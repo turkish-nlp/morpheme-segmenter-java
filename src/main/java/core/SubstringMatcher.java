@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
+import org.jboss.logging.Logger;
 
 public class SubstringMatcher {
 
@@ -57,7 +58,7 @@ public class SubstringMatcher {
             Collection<String> nearestList = vectors.wordsNearest(b, 10);
             System.out.println("\nNEAREST:");
             for (String s : nearestList){
-                System.out.println(new String(s.getBytes("cp1254"), "utf-8"));
+                System.out.println(s);
             }
         } catch (Exception e) {
             System.out.println(-.5);
@@ -83,10 +84,10 @@ public class SubstringMatcher {
 
     public static String findMostFrequentLongestSubsequence(WordVectors vectors, String word, int numberOfneighboors){
         try {
-
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
             int max_f = 0;
             String l_subs = "";
+            // In order to limit the control lenght limit; i<word.lenght()-limit can be used.
             for (int i=0; i<word.length(); i++){
                 int f = 0;
                 for (String n : neighboors){
@@ -101,7 +102,7 @@ public class SubstringMatcher {
             }
             return l_subs;
         } catch (Exception ex){
-            System.out.println("PROBLEM");
+            Logger.getLogger(SubstringMatcher.class).log(Logger.Level.ERROR, ex.getLocalizedMessage());
             return null;
         }
     }
