@@ -7,15 +7,16 @@ package core;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import org.jboss.logging.Logger;
 
 public class SubstringMatcher {
+
+    Map<String, Integer> segments = new TreeMap<String, Integer>();
+    Map<String, Integer> affixes = new TreeMap<String, Integer>();
 
     public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
         WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File("datas\\turkce.txt"));
@@ -57,7 +58,7 @@ public class SubstringMatcher {
             String b = new String("erkek".getBytes("utf-8"));
             Collection<String> nearestList = vectors.wordsNearest(b, 10);
             System.out.println("\nNEAREST:");
-            for (String s : nearestList){
+            for (String s : nearestList) {
                 System.out.println(s);
             }
         } catch (Exception e) {
@@ -69,7 +70,7 @@ public class SubstringMatcher {
             String b = new String("erkek".getBytes("utf-8"));
             Collection<String> nearestL = vectors.wordsNearest(a, 10);
             System.out.println("\nNEAREST:");
-            for (String s : nearestL){
+            for (String s : nearestL) {
                 System.out.println(new String(s.getBytes("cp1254"), "utf-8"));
             }
         } catch (Exception e) {
@@ -78,32 +79,45 @@ public class SubstringMatcher {
 
         String control = new String("gelmişti".getBytes("utf-8"));
         System.out.println("************");
-        System.out.println(findMostFrequentLongestSubsequence(vectors, control, 10));
+        //System.out.println(findMostFrequentLongestSubsequence(vectors, control, 10));
 
     }
 
-    public static String findMostFrequentLongestSubsequence(WordVectors vectors, String word, int numberOfneighboors){
+    public void findMostFrequentLongestSubsequence(WordVectors vectors, String word, int numberOfneighboors) {
         try {
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
             int max_f = 0;
-            String l_subs = "";
+            String segment = "";
+            String affix = "";
             // In order to limit the control lenght limit; i<word.lenght()-limit can be used.
-            for (int i=0; i<word.length(); i++){
+            for (int i = 0; i < word.length(); i++) {
                 int f = 0;
-                for (String n : neighboors){
-                    if (n.startsWith(word.substring(0, word.length()-i))){
+                for (String n : neighboors) {
+                    if (n.startsWith(word.substring(0, word.length() - i))) {
                         f++;
                     }
                 }
-                if (f > max_f){
+                if (f > max_f) {
                     max_f = f;
-                    l_subs = word.substring(0, word.length()-i);
+                    segment = word.substring(0, word.length() - i);
+                    affix = word.substring(word.length() - i, word.length());
                 }
             }
-            return l_subs;
-        } catch (Exception ex){
+
+            if (segments.containsKey(segment)) {
+                segments.put(segment, segments.get(segment) + 1);
+            }
+
+            if (affixes.containsKey(affix)) {
+                affixes.put(affix, affixes.get(affix) + 1);
+            }
+
+        } catch (Exception ex) {
             Logger.getLogger(SubstringMatcher.class).log(Logger.Level.ERROR, ex.getLocalizedMessage());
-            return null;
         }
+    }
+
+    public void findSegmentsAndAffixes() {
+
     }
 }
