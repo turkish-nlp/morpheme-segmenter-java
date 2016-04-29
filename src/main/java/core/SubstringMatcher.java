@@ -42,13 +42,13 @@ public class SubstringMatcher {
         }
     }
 
-    public void findMostFrequentLongestSubsequence(String word, int freq, int numberOfneighboors) {
+    private void findMostFrequentLongestSubsequence(String word, int freq, int numberOfneighboors) {
         try {
 
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
             boolean notFound = false;
 
-            if (neighboors.isEmpty()){
+            if (neighboors.isEmpty()) {
                 notFound = true;
             }
 
@@ -57,9 +57,9 @@ public class SubstringMatcher {
             String affix = "NLL";
 
             // In order to limit the control lenght limit; i<(word.lenght()-limit+1) can be used.
-            for (int i = 0; i < word.length()-2; i++) {
+            for (int i = 0; i < word.length() - 2; i++) {
 
-                if (notFound){
+                if (notFound) {
                     break;
                 }
 
@@ -100,7 +100,7 @@ public class SubstringMatcher {
         }
     }
 
-    public void findSegmentsAndAffixes() {
+    private void findSegmentsAndAffixes() {
         try {
 
             BufferedReader reader = null;
@@ -134,19 +134,19 @@ public class SubstringMatcher {
         PrintWriter writer_af = new PrintWriter("outputs/affixes", "UTF-8");
         PrintWriter writer_res = new PrintWriter("outputs/results", "UTF-8");
 
-        for (Map.Entry<String,Integer> entry : s.entrySet()) {
+        for (Map.Entry<String, Integer> entry : s.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
             writer_seg.println(line);
         }
         writer_seg.close();
 
-        for (Map.Entry<String,Integer> entry : a.entrySet()) {
+        for (Map.Entry<String, Integer> entry : a.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
             writer_af.println(line);
         }
         writer_af.close();
 
-        for (Map.Entry<String,Integer> entry : r.entrySet()) {
+        for (Map.Entry<String, Integer> entry : r.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
             writer_res.println(line);
         }
