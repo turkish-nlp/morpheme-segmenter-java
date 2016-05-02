@@ -13,23 +13,23 @@ import org.jboss.logging.Logger;
 
 public class SubstringMatcher {
 
-    private Map<String, Integer> segments = new TreeMap<String, Integer>();
-    private Map<String, Integer> affixes = new TreeMap<String, Integer>();
-    private Map<String, Integer> results = new TreeMap<String, Integer>();
+    private Map<String, Double> stems = new TreeMap<String, Double>();
+    private Map<String, Double> affixes = new TreeMap<String, Double>();
+    private Map<String, Double> results = new TreeMap<String, Double>();
 
     private String fileSegmentationInput;
 
     private WordVectors vectors;
 
-    public Map<String, Integer> getSegments() {
-        return segments;
+    public Map<String, Double> getStems() {
+        return stems;
     }
 
-    public Map<String, Integer> getAffixes() {
+    public Map<String, Double> getAffixes() {
         return affixes;
     }
 
-    public Map<String, Integer> getResults() {
+    public Map<String, Double> getResults() {
         return results;
     }
 
@@ -42,7 +42,7 @@ public class SubstringMatcher {
         }
     }
 
-    private void findMostFrequentLongestSubsequence(String word, int freq, int numberOfneighboors) {
+    private void findMostFrequentLongestSubsequence(String word, double freq, int numberOfneighboors) {
         try {
 
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
@@ -76,10 +76,10 @@ public class SubstringMatcher {
                 }
             }
 
-            if (segments.containsKey(segment)) {
-                segments.put(segment, segments.get(segment) + freq);
+            if (stems.containsKey(segment)) {
+                stems.put(segment, stems.get(segment) + freq);
             } else {
-                segments.put(segment, freq);
+                stems.put(segment, freq);
             }
 
             if (affixes.containsKey(affix)) {
@@ -111,7 +111,7 @@ public class SubstringMatcher {
                 String space = " ";
                 StringTokenizer st = new StringTokenizer(line, space);
 
-                int freq = Integer.parseInt(st.nextToken());
+                double freq = Double.parseDouble(st.nextToken());
                 String word = st.nextToken();
 
                 findMostFrequentLongestSubsequence(word, freq, 20);
@@ -126,27 +126,27 @@ public class SubstringMatcher {
         SubstringMatcher ssm = new SubstringMatcher(args[0], args[1]);
         ssm.findSegmentsAndAffixes();
 
-        Map<String, Integer> s = ssm.getSegments();
-        Map<String, Integer> a = ssm.getAffixes();
-        Map<String, Integer> r = ssm.getResults();
+        Map<String, Double> s = ssm.getStems();
+        Map<String, Double> a = ssm.getAffixes();
+        Map<String, Double> r = ssm.getResults();
 
-        PrintWriter writer_seg = new PrintWriter("outputs/segments", "UTF-8");
+        PrintWriter writer_seg = new PrintWriter("outputs/stems", "UTF-8");
         PrintWriter writer_af = new PrintWriter("outputs/affixes", "UTF-8");
         PrintWriter writer_res = new PrintWriter("outputs/results", "UTF-8");
 
-        for (Map.Entry<String, Integer> entry : s.entrySet()) {
+        for (Map.Entry<String, Double> entry : s.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
             writer_seg.println(line);
         }
         writer_seg.close();
 
-        for (Map.Entry<String, Integer> entry : a.entrySet()) {
+        for (Map.Entry<String, Double> entry : a.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
             writer_af.println(line);
         }
         writer_af.close();
 
-        for (Map.Entry<String, Integer> entry : r.entrySet()) {
+        for (Map.Entry<String, Double> entry : r.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
             writer_res.println(line);
         }

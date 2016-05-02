@@ -14,7 +14,7 @@ import java.util.StringTokenizer;
  */
 public class MorphemeTransition {
 
-    private HashMap<String, Double> stemCount;
+    /*private HashMap<String, Double> stemCount;*/
     private HashMap<String, Double> morphemeCount;
     private HashMap<String, HashMap<String, Double>> morphemeBiagramCount;
     private HashMap<String, HashMap<String, Double>> morphemeBiagramProbabilities;
@@ -28,7 +28,7 @@ public class MorphemeTransition {
     }
 
     public MorphemeTransition(String inputFileName) {
-        stemCount = new HashMap<String, Double>();
+        /*stemCount = new HashMap<String, Double>();*/
         morphemeCount = new HashMap<String, Double>();
         morphemeBiagramCount = new HashMap<String, HashMap<String, Double>>();
         morphemeBiagramProbabilities = new HashMap<String, HashMap<String, Double>>();
@@ -46,11 +46,11 @@ public class MorphemeTransition {
     public HashMap<String, Double> getMorphemeCount() {
         return morphemeCount;
     }
-
+/*
     public HashMap<String, Double> getStemCount() {
         return stemCount;
     }
-
+*/
     public void doItForFile() throws IOException {
 
         BufferedReader reader = null;
@@ -75,12 +75,12 @@ public class MorphemeTransition {
         StringTokenizer st = new StringTokenizer(word, seperator);
 
         String stem = st.nextToken();
-        if (stemCount.containsKey(stem)) {
+/*        if (stemCount.containsKey(stem)) {
             stemCount.put(stem, stemCount.get(stem) + frequency);
         } else {
             stemCount.put(stem, frequency);
         }
-
+*/
         String curr = startMorpheme;
         String next = null;
         while (st.hasMoreTokens()) {
@@ -179,7 +179,7 @@ public class MorphemeTransition {
         mt.doItForFile();
         mt.calculateTransitionProbabilities(Smoothing.LAPLACE);
 
-        HashMap<String, Double> stemCount = mt.getStemCount();
+        /*HashMap<String, Double> stemCount = mt.getStemCount();*/
         HashMap<String, Double> morphemeCount = mt.getMorphemeCount();
         HashMap<String, HashMap<String, Double>> morphemeBiagramCount = mt.getMorphemeBiagramCount();
         HashMap<String, HashMap<String, Double>> morphemeBiagramProbabilities = mt.getMorphemeBiagramProbabilities();
