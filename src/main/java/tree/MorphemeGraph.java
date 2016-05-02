@@ -17,7 +17,6 @@ public class MorphemeGraph {
 
     public void print() {
         root.print();
-
     }
 
     public static void main(String[] args) {
@@ -30,6 +29,8 @@ public class MorphemeGraph {
         g.add("geldin", 3);
         g.add("gelmektimiş", 10);
         g.add("gelmekseymiş", 20);
+
+
         g.print();
     }
 }

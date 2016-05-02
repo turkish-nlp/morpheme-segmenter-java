@@ -9,6 +9,8 @@ import java.util.TreeMap;
 public class MorphemeNode {
 
     private String morpheme;
+    private MorphemeNode parent;
+    private double cosineSimilarity;
     private HashMap<MorphemeNode, Double> children;
 
     public MorphemeNode(String morphemeName) {
@@ -24,6 +26,19 @@ public class MorphemeNode {
         return morpheme;
     }
 
+    public double getCosineSimilarity() {
+        return cosineSimilarity;
+    }
+
+    public MorphemeNode getParent() {
+        return parent;
+    }
+
+    public void setParent(MorphemeNode parent) {
+
+        this.parent = parent;
+    }
+
     public void addChild(MorphemeNode morpheme, double morphemeFreq) {
         if (children == null)
             children = new HashMap<MorphemeNode, Double>();
@@ -31,7 +46,6 @@ public class MorphemeNode {
         if (children.containsKey(morpheme)) {
             children.put(morpheme, children.get(morpheme) + morphemeFreq);
         } else {
-            MorphemeNode temp;
             boolean found = false;
             for (MorphemeNode mn : children.keySet()) {
                 if (morpheme.getMorpheme().contains(mn.getMorpheme())) {
@@ -42,7 +56,9 @@ public class MorphemeNode {
             }
             if (!found) {
                 children.put(morpheme, morphemeFreq);
+                morpheme.setParent(this);
             }
+
         }
     }
 
