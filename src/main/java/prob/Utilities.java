@@ -15,7 +15,7 @@ public class Utilities {
 
         for (int i = 2; i < word.length() + 1; i++) {
             String stem = word.substring(0, i);
-            String remaning = word.substring(i, word.length());
+            String remaning = word.substring(i);
 
             if (stems.containsKey(stem)) {
                 getPossibleAffixSequence(stem, remaning, segmentations);

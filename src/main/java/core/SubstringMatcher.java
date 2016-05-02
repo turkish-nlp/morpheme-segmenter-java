@@ -76,6 +76,34 @@ public class SubstringMatcher {
                 }
             }
 
+            for (String n : neighboors) {
+                if (n.startsWith(word)) {
+                    String suffixFar = n.substring(word.length());
+                    String suffixClose = n.substring(segment.length(), word.length());
+
+                    if (affixes.containsKey(suffixClose)) {
+                        affixes.put(suffixClose, affixes.get(suffixClose) + freq);
+                    } else {
+                        affixes.put(suffixClose, freq);
+                    }
+
+                    if (affixes.containsKey(suffixFar)) {
+                        affixes.put(suffixFar, affixes.get(suffixFar) + freq);
+                    } else {
+                        affixes.put(suffixFar, freq);
+                    }
+                } else if (n.startsWith(segment)) {
+                    String suffixClose = n.substring(segment.length());
+
+                    if (affixes.containsKey(suffixClose)) {
+                        affixes.put(suffixClose, affixes.get(suffixClose) + freq);
+                    } else {
+                        affixes.put(suffixClose, freq);
+                    }
+                }
+            }
+
+
             if (stems.containsKey(segment)) {
                 stems.put(segment, stems.get(segment) + freq);
             } else {
@@ -114,12 +142,16 @@ public class SubstringMatcher {
                 double freq = Double.parseDouble(st.nextToken());
                 String word = st.nextToken();
 
-                findMostFrequentLongestSubsequence(word, freq, 20);
+                findMostFrequentLongestSubsequence(word, freq, 50);
 
             }
         } catch (Exception ex) {
             Logger.getLogger(SubstringMatcher.class).log(Logger.Level.ERROR, ex.getLocalizedMessage());
         }
+    }
+
+    public void writeFile (){
+
     }
 
     public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
