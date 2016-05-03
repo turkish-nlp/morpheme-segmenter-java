@@ -62,15 +62,23 @@ public class MorphemeNode {
         }
     }
 
+    public String toString()
+    {
+        return this.morpheme;
+    }
+
     public void print() {
 
-        if (this.children == null)
-            System.out.println(morpheme);
-        else {
+        if(this.children != null)
+        {
+            // System.out.println(morpheme);
             for (MorphemeNode mn : children.keySet()) {
                 System.out.println(morpheme);
                 mn.print();
             }
         }
+        else
+            System.out.println(morpheme);
     }
+
 }

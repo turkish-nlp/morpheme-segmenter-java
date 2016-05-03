@@ -10,7 +10,11 @@ public class MorphemeGraph {
     public MorphemeGraph(String morp) {
         root = new MorphemeNode(morp);
     }
-
+    public MorphemeNode get(String morpheme)
+    {
+  //      return root.get(morpheme);
+        return null;
+    }
     public void add(String s, double f) {
         root.addChild(new MorphemeNode(s), f);
     }
@@ -29,8 +33,8 @@ public class MorphemeGraph {
         g.add("geldin", 3);
         g.add("gelmektimiş", 10);
         g.add("gelmekseymiş", 20);
-
-
+  //      MorphemeNode a = g.get("gelmek");
+   //     System.out.println("get: " + a);
         g.print();
     }
 }

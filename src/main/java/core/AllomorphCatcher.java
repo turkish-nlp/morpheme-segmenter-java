@@ -46,7 +46,8 @@ public class AllomorphCatcher {
     }
 
     public static void main(String[] args) {
-        AllomorphCatcher ac = new AllomorphCatcher(args[0], args[1]);
+        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        AllomorphCatcher ac = new AllomorphCatcher("vectors_tur.txt", "metusabanci_kelimeler_lowercase.txt");
         ac.TestAnalogy();
     }
 
