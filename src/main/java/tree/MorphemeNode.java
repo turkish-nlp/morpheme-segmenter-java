@@ -40,6 +40,7 @@ public class MorphemeNode {
     }
 
     public void addChild(MorphemeNode morpheme, double morphemeFreq) {
+
         if (children == null)
             children = new HashMap<MorphemeNode, Double>();
 
@@ -62,22 +63,19 @@ public class MorphemeNode {
         }
     }
 
-    public String toString()
-    {
+    public String toString() {
         return this.morpheme;
     }
 
     public void print() {
 
-        if(this.children != null)
-        {
+        if (this.children != null) {
             // System.out.println(morpheme);
             for (MorphemeNode mn : children.keySet()) {
                 System.out.println(morpheme);
                 mn.print();
             }
-        }
-        else
+        } else
             System.out.println(morpheme);
     }
 

@@ -7,7 +7,7 @@ import java.util.*;
  */
 public class Utilities {
 
-    public static ArrayList<String> getPossibleSegmentations(String word, Set<String> stems, Set<String> affixes) {
+    public static List<String> getPossibleSegmentations(String word, Set<String> stems, Set<String> affixes) {
 
         ArrayList<String> segmentations = new ArrayList<String>();
 
@@ -64,7 +64,7 @@ public class Utilities {
         Set<String> a = affixes.keySet();
 
         long start = System.nanoTime();
-        ArrayList<String> results = getPossibleSegmentations("geliyormuşsun", s, a);
+        List<String> results = getPossibleSegmentations("geliyormuşsun", s, a);
         long stop = System.nanoTime();
 
         System.out.println(stop - start);

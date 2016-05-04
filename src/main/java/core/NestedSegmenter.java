@@ -8,21 +8,25 @@ import java.io.*;
 import java.util.Map;
 import java.util.Stack;
 import java.util.StringTokenizer;
-import java.util.TreeMap;
+import java.util.HashMap;
 
 /**
  * Created by ahmetu on 29.04.2016.
  */
 public class NestedSegmenter {
 
-    private Map<String, Double> stems = new TreeMap<String, Double>();
-    private Map<String, Double> affixes = new TreeMap<String, Double>();
-    private Map<String, Double> results = new TreeMap<String, Double>();
-    private Map<String, Double> notFound = new TreeMap<String, Double>();
+    private Map<String, Double> stems = new HashMap<String, Double>();
+    private Map<String, Double> affixes = new HashMap<String, Double>();
+    private Map<String, Double> results = new HashMap<String, Double>();
+    private Map<String, Double> notFound = new HashMap<String, Double>();
 
     private String fileSegmentationInput;
 
     private WordVectors vectors;
+
+    public void setVectors(WordVectors vectors) {
+        this.vectors = vectors;
+    }
 
     public Map<String, Double> getStems() {
         return stems;
@@ -40,13 +44,9 @@ public class NestedSegmenter {
         return notFound;
     }
 
-    public NestedSegmenter(String fileVectorInput, String fileSegmentationInput) {
-        try {
-            vectors = WordVectorSerializer.loadTxtVectors(new File(fileVectorInput));
-            this.fileSegmentationInput = fileSegmentationInput;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+    public NestedSegmenter(String fileVectorInput, String fileSegmentationInput) throws FileNotFoundException {
+        vectors = WordVectorSerializer.loadTxtVectors(new File(fileVectorInput));
+        this.fileSegmentationInput = fileSegmentationInput;
     }
 
     private void doNested(String word, double frequency, double treshold) {
@@ -61,24 +61,24 @@ public class NestedSegmenter {
                 notFound.put(word, frequency);
             }
         } else {
-            if (word.length() < 3){
-                if (stems.containsKey(word)){
+            if (word.length() < 3) {
+                if (stems.containsKey(word)) {
                     stems.put(word, stems.get(word) + frequency);
                 } else {
                     stems.put(word, frequency);
                 }
             } else {
                 int count = 0;
-                for (int i=0; i < word.length()-2; i++){
-                    String candidate = stem.substring(0, stem.length()-count);
+                for (int i = 0; i < word.length() - 2; i++) {
+                    String candidate = stem.substring(0, stem.length() - count);
                     double cosine = vectors.similarity(stem, candidate);
-                    if (cosine > treshold && cosine < 1d){
-                        String affix = stem.substring(stem.length()-count, stem.length());
+                    if (cosine > treshold && cosine < 1d) {
+                        String affix = stem.substring(stem.length() - count, stem.length());
 
                         localSuffixes.push(affix);
 
-                        if (affixes.containsKey(affix)){
-                            affixes.put(affix, affixes.get(affix)+frequency);
+                        if (affixes.containsKey(affix)) {
+                            affixes.put(affix, affixes.get(affix) + frequency);
                         } else {
                             affixes.put(affix, frequency);
                         }
@@ -97,7 +97,7 @@ public class NestedSegmenter {
 
                 String result = stem;
                 int suffixNo = localSuffixes.size();
-                for (int j=0; j<suffixNo; j++){
+                for (int j = 0; j < suffixNo; j++) {
                     result = result + "+" + localSuffixes.pop();
                 }
 
@@ -106,33 +106,33 @@ public class NestedSegmenter {
                 } else {
                     results.put(result, frequency);
                 }
+
+                /*
+                * Results keeps the word and its segmentation above line.
+                *
+                results.put(word, result);
+                */
             }
         }
     }
 
-    private void findSegmentsAndAffixes() {
-        try {
+    public void findSegmentsAndAffixes() throws IOException {
+        BufferedReader reader = null;
+        reader = new BufferedReader(new FileReader(fileSegmentationInput));
 
-            BufferedReader reader = null;
-            reader = new BufferedReader(new FileReader(fileSegmentationInput));
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String space = " ";
+            StringTokenizer st = new StringTokenizer(line, space);
 
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String space = " ";
-                StringTokenizer st = new StringTokenizer(line, space);
+            double freq = Double.parseDouble(st.nextToken());
+            String word = st.nextToken();
 
-                double freq = Double.parseDouble(st.nextToken());
-                String word = st.nextToken();
-
-                doNested(word, freq, 0.25);
-
-            }
-        } catch (Exception ex) {
-            Logger.getLogger(NestedSegmenter.class).log(Logger.Level.ERROR, ex.getLocalizedMessage());
+            doNested(word, freq, 0.25);
         }
     }
 
-    public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
+    public static void main(String[] args) throws IOException {
         NestedSegmenter ns = new NestedSegmenter(args[0], args[1]);
         ns.findSegmentsAndAffixes();
 
