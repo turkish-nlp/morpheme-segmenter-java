@@ -75,6 +75,12 @@ public class MorphemeNode {
         return this.morpheme;
     }
 
+    public void printTree(){
+
+
+
+    }
+
     public void print() {
 
         if (this.children != null) {

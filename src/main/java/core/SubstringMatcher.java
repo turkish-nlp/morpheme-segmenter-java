@@ -17,7 +17,7 @@ public class SubstringMatcher {
     private Map<String, Double> stems = new TreeMap<String, Double>();
     private Map<String, Double> affixes = new TreeMap<String, Double>();
     private Map<String, Double> results = new TreeMap<String, Double>();
-    private List<MorphemeGraph> graphList = new ArrayList<>();
+    private Map<String, MorphemeGraph> graphList = new TreeMap<>();
 
     private String fileSegmentationInput;
 
@@ -33,6 +33,10 @@ public class SubstringMatcher {
 
     public Map<String, Double> getResults() {
         return results;
+    }
+
+    public Map<String, MorphemeGraph> getGraphList() {
+        return graphList;
     }
 
     public SubstringMatcher(String fileVectorInput, String fileSegmentationInput) throws FileNotFoundException {
@@ -73,34 +77,60 @@ public class SubstringMatcher {
             }
         }
 
+        MorphemeGraph graph = new MorphemeGraph(stem, vectors);
+
         String suffixFar = "";
         String suffixClose = "";
-        boolean isSeperable = false;
         for (String n : neighboors) {
-            if (n.startsWith(word)) {
-                suffixFar = n.substring(word.length());
-                suffixClose = n.substring(stem.length(), word.length());
 
-                isSeperable = true;
+            if (word.equals(stem)) {
 
-                if (affixes.containsKey(suffixClose)) {
-                    affixes.put(suffixClose, affixes.get(suffixClose) + freq);
-                } else {
-                    affixes.put(suffixClose, freq);
+                if (n.startsWith(stem)) {
+
+                    graph.add(n, freq);
+
+                    suffixClose = n.substring(stem.length());
+
+                    if (affixes.containsKey(suffixClose)) {
+                        affixes.put(suffixClose, affixes.get(suffixClose) + freq);
+                    } else {
+                        affixes.put(suffixClose, freq);
+                    }
                 }
 
-                if (affixes.containsKey(suffixFar)) {
-                    affixes.put(suffixFar, affixes.get(suffixFar) + freq);
-                } else {
-                    affixes.put(suffixFar, freq);
-                }
-            } else if (n.startsWith(stem)) {
-                suffixClose = n.substring(stem.length());
+            } else {
 
-                if (affixes.containsKey(suffixClose)) {
-                    affixes.put(suffixClose, affixes.get(suffixClose) + freq);
-                } else {
-                    affixes.put(suffixClose, freq);
+                graph.add(word, freq);
+
+                if (n.startsWith(word)) {
+
+                    graph.add(n, freq);
+
+                    suffixFar = n.substring(word.length());
+                    suffixClose = n.substring(stem.length(), word.length());
+
+                    if (affixes.containsKey(suffixClose)) {
+                        affixes.put(suffixClose, affixes.get(suffixClose) + freq);
+                    } else {
+                        affixes.put(suffixClose, freq);
+                    }
+
+                    if (affixes.containsKey(suffixFar)) {
+                        affixes.put(suffixFar, affixes.get(suffixFar) + freq);
+                    } else {
+                        affixes.put(suffixFar, freq);
+                    }
+                } else if (n.startsWith(stem)) {
+
+                    graph.add(n, freq);
+
+                    suffixClose = n.substring(stem.length());
+
+                    if (affixes.containsKey(suffixClose)) {
+                        affixes.put(suffixClose, affixes.get(suffixClose) + freq);
+                    } else {
+                        affixes.put(suffixClose, freq);
+                    }
                 }
             }
         }
@@ -120,23 +150,14 @@ public class SubstringMatcher {
         }
         */
 
-        MorphemeGraph graph = new MorphemeGraph(stem, vectors);
-
-        String result = "";
-        if (isSeperable) {
-            result = stem + suffixClose + suffixFar;
-            graph.add(stem + suffixClose, freq);
-            graph.add(result, freq);
-        } else {
-            result = stem + suffixClose;
-            graph.add(stem + suffixClose, freq);
-        }
-
+        String result = stem + "+" + affix;
         if (results.containsKey(result)) {
             results.put(result, results.get(result) + freq);
         } else {
             results.put(result, freq);
         }
+        graph.print();
+        graphList.put(word, graph);
 
     }
 
@@ -157,14 +178,11 @@ public class SubstringMatcher {
         }
     }
 
-    public void writeFile() {
-
-    }
-
     public static void main(String[] args) throws IOException {
-        SubstringMatcher ssm = new SubstringMatcher(args[0], args[1]);
+        SubstringMatcher ssm = new SubstringMatcher(args[0], "outputs/substringtest.txt");
         ssm.findSegmentsAndAffixes();
 
+        /*
         Map<String, Double> s = ssm.getStems();
         Map<String, Double> a = ssm.getAffixes();
         Map<String, Double> r = ssm.getResults();
@@ -192,6 +210,6 @@ public class SubstringMatcher {
         writer_seg.close();
         writer_af.close();
         writer_res.close();
-
+        */
     }
 }

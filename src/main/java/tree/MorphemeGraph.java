@@ -14,9 +14,9 @@ public class MorphemeGraph {
     MorphemeNode root;
     private WordVectors vectors;
 
-    public MorphemeGraph(String morp, WordVectors vectors) {
+    public MorphemeGraph(String rootNode, WordVectors vectors) {
         this.vectors = vectors;
-        root = new MorphemeNode(morp, vectors);
+        root = new MorphemeNode(rootNode, vectors);
     }
     public MorphemeNode get(String morpheme)
     {
