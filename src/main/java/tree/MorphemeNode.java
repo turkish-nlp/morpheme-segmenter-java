@@ -91,8 +91,6 @@ public class MorphemeNode {
 
     public void printTree() {
 
-        System.out.println("-------------------------------------------------------------------");
-        System.out.println("From root node >>>> " + this.morpheme + " <<<< to all leaf nodes, all paths: ");
         System.out.println("");
 
         List<String> paths = new ArrayList<>();

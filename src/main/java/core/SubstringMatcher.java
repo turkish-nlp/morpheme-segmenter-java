@@ -139,6 +139,9 @@ public class SubstringMatcher {
         } else {
             results.put(result, freq);
         }
+
+        System.out.println("-------------------------------------------------------------------");
+        System.out.println("For word >>>> " + word + " <<<< from root node to all leaf nodes, all paths: ");
         graph.print();
         graphList.put(word, graph);
 

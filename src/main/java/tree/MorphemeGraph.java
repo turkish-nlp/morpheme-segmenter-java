@@ -35,6 +35,8 @@ public class MorphemeGraph {
         WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(args[0]));
         MorphemeGraph g = new MorphemeGraph("gel", vectors);
         g.add("gelmek", 3);
+        g.add("gelmişti", 1);
+        g.add("gelmiş", 1);
         g.add("gelmekti", 3);
         g.add("gelmekse", 3);
         g.add("geldi", 5);
