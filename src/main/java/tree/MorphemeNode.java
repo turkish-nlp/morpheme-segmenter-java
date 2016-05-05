@@ -1,5 +1,7 @@
 package tree;
 
+import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
+
 import java.util.HashMap;
 import java.util.TreeMap;
 
@@ -12,10 +14,12 @@ public class MorphemeNode {
     private MorphemeNode parent;
     private double cosineSimilarity;
     private HashMap<MorphemeNode, Double> children;
+    private WordVectors vectors;
 
-    public MorphemeNode(String morphemeName) {
+    public MorphemeNode(String morphemeName, WordVectors vectors) {
         morpheme = morphemeName;
         children = null;
+        this.vectors = vectors;
     }
 
     public HashMap<MorphemeNode, Double> getChildren() {
@@ -35,8 +39,12 @@ public class MorphemeNode {
     }
 
     public void setParent(MorphemeNode parent) {
-
         this.parent = parent;
+        setCosineSimilarity();
+    }
+
+    private void setCosineSimilarity(){
+        cosineSimilarity = vectors.similarity(morpheme, parent.getMorpheme());
     }
 
     public void addChild(MorphemeNode morpheme, double morphemeFreq) {
