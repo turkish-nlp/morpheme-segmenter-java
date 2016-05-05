@@ -120,7 +120,7 @@ public class SubstringMatcher {
         }
         */
 
-        MorphemeGraph graph = new MorphemeGraph(stem);
+        MorphemeGraph graph = new MorphemeGraph(stem, vectors);
 
         String result = "";
         if (isSeperable) {
