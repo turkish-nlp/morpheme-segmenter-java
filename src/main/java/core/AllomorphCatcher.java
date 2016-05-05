@@ -19,8 +19,8 @@ public class AllomorphCatcher {
 
     public AllomorphCatcher(String fileVectorInput, String fileSegmentationInput) {
         try {
-                vectors = WordVectorSerializer.loadTxtVectors (new File(fileVectorInput)) ;
-                this.fileSegmentationInput = fileSegmentationInput;
+            vectors = WordVectorSerializer.loadTxtVectors(new File(fileVectorInput));
+            this.fileSegmentationInput = fileSegmentationInput;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -47,7 +47,7 @@ public class AllomorphCatcher {
 
     public static void main(String[] args) {
 
-        AllomorphCatcher ac = new AllomorphCatcher("tvec2.bin", "metusabanci_kelimeler_lowercase.txt");
+        AllomorphCatcher ac = new AllomorphCatcher(args[0], args[1]);
         ac.TestAnalogy();
     }
 
