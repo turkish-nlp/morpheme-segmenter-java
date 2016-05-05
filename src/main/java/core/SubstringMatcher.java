@@ -78,59 +78,42 @@ public class SubstringMatcher {
         }
 
         MorphemeGraph graph = new MorphemeGraph(stem, vectors);
+        if (!stem.equals(word)){
+            graph.add(word, freq);
+        }
 
         String suffixFar = "";
         String suffixClose = "";
         for (String n : neighboors) {
 
-            if (word.equals(stem)) {
+            if (n.startsWith(word)) {
 
-                if (n.startsWith(stem)) {
+                graph.add(n, freq);
 
-                    graph.add(n, freq);
+                suffixFar = n.substring(word.length());
+                suffixClose = n.substring(stem.length(), word.length());
 
-                    suffixClose = n.substring(stem.length());
-
-                    if (affixes.containsKey(suffixClose)) {
-                        affixes.put(suffixClose, affixes.get(suffixClose) + freq);
-                    } else {
-                        affixes.put(suffixClose, freq);
-                    }
+                if (affixes.containsKey(suffixClose)) {
+                    affixes.put(suffixClose, affixes.get(suffixClose) + freq);
+                } else {
+                    affixes.put(suffixClose, freq);
                 }
 
-            } else {
+                if (affixes.containsKey(suffixFar)) {
+                    affixes.put(suffixFar, affixes.get(suffixFar) + freq);
+                } else {
+                    affixes.put(suffixFar, freq);
+                }
+            } else if (n.startsWith(stem)) {
 
-                graph.add(word, freq);
+                graph.add(n, freq);
 
-                if (n.startsWith(word)) {
+                suffixClose = n.substring(stem.length());
 
-                    graph.add(n, freq);
-
-                    suffixFar = n.substring(word.length());
-                    suffixClose = n.substring(stem.length(), word.length());
-
-                    if (affixes.containsKey(suffixClose)) {
-                        affixes.put(suffixClose, affixes.get(suffixClose) + freq);
-                    } else {
-                        affixes.put(suffixClose, freq);
-                    }
-
-                    if (affixes.containsKey(suffixFar)) {
-                        affixes.put(suffixFar, affixes.get(suffixFar) + freq);
-                    } else {
-                        affixes.put(suffixFar, freq);
-                    }
-                } else if (n.startsWith(stem)) {
-
-                    graph.add(n, freq);
-
-                    suffixClose = n.substring(stem.length());
-
-                    if (affixes.containsKey(suffixClose)) {
-                        affixes.put(suffixClose, affixes.get(suffixClose) + freq);
-                    } else {
-                        affixes.put(suffixClose, freq);
-                    }
+                if (affixes.containsKey(suffixClose)) {
+                    affixes.put(suffixClose, affixes.get(suffixClose) + freq);
+                } else {
+                    affixes.put(suffixClose, freq);
                 }
             }
         }
