@@ -87,27 +87,24 @@ public class MorphemeTransition {
 
         String line;
         while ((line = reader.readLine()) != null) {
-            String space = " ";
+            String space = " +";
             StringTokenizer st = new StringTokenizer(line, space);
 
             double freq = Double.parseDouble(st.nextToken());
-            String word = st.nextToken();
+            //String word = st.nextToken();
 
-            countMorhemeForWord(word, freq);
+            countMorhemeForWord(st, freq);
 
         }
     }
 
     public void doItWithResults() {
         for (Map.Entry<String, Double> e : results.entrySet()) {
-            countMorhemeForWord(e.getKey(), e.getValue());
+            countMorhemeForWord(new StringTokenizer(e.getKey(), "+"), e.getValue());
         }
     }
 
-    private void countMorhemeForWord(String word, double frequency) {
-
-        String seperator = "+";
-        StringTokenizer st = new StringTokenizer(word, seperator);
+    private void countMorhemeForWord(StringTokenizer st, double frequency) {
 
         String stem = st.nextToken();
         if (stemCount.containsKey(stem)) {
@@ -181,16 +178,20 @@ public class MorphemeTransition {
     public void calculateTransitionProbabilities(Smoothing smoothing) throws Exception {
         switch (smoothing) {
             case LAPLACE:
+                System.out.println("---------------------------------------------------------------");
                 System.out.println("Transition probabilities are calculating with laplace smoothing");
                 calculateTransitionProbabilitiesWithLaplace();
                 break;
             case INTERPOLATION:
+                System.out.println("---------------------------------------------------------------");
                 System.out.println("Transition probabilities are calculating with interpolation smoothing");
                 break;
             case KNESERNEY:
+                System.out.println("---------------------------------------------------------------");
                 System.out.println("Transition probabilities are calculating with kneser-ney smoothing");
                 break;
             default:
+                System.out.println("---------------------------------------------------------------");
                 System.out.println("Transition probabilities are calculating with laplace smoothing");
                 break;
         }
@@ -201,6 +202,9 @@ public class MorphemeTransition {
         double additive = 1d;
         for (String firstMorpheme : morphemeCount.keySet()) {
 
+            double noF_denominator = ((morphemeCount.get(firstMorpheme) + morphemeCount.size() * additive));
+            double noF = additive / noF_denominator;
+
             Map<String, Double> transitions;
             Map<String, Double> transitionProbabilities;
             if (morphemeBiagramCount.containsKey(firstMorpheme)) {
@@ -208,15 +212,15 @@ public class MorphemeTransition {
                 transitionProbabilities = new HashMap<String, Double>();
                 for (String secondMorpheme : morphemeCount.keySet()) {
                     if (transitions.containsKey(secondMorpheme)) {
-                        transitionProbabilities.put(secondMorpheme, (transitions.get(secondMorpheme) + additive) / (morphemeCount.get(firstMorpheme) + morphemeCount.size() * additive));
+                        transitionProbabilities.put(secondMorpheme, (transitions.get(secondMorpheme) + additive) / noF_denominator);
                     } else {
-                        transitionProbabilities.put(secondMorpheme, additive / (morphemeCount.get(firstMorpheme) + morphemeCount.size() * additive));
+                        transitionProbabilities.put(secondMorpheme, noF);
                     }
                 }
             } else {
                 transitionProbabilities = new HashMap<>();
                 for (String secondMorpheme : morphemeCount.keySet()) {
-                    transitionProbabilities.put(secondMorpheme, additive / ((morphemeCount.get(firstMorpheme) + morphemeCount.size() * additive)));
+                    transitionProbabilities.put(secondMorpheme, noF);
                 }
             }
             morphemeBiagramProbabilities.put(firstMorpheme, transitionProbabilities);

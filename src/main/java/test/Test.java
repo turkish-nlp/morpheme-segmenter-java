@@ -3,6 +3,7 @@ package test;
 import core.NestedSegmenter;
 import prob.MorphemeTransition;
 import prob.ReSegmenter;
+import prob.Utilities;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -26,7 +27,6 @@ public class Test {
         Map<String, Double> notFounds = ns.getNotFound();
 
         ns.setVectors(null);
-        System.gc();
 
         PrintWriter writer_seg = new PrintWriter("outputs/stems_nested", "UTF-8");
         PrintWriter writer_af = new PrintWriter("outputs/affixes_nested", "UTF-8");
@@ -59,14 +59,16 @@ public class Test {
         writer_noF.close();
         */
 
-        System.out.println("--------------------------------------------------");
-        System.out.println("-----Transition probabilities are calculating-----");
+        System.out.println("---------------------------------------------------------------");
+        System.out.println("------------Transition probabilities are calculating-----------");
         MorphemeTransition mt = new MorphemeTransition("outputs/results_nested");
         mt.doItForFile();
         mt.calculateTransitionProbabilities(MorphemeTransition.Smoothing.LAPLACE);
 
         mt.setMorphemeBiagramCount(null);
 
+        Utilities.writeFileBigramProbabilities(mt.getMorphemeBiagramProbabilities());
+        /*
         System.out.println("--------------------------------------------------");
         System.out.println("--------------ReSegmentation started--------------");
         ReSegmenter rs = new ReSegmenter(args[1], mt.getStemCount(), mt.getMorphemeCount(), mt.getMorphemeBiagramProbabilities());
@@ -90,6 +92,6 @@ public class Test {
 
         writer_res_new.close();
         writer_noF_new.close();
-
+        */
     }
 }

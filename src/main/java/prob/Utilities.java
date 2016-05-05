@@ -1,5 +1,8 @@
 package prob;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 /**
@@ -44,6 +47,20 @@ public class Utilities {
         }
     }
 
+    public static void writeFileBigramProbabilities(Map<String, Map<String, Double>> morphemeBiagramProbabilities) throws FileNotFoundException, UnsupportedEncodingException {
+
+        PrintWriter writer = new PrintWriter("outputs/bigrams", "UTF-8");
+
+        for (String first : morphemeBiagramProbabilities.keySet()) {
+            for (String second : morphemeBiagramProbabilities.get(first).keySet()) {
+                String line = first + "->" + second + ":" + morphemeBiagramProbabilities.get(first).get(second);
+                writer.println(line);
+            }
+        }
+
+        writer.close();
+    }
+
     public static void main(String[] args) {
 
         Map<String, Double> stems = new HashMap<>();
@@ -69,7 +86,7 @@ public class Utilities {
 
         System.out.println(stop - start);
         System.out.println("***************");
-        for (String r : results){
+        for (String r : results) {
             System.out.println(r);
         }
     }

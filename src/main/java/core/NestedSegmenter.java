@@ -150,13 +150,11 @@ public class NestedSegmenter {
             String line = entry.getValue() + " " + entry.getKey();
             writer_seg.println(line);
         }
-        writer_seg.close();
 
         for (Map.Entry<String, Double> entry : a.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
             writer_af.println(line);
         }
-        writer_af.close();
 
         for (Map.Entry<String, Double> entry : r.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
