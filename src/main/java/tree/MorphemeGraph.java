@@ -28,7 +28,7 @@ public class MorphemeGraph {
     }
 
     public void print() {
-        root.print();
+        root.printTree();
     }
 
     public static void main(String[] args) throws FileNotFoundException {
@@ -40,7 +40,7 @@ public class MorphemeGraph {
         g.add("geldi", 5);
         g.add("geldim", 8);
         g.add("geldin", 3);
-        g.add("gelmektimiş", 10);
+        g.add("gelmektiyse", 10);
         g.add("gelmekseymiş", 20);
   //      MorphemeNode a = g.get("gelmek");
    //     System.out.println("get: " + a);

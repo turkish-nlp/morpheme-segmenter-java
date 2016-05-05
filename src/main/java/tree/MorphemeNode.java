@@ -2,7 +2,9 @@ package tree;
 
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.TreeMap;
 
 /**
@@ -15,11 +17,13 @@ public class MorphemeNode {
     private double cosineSimilarity;
     private HashMap<MorphemeNode, Double> children;
     private WordVectors vectors;
+    private boolean isLeaf;
 
     public MorphemeNode(String morphemeName, WordVectors vectors) {
         morpheme = morphemeName;
         children = null;
         this.vectors = vectors;
+        isLeaf = true;
     }
 
     public HashMap<MorphemeNode, Double> getChildren() {
@@ -43,8 +47,17 @@ public class MorphemeNode {
         setCosineSimilarity();
     }
 
-    private void setCosineSimilarity(){
-        cosineSimilarity = vectors.similarity(morpheme, parent.getMorpheme());
+    public void setLeaf(boolean leaf) {
+        isLeaf = leaf;
+    }
+
+    private void setCosineSimilarity() {
+
+        if (vectors.hasWord(morpheme) && vectors.hasWord(parent.getMorpheme())){
+            cosineSimilarity = vectors.similarity(morpheme, parent.getMorpheme());
+        } else {
+            cosineSimilarity = -0.5;
+        }
     }
 
     public void addChild(MorphemeNode morpheme, double morphemeFreq) {
@@ -66,6 +79,7 @@ public class MorphemeNode {
             if (!found) {
                 children.put(morpheme, morphemeFreq);
                 morpheme.setParent(this);
+                this.setLeaf(false);
             }
 
         }
@@ -75,22 +89,34 @@ public class MorphemeNode {
         return this.morpheme;
     }
 
-    public void printTree(){
+    public void printTree() {
 
+        System.out.println("-------------------------------------------------------------------");
+        System.out.println("From root node >>>> " + this.morpheme + " <<<< to all leaf nodes, all paths: ");
+        System.out.println("");
 
+        List<String> paths = new ArrayList<>();
+        String path = "";
+        print(paths, path);
 
+        for (String s : paths) {
+            System.out.println(s);
+        }
+
+        System.out.println("");
     }
 
-    public void print() {
+    public void print(List<String> paths, String path) {
 
-        if (this.children != null) {
-            // System.out.println(morpheme);
+        if (!this.isLeaf) {
+            path = path + this.morpheme + "-->";
             for (MorphemeNode mn : children.keySet()) {
-                System.out.println(morpheme);
-                mn.print();
+                mn.print(paths, path);
             }
-        } else
-            System.out.println(morpheme);
+        } else {
+            path = path + this.getMorpheme();
+            paths.add(path);
+        }
     }
 
 }
