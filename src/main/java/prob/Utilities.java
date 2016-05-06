@@ -1,5 +1,7 @@
 package prob;
 
+import org.apache.commons.collections.FastHashMap;
+
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -63,12 +65,12 @@ public class Utilities {
 
     public static void main(String[] args) {
 
-        Map<String, Double> stems = new HashMap<>();
+        Map<String, Double> stems = new FastHashMap();
         stems.put("gel", 5d);
         stems.put("geliyor", 3d);
         stems.put("geliyormuş", 6d);
 
-        Map<String, Double> affixes = new HashMap<>();
+        Map<String, Double> affixes = new FastHashMap();
         affixes.put("iyor", 3d);
         affixes.put("muş", 2d);
         affixes.put("sun", 1d);

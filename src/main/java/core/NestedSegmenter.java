@@ -1,24 +1,25 @@
 package core;
 
+import org.apache.commons.collections.FastHashMap;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import org.jboss.logging.Logger;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 import java.util.StringTokenizer;
-import java.util.HashMap;
 
 /**
  * Created by ahmetu on 29.04.2016.
  */
 public class NestedSegmenter {
 
-    private Map<String, Double> stems = new HashMap<String, Double>();
-    private Map<String, Double> affixes = new HashMap<String, Double>();
-    private Map<String, Double> results = new HashMap<String, Double>();
-    private Map<String, Double> notFound = new HashMap<String, Double>();
+    private Map<String, Double> stems = new FastHashMap();
+    private Map<String, Double> affixes = new FastHashMap();
+    private Map<String, Double> results = new FastHashMap();
+    private Map<String, Double> notFound = new FastHashMap();
 
     private String fileSegmentationInput;
 

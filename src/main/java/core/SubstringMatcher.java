@@ -7,17 +7,21 @@ package core;
 import java.io.*;
 import java.util.*;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.FastHashMap;
+import org.apache.lucene.util.CollectionUtil;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
+import org.deeplearning4j.text.corpora.treeparser.CollapseUnaries;
 import org.jboss.logging.Logger;
 import tree.MorphemeGraph;
 
 public class SubstringMatcher {
 
-    private Map<String, Double> stems = new TreeMap<String, Double>();
-    private Map<String, Double> affixes = new TreeMap<String, Double>();
-    private Map<String, Double> results = new TreeMap<String, Double>();
-    private Map<String, MorphemeGraph> graphList = new TreeMap<>();
+    private Map<String, Double> stems = new FastHashMap();
+    private Map<String, Double> affixes = new FastHashMap();
+    private Map<String, Double> results = new FastHashMap();
+    private Map<String, MorphemeGraph> graphList = new FastHashMap();
 
     private String fileSegmentationInput;
 
@@ -142,6 +146,8 @@ public class SubstringMatcher {
 
         System.out.println("-------------------------------------------------------------------");
         System.out.println("For word >>>> " + word + " <<<< from root node to all leaf nodes, all paths: ");
+
+        graph.finish();
         graph.print();
         graphList.put(word, graph);
 

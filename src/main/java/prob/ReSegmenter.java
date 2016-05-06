@@ -1,5 +1,7 @@
 package prob;
 
+import org.apache.commons.collections.FastHashMap;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -56,8 +58,8 @@ public class ReSegmenter {
         this.fileSegmentationInput = fileSegmentationInput;
         this.stems = stems;
         this.affixes = affixes;
-        results = new HashMap<>();
-        notFound = new HashMap<>();
+        results = new FastHashMap();
+        notFound = new FastHashMap();
         this.morphemeBiagramProbabilities = morphemeBiagramProbabilities;
     }
 

@@ -1,11 +1,9 @@
 package tree;
 
+import org.apache.commons.collections.FastHashMap;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Created by ahmet on 2.05.2016.
@@ -15,7 +13,7 @@ public class MorphemeNode {
     private String morpheme;
     private MorphemeNode parent;
     private double cosineSimilarity;
-    private HashMap<MorphemeNode, Double> children;
+    private Map<MorphemeNode, Double> children;
     private WordVectors vectors;
     private boolean isLeaf;
 
@@ -26,7 +24,7 @@ public class MorphemeNode {
         isLeaf = true;
     }
 
-    public HashMap<MorphemeNode, Double> getChildren() {
+    public Map<MorphemeNode, Double> getChildren() {
         return children;
     }
 
@@ -63,7 +61,7 @@ public class MorphemeNode {
     public void addChild(MorphemeNode morpheme, double morphemeFreq) {
 
         if (children == null)
-            children = new HashMap<MorphemeNode, Double>();
+            children = new FastHashMap();
 
         if (children.containsKey(morpheme)) {
             children.put(morpheme, children.get(morpheme) + morphemeFreq);
