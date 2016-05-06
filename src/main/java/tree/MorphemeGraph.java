@@ -29,15 +29,17 @@ public class MorphemeGraph {
 
 
     public void finish() {
-        for (String s : nodes.keySet()) {
-            root.addChild(new MorphemeNode(s, vectors), nodes.get(s));
+        if (!(nodes == null)) {
+            for (String s : nodes.keySet()) {
+                root.addChild(new MorphemeNode(s, vectors), nodes.get(s));
+            }
         }
     }
 
     public void add(String s, double f) {
         if (nodes == null)
             nodes = new FastTreeMap();
-        
+
         nodes.put(s, f);
     }
 
