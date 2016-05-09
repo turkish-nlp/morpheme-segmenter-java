@@ -1,6 +1,8 @@
 package prob;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -68,7 +70,9 @@ public class Utilities {
 
         MongoClient mongo = new MongoClient("localhost", 27017);
         MongoDatabase db = mongo.getDatabase("nlp-db");
+        //DB db = mongo.getDB("nlp-db");
         MongoCollection<BasicDBObject> bigrams = db.getCollection("bigrams", BasicDBObject.class);
+        //DBCollection bigrams = db.getCollection("bigrams");
 
         BufferedReader reader = null;
         reader = new BufferedReader(new FileReader(fileName));
@@ -87,12 +91,12 @@ public class Utilities {
         }
     }
 
-    public static double getProbabilityForBigram(MongoCollection<BasicDBObject> bigrams, String firstWord, String secondWord) {
+    public static double getProbabilityForBigram(DBCollection bigrams, String firstWord, String secondWord) {
 
         String pair = firstWord + "->" + secondWord;
 
         BasicDBObject object = new BasicDBObject("pair", pair);
-        return (double) bigrams.find(object).iterator().next().get("probability");
+        return (double) (double)bigrams.findOne(object).get("probability");
     }
 
     public static void main(String[] args) throws IOException {
@@ -138,10 +142,17 @@ public class Utilities {
         */
 
         MongoClient mongo = new MongoClient("localhost", 27017);
-        MongoDatabase db = mongo.getDatabase("nlp-db");
-        MongoCollection<BasicDBObject> bigrams = db.getCollection("bigrams", BasicDBObject.class);
+        DB db = mongo.getDB("nlp-db");
+        DBCollection bigrams = db.getCollection("bigrams");
 
-        System.out.println(getProbabilityForBigram(bigrams, "le", "r"));
+        String pair = "ler" + "->" + "in";
+
+        BasicDBObject object = new BasicDBObject("pair", pair);
+        System.out.println((double)bigrams.findOne(object).get("probability"));
+
+        for (int i=0; i<100; i++){
+            System.out.println((double)bigrams.findOne(object).get("probability"));
+        }
     }
 
 }
