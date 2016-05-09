@@ -6,6 +6,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import org.apache.commons.collections.FastHashMap;
 
 import java.io.*;
 import java.util.*;
@@ -96,7 +97,56 @@ public class Utilities {
         String pair = firstWord + "->" + secondWord;
 
         BasicDBObject object = new BasicDBObject("pair", pair);
-        return (double) (double)bigrams.findOne(object).get("probability");
+        return (double) (double) bigrams.findOne(object).get("probability");
+    }
+
+    public static void constructStemAndAffixMaps(String inputFileName, Map<String, Double> stems, Map<String, Double> affixes) throws IOException {
+
+        BufferedReader reader = null;
+        reader = new BufferedReader(new FileReader(inputFileName));
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String space = " +";
+            StringTokenizer st = new StringTokenizer(line, space);
+
+            double freq = Double.parseDouble(st.nextToken());
+            String stem = st.nextToken();
+
+            if (stems.containsKey(stem)) {
+                stems.put(stem, stems.get(stem) + freq);
+            } else {
+                stems.put(stem, freq);
+            }
+
+            String curr = "STR";
+            String next = null;
+            while (st.hasMoreTokens()) {
+
+                if (affixes.containsKey(curr)) {
+                    affixes.put(curr, affixes.get(curr) + freq);
+                } else {
+                    affixes.put(curr, freq);
+                }
+
+                next = st.nextToken();
+                curr = next;
+            }
+            next = "END";
+
+            if (affixes.containsKey(curr)) {
+                affixes.put(curr, affixes.get(curr) + freq);
+            } else {
+                affixes.put(curr, freq);
+            }
+
+            if (affixes.containsKey(next)) {
+                affixes.put(next, affixes.get(next) + freq);
+            } else {
+                affixes.put(next, freq);
+            }
+
+        }
     }
 
     public static void main(String[] args) throws IOException {
@@ -148,10 +198,10 @@ public class Utilities {
         String pair = "ler" + "->" + "in";
 
         BasicDBObject object = new BasicDBObject("pair", pair);
-        System.out.println((double)bigrams.findOne(object).get("probability"));
+        System.out.println((double) bigrams.findOne(object).get("probability"));
 
-        for (int i=0; i<100; i++){
-            System.out.println((double)bigrams.findOne(object).get("probability"));
+        for (int i = 0; i < 100; i++) {
+            System.out.println((double) bigrams.findOne(object).get("probability"));
         }
     }
 

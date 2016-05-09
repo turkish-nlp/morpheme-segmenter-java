@@ -1,6 +1,8 @@
 package prob;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -28,8 +30,8 @@ public class ReSegmenter {
     private String fileSegmentationInput;
 
     MongoClient mongo;
-    MongoDatabase db;
-    MongoCollection<BasicDBObject> bigrams;
+    DB db;
+    DBCollection bigrams;
 
     String startMorpheme = "STR";
     String endMorphmeme = "END";
@@ -79,8 +81,8 @@ public class ReSegmenter {
         this.affixes = affixes;
 
         mongo = new MongoClient("localhost", 27017);
-        db = mongo.getDatabase("nlp-db");
-        bigrams = db.getCollection("bigrams", BasicDBObject.class);
+        db = mongo.getDB("nlp-db");
+        bigrams = db.getCollection("bigrams");
 
         results = new FastHashMap();
         notFound = new FastHashMap();

@@ -1,12 +1,11 @@
 package test;
 
 import core.NestedSegmenter;
+import org.apache.commons.collections.FastHashMap;
 import prob.MorphemeTransition;
 import prob.ReSegmenter;
 import prob.Utilities;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
 
@@ -59,6 +58,7 @@ public class Test {
         writer_noF.close();
         */
 
+        /*
         System.out.println("---------------------------------------------------------------");
         System.out.println("------------Transition probabilities are calculating-----------");
         MorphemeTransition mt = new MorphemeTransition("outputs/results_nested");
@@ -68,10 +68,29 @@ public class Test {
         mt.setMorphemeBiagramCount(null);
 
         Utilities.writeFileBigramProbabilities(mt.getMorphemeBiagramProbabilities());
-        /*
+        */
+
+
+        Map<String, Double> stems = new FastHashMap();
+        Map<String, Double> affixes = new FastHashMap();
+        Map<String, Double> stemProbabilities = new FastHashMap();
+
+        System.out.println("------------------------------------------------------------");
+        System.out.println("--------------Stems & Affixes are constructing--------------");
+        Utilities.constructStemAndAffixMaps("outputs/results_nested", stems, affixes);
+
+        double totalStemCount = 0;
+        for (String s : stems.keySet()) {
+            totalStemCount = totalStemCount + stems.get(s);
+        }
+
+        for (String stem : stems.keySet()) {
+            stemProbabilities.put(stem, (stems.get(stem) / totalStemCount));
+        }
+
         System.out.println("--------------------------------------------------");
         System.out.println("--------------ReSegmentation started--------------");
-        ReSegmenter rs = new ReSegmenter(args[1], mt.getStemCount(), mt.getMorphemeCount(), mt.getMorphemeBiagramProbabilities());
+        ReSegmenter rs = new ReSegmenter("outputs/test.txt", stems, affixes);
         rs.doItForFile();
 
         Map<String, Double> newResults = rs.getResults();
@@ -92,6 +111,6 @@ public class Test {
 
         writer_res_new.close();
         writer_noF_new.close();
-        */
+
     }
 }

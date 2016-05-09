@@ -17,6 +17,7 @@ public class MorphemeTransition {
     private Map<String, Double> morphemeCount;
     private Map<String, Map<String, Double>> morphemeBiagramCount;
     private Map<String, Map<String, Double>> morphemeBiagramProbabilities;
+    private Map<String, Double> stemPropabilities;
     private Map<String, Double> results;
 
     String fileName;
@@ -24,6 +25,7 @@ public class MorphemeTransition {
     String endMorphmeme = "END";
 
     double totalMorphemeCount = 0;
+    double totalStemCount = 0;
 
     public enum Smoothing {
         LAPLACE, INTERPOLATION, KNESERNEY
@@ -34,6 +36,7 @@ public class MorphemeTransition {
         morphemeCount = new HashMap<String, Double>();
         morphemeBiagramCount = new HashMap<String, Map<String, Double>>();
         morphemeBiagramProbabilities = new HashMap<String, Map<String, Double>>();
+        stemPropabilities = new HashMap<>();
         fileName = inputFileName;
     }
 
@@ -41,6 +44,7 @@ public class MorphemeTransition {
         morphemeCount = new HashMap<String, Double>();
         morphemeBiagramCount = new HashMap<String, Map<String, Double>>();
         morphemeBiagramProbabilities = new HashMap<String, Map<String, Double>>();
+        stemPropabilities = new HashMap<>();
         this.results = results;
     }
 
@@ -58,6 +62,14 @@ public class MorphemeTransition {
 
     public Map<String, Double> getStemCount() {
         return stemCount;
+    }
+
+    public double getTotalMorphemeCount() {
+        return totalMorphemeCount;
+    }
+
+    public double getTotalStemCount() {
+        return totalStemCount;
     }
 
     public void setStemCount(Map<String, Double> stemCount) {
@@ -172,6 +184,18 @@ public class MorphemeTransition {
     private void calculateTotalMorphemeCount() {
         for (String s : morphemeCount.keySet()) {
             totalMorphemeCount = totalMorphemeCount + morphemeCount.get(s);
+        }
+    }
+
+    private void calculateTotalStemCount() {
+        for (String s : stemCount.keySet()) {
+            totalStemCount = totalStemCount + stemCount.get(s);
+        }
+    }
+
+    public void calculateStemProbabilities() {
+        for (String stem : stemCount.keySet()) {
+            stemPropabilities.put(stem, (stemCount.get(stem) / totalStemCount));
         }
     }
 
