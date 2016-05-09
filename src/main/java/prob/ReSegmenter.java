@@ -1,5 +1,9 @@
 package prob;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import org.apache.commons.collections.FastHashMap;
 
 import java.io.BufferedReader;
@@ -22,6 +26,10 @@ public class ReSegmenter {
     private Map<String, Map<String, Double>> morphemeBiagramProbabilities;
 
     private String fileSegmentationInput;
+
+    MongoClient mongo;
+    MongoDatabase db;
+    MongoCollection<BasicDBObject> bigrams;
 
     String startMorpheme = "STR";
     String endMorphmeme = "END";
@@ -58,15 +66,31 @@ public class ReSegmenter {
         this.fileSegmentationInput = fileSegmentationInput;
         this.stems = stems;
         this.affixes = affixes;
+        this.morphemeBiagramProbabilities = morphemeBiagramProbabilities;
+
         results = new FastHashMap();
         notFound = new FastHashMap();
-        this.morphemeBiagramProbabilities = morphemeBiagramProbabilities;
+
     }
 
-    private void reSegment(String word, double frequency) {
+    public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes) {
+        this.fileSegmentationInput = fileSegmentationInput;
+        this.stems = stems;
+        this.affixes = affixes;
+
+        mongo = new MongoClient("localhost", 27017);
+        db = mongo.getDatabase("nlp-db");
+        bigrams = db.getCollection("bigrams", BasicDBObject.class);
+
+        results = new FastHashMap();
+        notFound = new FastHashMap();
+    }
+
+    private void reSegmentWithMap(String word, double frequency) {
 
         /*
-        Prior information must be added to the production due to prevent undersegmentation.
+        ** Prior information must be added to the production due to prevent undersegmentation.
+        ** Affix lenght can be used for prior with coefficient of n in the equation (1/29)^n
          */
 
         List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet());
@@ -78,7 +102,7 @@ public class ReSegmenter {
             }
         } else {
 
-            double max = Double.MIN_VALUE;
+            double max = -1 * Double.MAX_VALUE;
             String argmax = word;
 
             for (String segmentation : segmentations) {
@@ -89,19 +113,66 @@ public class ReSegmenter {
                 String curr = startMorpheme;
                 String next = null;
 
-                double probability = 1d;
-
-                /*
-                Production must be converted in logarithm domain
-                 */
+                double probability = 0d;
                 while (st.hasMoreTokens()) {
                     next = st.nextToken();
-                    probability = probability * morphemeBiagramProbabilities.get(curr).get(next);
+                    probability = probability + Math.log(morphemeBiagramProbabilities.get(curr).get(next));
                     curr = next;
                 }
 
                 next = endMorphmeme;
-                probability = probability * morphemeBiagramProbabilities.get(curr).get(next);
+                probability = probability + Math.log(morphemeBiagramProbabilities.get(curr).get(next));
+
+                if (probability > max) {
+                    max = probability;
+                    argmax = segmentation;
+                }
+            }
+
+            if (results.containsKey(argmax)) {
+                results.put(argmax, results.get(argmax) + frequency);
+            } else {
+                results.put(argmax, frequency);
+            }
+        }
+    }
+
+    private void reSegmentWithDB(String word, double frequency) {
+
+        /*
+        ** Prior information must be added to the production due to prevent undersegmentation.
+        ** Affix lenght can be used for prior with coefficient of n in the equation (1/29)^n
+         */
+
+        List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet());
+        if (segmentations.isEmpty()) {
+            if (notFound.containsKey(word)) {
+                notFound.put(word, notFound.get(word) + frequency);
+            } else {
+                notFound.put(word, frequency);
+            }
+        } else {
+
+            double max = -1 * Double.MAX_VALUE;
+            String argmax = word;
+
+            for (String segmentation : segmentations) {
+                String seperator = "+";
+                StringTokenizer st = new StringTokenizer(segmentation, seperator);
+
+                String stem = st.nextToken();
+                String curr = startMorpheme;
+                String next = null;
+
+                double probability = 0d;
+                while (st.hasMoreTokens()) {
+                    next = st.nextToken();
+                    probability = probability + Math.log(Utilities.getProbabilityForBigram(bigrams, curr, next));
+                    curr = next;
+                }
+
+                next = endMorphmeme;
+                probability = probability + Math.log(Utilities.getProbabilityForBigram(bigrams, curr, next));
 
                 if (probability > max) {
                     max = probability;
@@ -129,7 +200,7 @@ public class ReSegmenter {
             double freq = Double.parseDouble(st.nextToken());
             String word = st.nextToken();
 
-            reSegment(word, freq);
+            reSegmentWithDB(word, freq);
         }
     }
 }

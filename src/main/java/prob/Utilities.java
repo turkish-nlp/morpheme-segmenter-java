@@ -1,10 +1,11 @@
 package prob;
 
-import org.apache.commons.collections.FastHashMap;
+import com.mongodb.BasicDBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -63,8 +64,40 @@ public class Utilities {
         writer.close();
     }
 
-    public static void main(String[] args) {
+    public static void writeDBFromFile(String fileName) throws IOException {
 
+        MongoClient mongo = new MongoClient("localhost", 27017);
+        MongoDatabase db = mongo.getDatabase("nlp-db");
+        MongoCollection<BasicDBObject> bigrams = db.getCollection("bigrams", BasicDBObject.class);
+
+        BufferedReader reader = null;
+        reader = new BufferedReader(new FileReader(fileName));
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String seperator = ":";
+            StringTokenizer st = new StringTokenizer(line, seperator);
+
+            String word = st.nextToken();
+            double prob = Double.parseDouble(st.nextToken());
+
+            BasicDBObject object = new BasicDBObject("pair", word);
+            object.append("probability", prob);
+            bigrams.insertOne(object);
+        }
+    }
+
+    public static double getProbabilityForBigram(MongoCollection<BasicDBObject> bigrams, String firstWord, String secondWord) {
+
+        String pair = firstWord + "->" + secondWord;
+
+        BasicDBObject object = new BasicDBObject("pair", pair);
+        return (double) bigrams.find(object).iterator().next().get("probability");
+    }
+
+    public static void main(String[] args) throws IOException {
+
+        /*
         Map<String, Double> stems = new FastHashMap();
         stems.put("gel", 5d);
         stems.put("geliyor", 3d);
@@ -91,6 +124,24 @@ public class Utilities {
         for (String r : results) {
             System.out.println(r);
         }
+        */
+
+        //writeDBFromFile(args[0]);
+
+        /*
+        MongoClient mongo = new MongoClient("localhost", 27017);
+        MongoDatabase db = mongo.getDatabase("nlp-db");
+        MongoCollection<BasicDBObject> bigrams = db.getCollection("bigrams", BasicDBObject.class);
+        BasicDBObject object = new BasicDBObject("pair", "alşskdjaşsdjsşaldjkasşdlka");
+
+        System.out.println(bigrams.find(object).iterator().next().get("probability"));
+        */
+
+        MongoClient mongo = new MongoClient("localhost", 27017);
+        MongoDatabase db = mongo.getDatabase("nlp-db");
+        MongoCollection<BasicDBObject> bigrams = db.getCollection("bigrams", BasicDBObject.class);
+
+        System.out.println(getProbabilityForBigram(bigrams, "le", "r"));
     }
 
 }
