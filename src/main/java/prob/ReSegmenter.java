@@ -1,15 +1,11 @@
 package prob;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import org.apache.commons.collections.FastHashMap;
+import org.apache.commons.collections.*;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -23,8 +19,9 @@ public class ReSegmenter {
     private Map<String, Double> affixes;
 
     private Map<String, Double> results;
-    private Map<String, Double> notFound;
+    private Map<String, Double> notFounds;
 
+    private Map<String, Double> stemProbabilities;
     private Map<String, Map<String, Double>> morphemeBiagramProbabilities;
 
     private String fileSegmentationInput;
@@ -40,8 +37,8 @@ public class ReSegmenter {
         return results;
     }
 
-    public Map<String, Double> getNotFound() {
-        return notFound;
+    public Map<String, Double> getNotFounds() {
+        return notFounds;
     }
 
     public void setStems(Map<String, Double> stems) {
@@ -56,39 +53,56 @@ public class ReSegmenter {
         this.results = results;
     }
 
-    public void setNotFound(Map<String, Double> notFound) {
-        this.notFound = notFound;
+    public void setNotFounds(Map<String, Double> notFounds) {
+        this.notFounds = notFounds;
     }
 
     public void setMorphemeBiagramProbabilities(Map<String, Map<String, Double>> morphemeBiagramProbabilities) {
         this.morphemeBiagramProbabilities = morphemeBiagramProbabilities;
     }
 
-    public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, Map<String, Map<String, Double>> morphemeBiagramProbabilities) {
+    public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, Map<String, Map<String, Double>> morphemeBiagramProbabilities, Map<String, Double> stemProbabilities) {
         this.fileSegmentationInput = fileSegmentationInput;
         this.stems = stems;
         this.affixes = affixes;
+        this.stemProbabilities = stemProbabilities;
         this.morphemeBiagramProbabilities = morphemeBiagramProbabilities;
 
         results = new FastHashMap();
-        notFound = new FastHashMap();
+        notFounds = new FastHashMap();
 
     }
 
-    public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes) {
+    public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, Map<String, Double> stemProbabilities) {
         this.fileSegmentationInput = fileSegmentationInput;
         this.stems = stems;
         this.affixes = affixes;
+        this.stemProbabilities = stemProbabilities;
 
         mongo = new MongoClient("localhost", 27017);
         db = mongo.getDB("nlp-db");
         bigrams = db.getCollection("bigrams");
 
         results = new FastHashMap();
-        notFound = new FastHashMap();
+        notFounds = new FastHashMap();
     }
 
-    private void reSegmentWithMap(String word, double frequency) {
+    public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, Map<String, Double> stemProbabilities,
+                       Map<String, Double> results, Map<String, Double> notFounds) {
+        this.fileSegmentationInput = fileSegmentationInput;
+        this.stems = stems;
+        this.affixes = affixes;
+        this.stemProbabilities = stemProbabilities;
+
+        mongo = new MongoClient("localhost", 27017);
+        db = mongo.getDB("nlp-db");
+        bigrams = db.getCollection("bigrams");
+
+        this.results = results;
+        this.notFounds = notFounds;
+    }
+
+    public void reSegmentWithMap(String word, double frequency, boolean withStemProbability) {
 
         /*
         ** Prior information must be added to the production due to prevent undersegmentation.
@@ -97,10 +111,10 @@ public class ReSegmenter {
 
         List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet());
         if (segmentations.isEmpty()) {
-            if (notFound.containsKey(word)) {
-                notFound.put(word, notFound.get(word) + frequency);
+            if (notFounds.containsKey(word)) {
+                notFounds.put(word, notFounds.get(word) + frequency);
             } else {
-                notFound.put(word, frequency);
+                notFounds.put(word, frequency);
             }
         } else {
 
@@ -116,6 +130,10 @@ public class ReSegmenter {
                 String next = null;
 
                 double probability = 0d;
+                if (withStemProbability) {
+                    probability = probability + Math.log(stemProbabilities.get(stem));
+                }
+
                 while (st.hasMoreTokens()) {
                     next = st.nextToken();
                     probability = probability + Math.log(morphemeBiagramProbabilities.get(curr).get(next));
@@ -139,7 +157,7 @@ public class ReSegmenter {
         }
     }
 
-    private void reSegmentWithDB(String word, double frequency) {
+    public void reSegmentWithDB(String word, double frequency, boolean withStemProbability) {
 
         /*
         ** Prior information must be added to the production due to prevent undersegmentation.
@@ -148,10 +166,10 @@ public class ReSegmenter {
 
         List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet());
         if (segmentations.isEmpty()) {
-            if (notFound.containsKey(word)) {
-                notFound.put(word, notFound.get(word) + frequency);
+            if (notFounds.containsKey(word)) {
+                notFounds.put(word, notFounds.get(word) + frequency);
             } else {
-                notFound.put(word, frequency);
+                notFounds.put(word, frequency);
             }
         } else {
 
@@ -167,6 +185,10 @@ public class ReSegmenter {
                 String next = null;
 
                 double probability = 0d;
+                if (withStemProbability) {
+                    probability = probability + Math.log(stemProbabilities.get(stem));
+                }
+
                 while (st.hasMoreTokens()) {
                     next = st.nextToken();
                     probability = probability + Math.log(Utilities.getProbabilityForBigram(bigrams, curr, next));
@@ -190,7 +212,7 @@ public class ReSegmenter {
         }
     }
 
-    public void doItForFile() throws IOException {
+    public void doItForFile(boolean withStemProbabilities) throws IOException {
         BufferedReader reader = null;
         reader = new BufferedReader(new FileReader(fileSegmentationInput));
 
@@ -202,7 +224,7 @@ public class ReSegmenter {
             double freq = Double.parseDouble(st.nextToken());
             String word = st.nextToken();
 
-            reSegmentWithDB(word, freq);
+            reSegmentWithDB(word, freq, withStemProbabilities);
         }
     }
 }
