@@ -116,6 +116,50 @@ public class Test {
         writer_noF_new.close();
     }
 
+    public void singleThreadTest(String inputFileName) throws IOException {
+        Map<String, Double> stems = new FastHashMap();
+        Map<String, Double> affixes = new FastHashMap();
+        Map<String, Double> stemProbabilities = new FastHashMap();
+
+        System.out.println("------------------------------------------------------------");
+        System.out.println("--------------Stems & Affixes are constructing--------------");
+        Utilities.constructStemAndAffixMaps("outputs/results_nested", stems, affixes);
+
+        double totalStemCount = 0;
+        for (String s : stems.keySet()) {
+            totalStemCount = totalStemCount + stems.get(s);
+        }
+
+        for (String stem : stems.keySet()) {
+            stemProbabilities.put(stem, (stems.get(stem) / totalStemCount));
+        }
+
+        System.out.println("--------------------------------------------------");
+        System.out.println("--------------ReSegmentation started--------------");
+        ReSegmenter rs = new ReSegmenter(inputFileName, stems, affixes, stemProbabilities);
+        rs.doItForFile(true);
+
+        Map<String, Double> newResults = rs.getResults();
+        Map<String, Double> newNotFound = rs.getNotFounds();
+
+        PrintWriter writer_res_new = new PrintWriter("outputs/results_re", "UTF-8");
+        PrintWriter writer_noF_new = new PrintWriter("outputs/absent_re", "UTF-8");
+
+        for (Map.Entry<String, Double> entry : newResults.entrySet()) {
+            String line = entry.getValue() + " " + entry.getKey();
+            writer_res_new.println(line);
+        }
+
+        for (Map.Entry<String, Double> entry : newNotFound.entrySet()) {
+            String line = entry.getValue() + " " + entry.getKey();
+            writer_noF_new.println(line);
+        }
+
+        writer_res_new.close();
+        writer_noF_new.close();
+
+    }
+
     public static void main(String[] args) throws Exception {
 
         /*
@@ -172,47 +216,7 @@ public class Test {
         Utilities.writeFileBigramProbabilities(mt.getMorphemeBiagramProbabilities());
         */
 
-
-        Map<String, Double> stems = new FastHashMap();
-        Map<String, Double> affixes = new FastHashMap();
-        Map<String, Double> stemProbabilities = new FastHashMap();
-
-        System.out.println("------------------------------------------------------------");
-        System.out.println("--------------Stems & Affixes are constructing--------------");
-        Utilities.constructStemAndAffixMaps("outputs/results_nested", stems, affixes);
-
-        double totalStemCount = 0;
-        for (String s : stems.keySet()) {
-            totalStemCount = totalStemCount + stems.get(s);
-        }
-
-        for (String stem : stems.keySet()) {
-            stemProbabilities.put(stem, (stems.get(stem) / totalStemCount));
-        }
-
-        System.out.println("--------------------------------------------------");
-        System.out.println("--------------ReSegmentation started--------------");
-        ReSegmenter rs = new ReSegmenter(args[1], stems, affixes, stemProbabilities);
-        rs.doItForFile(true);
-
-        Map<String, Double> newResults = rs.getResults();
-        Map<String, Double> newNotFound = rs.getNotFounds();
-
-        PrintWriter writer_res_new = new PrintWriter("outputs/results_re", "UTF-8");
-        PrintWriter writer_noF_new = new PrintWriter("outputs/absent_re", "UTF-8");
-
-        for (Map.Entry<String, Double> entry : newResults.entrySet()) {
-            String line = entry.getValue() + " " + entry.getKey();
-            writer_res_new.println(line);
-        }
-
-        for (Map.Entry<String, Double> entry : newNotFound.entrySet()) {
-            String line = entry.getValue() + " " + entry.getKey();
-            writer_noF_new.println(line);
-        }
-
-        writer_res_new.close();
-        writer_noF_new.close();
-
+        Test test = new Test();
+        test.multiThreadTest(args[1], 16);
     }
 }
