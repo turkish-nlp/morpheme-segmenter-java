@@ -65,6 +65,9 @@ public class Test {
                 @Override
                 public void run() {
                     //method testing
+
+                    System.out.println("Thread starting: " + Thread.currentThread().getName());
+
                     String line = null;
                     do {
                         try {

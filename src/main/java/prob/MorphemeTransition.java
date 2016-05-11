@@ -105,7 +105,7 @@ public class MorphemeTransition {
             double freq = Double.parseDouble(st.nextToken());
             //String word = st.nextToken();
 
-            countMorhemeForWord(st, freq);
+            countMorhemeForWordWithAllomorphs(st, freq);
 
         }
     }
@@ -136,6 +136,77 @@ public class MorphemeTransition {
             }
 
             next = st.nextToken();
+
+            Map<String, Double> transitions;
+            if (morphemeBiagramCount.containsKey(curr)) {
+                transitions = morphemeBiagramCount.get(curr);
+                if (transitions.containsKey(next)) {
+                    transitions.put(next, transitions.get(next) + frequency);
+                } else {
+                    transitions.put(next, frequency);
+                }
+            } else {
+                transitions = new HashMap<String, Double>();
+                transitions.put(next, frequency);
+            }
+            morphemeBiagramCount.put(curr, transitions);
+            curr = next;
+        }
+        next = endMorphmeme;
+
+        if (morphemeCount.containsKey(curr)) {
+            morphemeCount.put(curr, morphemeCount.get(curr) + frequency);
+        } else {
+            morphemeCount.put(curr, frequency);
+        }
+
+        if (morphemeCount.containsKey(next)) {
+            morphemeCount.put(next, morphemeCount.get(next) + frequency);
+        } else {
+            morphemeCount.put(next, frequency);
+        }
+
+        Map<String, Double> transitions;
+        if (morphemeBiagramCount.containsKey(curr)) {
+            transitions = morphemeBiagramCount.get(curr);
+            if (transitions.containsKey(next)) {
+                transitions.put(next, transitions.get(next) + frequency);
+            } else {
+                transitions.put(next, frequency);
+            }
+        } else {
+            transitions = new HashMap<String, Double>();
+            transitions.put(next, frequency);
+        }
+        morphemeBiagramCount.put(curr, transitions);
+    }
+
+    private void countMorhemeForWordWithAllomorphs(StringTokenizer st, double frequency) {
+
+        String stem = st.nextToken();
+        if (stemCount.containsKey(stem)) {
+            stemCount.put(stem, stemCount.get(stem) + frequency);
+        } else {
+            stemCount.put(stem, frequency);
+        }
+
+        String curr = startMorpheme;
+        String next = null;
+        while (st.hasMoreTokens()) {
+
+            if (morphemeCount.containsKey(curr)) {
+                morphemeCount.put(curr, morphemeCount.get(curr) + frequency);
+            } else {
+                morphemeCount.put(curr, frequency);
+            }
+
+            next = st.nextToken();
+            if (!next.equals("ken")) {
+                next = next.replaceAll("a|e|ı|i", "H");
+                next = next.replaceAll("t|d", "D");
+                next = next.replaceAll("c|ç", "C");
+                next = next.replaceAll("k|ğ", "G");
+            }
 
             Map<String, Double> transitions;
             if (morphemeBiagramCount.containsKey(curr)) {
