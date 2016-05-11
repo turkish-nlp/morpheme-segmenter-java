@@ -1,5 +1,7 @@
 package prob;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -7,9 +9,11 @@ import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.apache.commons.collections.FastHashMap;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by ahmetu on 02.05.2016.
@@ -55,7 +59,7 @@ public class Utilities {
 
     public static void writeFileBigramProbabilities(Map<String, Map<String, Double>> morphemeBiagramProbabilities) throws FileNotFoundException, UnsupportedEncodingException {
 
-        PrintWriter writer = new PrintWriter("outputs/bigrams", "UTF-8");
+        PrintWriter writer = new PrintWriter("outputs/collection", "UTF-8");
 
         for (String first : morphemeBiagramProbabilities.keySet()) {
             for (String second : morphemeBiagramProbabilities.get(first).keySet()) {
@@ -72,8 +76,8 @@ public class Utilities {
         MongoClient mongo = new MongoClient("localhost", 27017);
         MongoDatabase db = mongo.getDatabase("nlp-db");
         //DB db = mongo.getDB("nlp-db");
-        MongoCollection<BasicDBObject> bigrams = db.getCollection("bigrams", BasicDBObject.class);
-        //DBCollection bigrams = db.getCollection("bigrams");
+        MongoCollection<BasicDBObject> bigrams = db.getCollection("allomorphs", BasicDBObject.class);
+        //DBCollection collection = db.getCollection("collection");
 
         BufferedReader reader = null;
         reader = new BufferedReader(new FileReader(fileName));
@@ -149,7 +153,66 @@ public class Utilities {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void multiThreadWriteToDB(String fileName, int threadNumber) throws InterruptedException, IOException {
+
+        Logger root = (Logger) LoggerFactory
+                .getLogger(Logger.ROOT_LOGGER_NAME);
+
+        root.setLevel(Level.ERROR);
+
+        MongoClient mongo = new MongoClient("localhost", 27017);
+        MongoDatabase db = mongo.getDatabase("nlp-db");
+        //DB db = mongo.getDB("nlp-db");
+        MongoCollection<BasicDBObject> allomorphs = db.getCollection("bigram_allomorphs", BasicDBObject.class);
+        //DBCollection collection = db.getCollection("collection");
+
+        final BufferedReader reader = new BufferedReader(new FileReader(fileName), 1024 * 1024);
+
+        Thread[] threads = new Thread[threadNumber];
+        for (int i = 0; i < threadNumber; i++) {
+            threads[i] = new Thread(new Runnable() {
+
+                @Override
+                public void run() {
+                    //method testing
+
+                    System.out.println("Thread starting: " + Thread.currentThread().getName());
+
+                    String line = null;
+                    do {
+                        try {
+                            synchronized (reader) {
+                                line = reader.readLine();
+                            }
+                            if (line != null) {
+                                String seperator = ":";
+                                StringTokenizer st = new StringTokenizer(line, seperator);
+
+                                String word = st.nextToken();
+                                double prob = Double.parseDouble(st.nextToken());
+
+                                BasicDBObject object = new BasicDBObject("pair", word);
+                                object.append("probability", prob);
+                                allomorphs.insertOne(object);
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } while (line != null);
+                }
+            });
+        }
+
+        for (int i = 0; i < threadNumber; i++) {
+            threads[i].start();
+        }
+
+        for (int i = 0; i < threadNumber; i++) {
+            threads[i].join();
+        }
+    }
+
+    public static void main(String[] args) throws IOException, InterruptedException {
 
         /*
         Map<String, Double> stems = new FastHashMap();
@@ -180,29 +243,31 @@ public class Utilities {
         }
         */
 
-        //writeDBFromFile(args[0]);
+        multiThreadWriteToDB(args[0], 16);
 
         /*
         MongoClient mongo = new MongoClient("localhost", 27017);
         MongoDatabase db = mongo.getDatabase("nlp-db");
-        MongoCollection<BasicDBObject> bigrams = db.getCollection("bigrams", BasicDBObject.class);
+        MongoCollection<BasicDBObject> collection = db.getCollection("collection", BasicDBObject.class);
         BasicDBObject object = new BasicDBObject("pair", "alşskdjaşsdjsşaldjkasşdlka");
 
-        System.out.println(bigrams.find(object).iterator().next().get("probability"));
+        System.out.println(collection.find(object).iterator().next().get("probability"));
         */
 
+        /*
         MongoClient mongo = new MongoClient("localhost", 27017);
         DB db = mongo.getDB("nlp-db");
-        DBCollection bigrams = db.getCollection("bigrams");
+        DBCollection collection = db.getCollection("allomorphs");
 
         String pair = "ler" + "->" + "in";
 
         BasicDBObject object = new BasicDBObject("pair", pair);
-        System.out.println((double) bigrams.findOne(object).get("probability"));
+        System.out.println((double) collection.findOne(object).get("probability"));
 
         for (int i = 0; i < 100; i++) {
-            System.out.println((double) bigrams.findOne(object).get("probability"));
+            System.out.println((double) collection.findOne(object).get("probability"));
         }
+        */
     }
 
 }

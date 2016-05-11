@@ -28,7 +28,7 @@ public class ReSegmenter {
 
     MongoClient mongo;
     DB db;
-    DBCollection bigrams;
+    DBCollection collection;
 
     String startMorpheme = "STR";
     String endMorphmeme = "END";
@@ -73,7 +73,7 @@ public class ReSegmenter {
 
     }
 
-    public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, Map<String, Double> stemProbabilities) {
+    public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, Map<String, Double> stemProbabilities, String collectionName) {
         this.fileSegmentationInput = fileSegmentationInput;
         this.stems = stems;
         this.affixes = affixes;
@@ -81,14 +81,14 @@ public class ReSegmenter {
 
         mongo = new MongoClient("localhost", 27017);
         db = mongo.getDB("nlp-db");
-        bigrams = db.getCollection("bigrams");
+        collection = db.getCollection(collectionName);
 
         results = new FastHashMap();
         notFounds = new FastHashMap();
     }
 
     public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, Map<String, Double> stemProbabilities,
-                       Map<String, Double> results, Map<String, Double> notFounds) {
+                       Map<String, Double> results, Map<String, Double> notFounds, String collectionName) {
         this.fileSegmentationInput = fileSegmentationInput;
         this.stems = stems;
         this.affixes = affixes;
@@ -96,7 +96,7 @@ public class ReSegmenter {
 
         mongo = new MongoClient("localhost", 27017);
         db = mongo.getDB("nlp-db");
-        bigrams = db.getCollection("bigrams");
+        collection = db.getCollection(collectionName);
 
         this.results = results;
         this.notFounds = notFounds;
@@ -191,12 +191,76 @@ public class ReSegmenter {
 
                 while (st.hasMoreTokens()) {
                     next = st.nextToken();
-                    probability = probability + Math.log(Utilities.getProbabilityForBigram(bigrams, curr, next));
+                    probability = probability + Math.log(Utilities.getProbabilityForBigram(collection, curr, next));
                     curr = next;
                 }
 
                 next = endMorphmeme;
-                probability = probability + Math.log(Utilities.getProbabilityForBigram(bigrams, curr, next));
+                probability = probability + Math.log(Utilities.getProbabilityForBigram(collection, curr, next));
+
+                if (probability > max) {
+                    max = probability;
+                    argmax = segmentation;
+                }
+            }
+
+            if (results.containsKey(argmax)) {
+                results.put(argmax, results.get(argmax) + frequency);
+            } else {
+                results.put(argmax, frequency);
+            }
+        }
+    }
+
+    public void reSegmentWithDBforAllomorphs(String word, double frequency, boolean withStemProbability) {
+
+        /*
+        ** Prior information must be added to the production due to prevent undersegmentation.
+        ** Affix lenght can be used for prior with coefficient of n in the equation (1/29)^n
+         */
+
+        List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet());
+        if (segmentations.isEmpty()) {
+            if (notFounds.containsKey(word)) {
+                notFounds.put(word, notFounds.get(word) + frequency);
+            } else {
+                notFounds.put(word, frequency);
+            }
+        } else {
+
+            double max = -1 * Double.MAX_VALUE;
+            String argmax = word;
+
+            for (String segmentation : segmentations) {
+                String seperator = "+";
+                StringTokenizer st = new StringTokenizer(segmentation, seperator);
+
+                String stem = st.nextToken();
+                String curr = startMorpheme;
+                String next = null;
+
+                double probability = 0d;
+                if (withStemProbability) {
+                    probability = probability + Math.log(stemProbabilities.get(stem));
+                }
+
+                while (st.hasMoreTokens()) {
+                    next = st.nextToken();
+
+                    next = st.nextToken();
+                    if (!next.equals("ken")) {
+                        next = next.replaceAll("a|e|ı|i", "H");
+                        next = next.replaceAll("t|d", "D");
+                        next = next.replaceAll("c|ç", "C");
+                        next = next.replaceAll("k|ğ", "G");
+                    }
+
+                    probability = probability + Math.log(Utilities.getProbabilityForBigram(collection, curr, next));
+                    curr = next;
+                }
+
+                next = endMorphmeme;
+                probability = probability + Math.log(Utilities.getProbabilityForBigram(collection, curr, next));
 
                 if (probability > max) {
                     max = probability;

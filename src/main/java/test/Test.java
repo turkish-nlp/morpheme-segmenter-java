@@ -54,7 +54,7 @@ public class Test {
         System.out.println("--------------ReSegmentation started with " + threadNumber + " threads --------------");
         System.out.println("");
 
-        ReSegmenter rs = new ReSegmenter(inputFileName, stems, affixes, stemProbabilities, results, notfounds);
+        ReSegmenter rs = new ReSegmenter(inputFileName, stems, affixes, stemProbabilities, results, notfounds, "bigram_allomorphs");
 
         final BufferedReader reader = new BufferedReader(new FileReader(inputFileName), 1024 * 1024);
 
@@ -81,7 +81,7 @@ public class Test {
                                 double freq = Double.parseDouble(st.nextToken());
                                 String word = st.nextToken();
 
-                                rs.reSegmentWithDB(word, freq, true);
+                                rs.reSegmentWithDBforAllomorphs(word, freq, true);
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -139,7 +139,7 @@ public class Test {
 
         System.out.println("--------------------------------------------------");
         System.out.println("--------------ReSegmentation started--------------");
-        ReSegmenter rs = new ReSegmenter(inputFileName, stems, affixes, stemProbabilities);
+        ReSegmenter rs = new ReSegmenter(inputFileName, stems, affixes, stemProbabilities, "bigram_allomorphs");
         rs.doItForFile(true);
 
         Map<String, Double> newResults = rs.getResults();

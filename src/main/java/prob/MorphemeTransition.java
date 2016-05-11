@@ -1,12 +1,12 @@
 package prob;
 
+import org.apache.commons.collections.FastHashMap;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.HashMap;
 
 /**
  * Created by ahmetu on 02.05.2016.
@@ -32,19 +32,19 @@ public class MorphemeTransition {
     }
 
     public MorphemeTransition(String inputFileName) {
-        stemCount = new HashMap<String, Double>();
-        morphemeCount = new HashMap<String, Double>();
-        morphemeBiagramCount = new HashMap<String, Map<String, Double>>();
-        morphemeBiagramProbabilities = new HashMap<String, Map<String, Double>>();
-        stemPropabilities = new HashMap<>();
+        stemCount = new FastHashMap();
+        morphemeCount = new FastHashMap();
+        morphemeBiagramCount = new FastHashMap();
+        morphemeBiagramProbabilities = new FastHashMap();
+        stemPropabilities = new FastHashMap();
         fileName = inputFileName;
     }
 
     public MorphemeTransition(Map<String, Double> results) {
-        morphemeCount = new HashMap<String, Double>();
-        morphemeBiagramCount = new HashMap<String, Map<String, Double>>();
-        morphemeBiagramProbabilities = new HashMap<String, Map<String, Double>>();
-        stemPropabilities = new HashMap<>();
+        morphemeCount = new FastHashMap();
+        morphemeBiagramCount = new FastHashMap();
+        morphemeBiagramProbabilities = new FastHashMap();
+        stemPropabilities = new FastHashMap();
         this.results = results;
     }
 
@@ -146,7 +146,7 @@ public class MorphemeTransition {
                     transitions.put(next, frequency);
                 }
             } else {
-                transitions = new HashMap<String, Double>();
+                transitions = new FastHashMap();
                 transitions.put(next, frequency);
             }
             morphemeBiagramCount.put(curr, transitions);
@@ -175,7 +175,7 @@ public class MorphemeTransition {
                 transitions.put(next, frequency);
             }
         } else {
-            transitions = new HashMap<String, Double>();
+            transitions = new FastHashMap();
             transitions.put(next, frequency);
         }
         morphemeBiagramCount.put(curr, transitions);
@@ -217,7 +217,7 @@ public class MorphemeTransition {
                     transitions.put(next, frequency);
                 }
             } else {
-                transitions = new HashMap<String, Double>();
+                transitions = new FastHashMap();
                 transitions.put(next, frequency);
             }
             morphemeBiagramCount.put(curr, transitions);
@@ -246,7 +246,7 @@ public class MorphemeTransition {
                 transitions.put(next, frequency);
             }
         } else {
-            transitions = new HashMap<String, Double>();
+            transitions = new FastHashMap();
             transitions.put(next, frequency);
         }
         morphemeBiagramCount.put(curr, transitions);
@@ -304,7 +304,7 @@ public class MorphemeTransition {
             Map<String, Double> transitionProbabilities;
             if (morphemeBiagramCount.containsKey(firstMorpheme)) {
                 transitions = morphemeBiagramCount.get(firstMorpheme);
-                transitionProbabilities = new HashMap<String, Double>();
+                transitionProbabilities = new FastHashMap();
                 for (String secondMorpheme : morphemeCount.keySet()) {
                     if (transitions.containsKey(secondMorpheme)) {
                         transitionProbabilities.put(secondMorpheme, (transitions.get(secondMorpheme) + additive) / noF_denominator);
@@ -313,7 +313,7 @@ public class MorphemeTransition {
                     }
                 }
             } else {
-                transitionProbabilities = new HashMap<>();
+                transitionProbabilities = new FastHashMap();
                 for (String secondMorpheme : morphemeCount.keySet()) {
                     transitionProbabilities.put(secondMorpheme, noF);
                 }
