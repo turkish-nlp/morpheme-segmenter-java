@@ -87,6 +87,44 @@ public class SubstringMatcher {
 
         String suffixFar = "";
         String suffixClose = "";
+
+        /*
+        neighboors.parallelStream().forEach((n) -> {
+            if (n.startsWith(word)) {
+
+                //graph.add(n, freq);
+                recursiveAdd(n, stem, freq, numberOfneighboors, graph);
+
+                suffixFar = n.substring(word.length());
+                suffixClose = n.substring(stem.length(), word.length());
+
+                if (affixes.containsKey(suffixClose)) {
+                    affixes.put(suffixClose, affixes.get(suffixClose) + freq);
+                } else {
+                    affixes.put(suffixClose, freq);
+                }
+
+                if (affixes.containsKey(suffixFar)) {
+                    affixes.put(suffixFar, affixes.get(suffixFar) + freq);
+                } else {
+                    affixes.put(suffixFar, freq);
+                }
+            } else if (n.startsWith(stem)) {
+
+                //graph.add(n, freq);
+                recursiveAdd(n, stem, freq, numberOfneighboors, graph);
+
+                suffixClose = n.substring(stem.length());
+
+                if (affixes.containsKey(suffixClose)) {
+                    affixes.put(suffixClose, affixes.get(suffixClose) + freq);
+                } else {
+                    affixes.put(suffixClose, freq);
+                }
+            }
+        });
+        */
+
         for (String n : neighboors) {
 
             if (n.startsWith(word)) {
