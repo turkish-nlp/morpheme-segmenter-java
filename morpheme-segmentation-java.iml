@@ -11,6 +11,7 @@
     </content>
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="org.mongodb:mongo-java-driver:3.2.2" level="project" />
     <orderEntry type="library" name="Maven: org.deeplearning4j:deeplearning4j-core:0.4-rc3.8" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-buffer:4.0.28.Final" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-common:4.0.28.Final" level="project" />
@@ -212,6 +213,6 @@
     <orderEntry type="library" name="Maven: org.jblas:jblas:1.2.4" level="project" />
     <orderEntry type="library" name="Maven: org.bytedeco:javacpp:0.11" level="project" />
     <orderEntry type="library" name="Maven: org.nd4j:canova-api:0.0.0.14" level="project" />
-    <orderEntry type="library" name="org.mongodb:mongo-java-driver:3.2.2" level="project" />
+    <orderEntry type="library" name="org.mongodb:mongo-java-driver:3.1.0" level="project" />
   </component>
 </module>

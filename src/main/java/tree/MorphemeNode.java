@@ -16,12 +16,14 @@ public class MorphemeNode {
     private Map<MorphemeNode, Double> children;
     private WordVectors vectors;
     private boolean isLeaf;
+    private int size;
 
     public MorphemeNode(String morphemeName, WordVectors vectors) {
         morpheme = morphemeName;
         children = null;
         this.vectors = vectors;
         isLeaf = true;
+        size = 0;
     }
 
     public Map<MorphemeNode, Double> getChildren() {
@@ -45,6 +47,11 @@ public class MorphemeNode {
         setCosineSimilarity();
     }
 
+    public int getSize()
+    {
+        return this.size;
+    }
+
     public void setLeaf(boolean leaf) {
         isLeaf = leaf;
     }
@@ -60,9 +67,10 @@ public class MorphemeNode {
 
     public void addChild(MorphemeNode morpheme, double morphemeFreq) {
 
-        if (children == null)
+        if (children == null) {
             children = new FastHashMap();
-
+            size = size + 1;
+        }
         if (children.containsKey(morpheme)) {
             children.put(morpheme, children.get(morpheme) + morphemeFreq);
         } else {
@@ -78,9 +86,11 @@ public class MorphemeNode {
                 children.put(morpheme, morphemeFreq);
                 morpheme.setParent(this);
                 this.setLeaf(false);
+                size = size + 1;
             }
 
         }
+
     }
 
     public String toString() {

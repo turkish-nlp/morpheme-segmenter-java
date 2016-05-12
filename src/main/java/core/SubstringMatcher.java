@@ -50,6 +50,9 @@ public class SubstringMatcher {
 
     private void findMostFrequentLongestSubsequence(String word, double freq, int numberOfneighboors) {
 
+
+        System.out.println("Control Word: " + word);
+
         Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
         boolean notFound = false;
 
@@ -61,7 +64,7 @@ public class SubstringMatcher {
         String stem = word;
         String affix = "NLL";
 
-        // In order to limit the control lenght limit; i<(word.lenght()-limit+1) can be used.
+        // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
         for (int i = 0; i < word.length() - 2; i++) {
 
             if (notFound) {
@@ -82,8 +85,9 @@ public class SubstringMatcher {
         }
 
         MorphemeGraph graph = new MorphemeGraph(stem, vectors);
-        if (!stem.equals(word)){
+        if (!stem.equals(word)) {
             graph.add(word, freq);
+            System.out.println("Stem: " + stem);
         }
 
         String suffixFar = "";
@@ -92,7 +96,8 @@ public class SubstringMatcher {
 
             if (n.startsWith(word)) {
 
-                graph.add(n, freq);
+                //graph.add(n, freq);
+                recursiveAdd(n, stem, freq, numberOfneighboors, graph);
 
                 suffixFar = n.substring(word.length());
                 suffixClose = n.substring(stem.length(), word.length());
@@ -110,7 +115,8 @@ public class SubstringMatcher {
                 }
             } else if (n.startsWith(stem)) {
 
-                graph.add(n, freq);
+                //graph.add(n, freq);
+                recursiveAdd(n, stem, freq, numberOfneighboors, graph);
 
                 suffixClose = n.substring(stem.length());
 
@@ -148,9 +154,66 @@ public class SubstringMatcher {
         System.out.println("For word >>>> " + word + " <<<< from root node to all leaf nodes, all paths: ");
 
         graph.finish();
+
         graph.print();
         graphList.put(word, graph);
 
+    }
+
+    private void recursiveAdd(String word, String stem, double freq, int numberOfneighboors, MorphemeGraph graph) {
+
+        Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
+        boolean notFound = false;
+
+        if (neighboors.isEmpty()) {
+            notFound = true;
+        }
+
+        int max_f = 0;
+        String affix = "NLL";
+
+        if (graph.add(word, freq)) {
+
+            System.out.println("Child: " + word);
+
+            String suffixFar = "";
+            String suffixClose = "";
+            for (String n : neighboors) {
+
+                if (n.startsWith(word)) {
+
+                    //graph.add(n, freq);
+                    recursiveAdd(n, stem, freq, numberOfneighboors, graph);
+
+                    suffixFar = n.substring(word.length());
+                    suffixClose = n.substring(stem.length(), word.length());
+
+                    if (affixes.containsKey(suffixClose)) {
+                        affixes.put(suffixClose, affixes.get(suffixClose) + freq);
+                    } else {
+                        affixes.put(suffixClose, freq);
+                    }
+
+                    if (affixes.containsKey(suffixFar)) {
+                        affixes.put(suffixFar, affixes.get(suffixFar) + freq);
+                    } else {
+                        affixes.put(suffixFar, freq);
+                    }
+                } else if (n.startsWith(stem)) {
+
+                    //graph.add(n, freq);
+                    recursiveAdd(n, stem, freq, numberOfneighboors, graph);
+
+                    suffixClose = n.substring(stem.length());
+
+                    if (affixes.containsKey(suffixClose)) {
+                        affixes.put(suffixClose, affixes.get(suffixClose) + freq);
+                    } else {
+                        affixes.put(suffixClose, freq);
+                    }
+                }
+            }
+        }
     }
 
     private void findSegmentsAndAffixes() throws IOException {
@@ -171,7 +234,7 @@ public class SubstringMatcher {
     }
 
     public static void main(String[] args) throws IOException {
-        SubstringMatcher ssm = new SubstringMatcher(args[0], "outputs/substringtest.txt");
+        SubstringMatcher ssm = new SubstringMatcher(args[0], "outputs/recursion.test");
         ssm.findSegmentsAndAffixes();
 
         /*

@@ -4,9 +4,9 @@ import org.apache.commons.collections.FastTreeMap;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by ahmet on 2.05.2016.
@@ -27,7 +27,6 @@ public class MorphemeGraph {
         return null;
     }
 
-
     public void finish() {
         if (!(nodes == null)) {
             for (String s : nodes.keySet()) {
@@ -36,11 +35,18 @@ public class MorphemeGraph {
         }
     }
 
-    public void add(String s, double f) {
-        if (nodes == null)
-            nodes = new FastTreeMap();
+    public boolean add(String s, double f) {
 
-        nodes.put(s, f);
+        boolean has = true;
+        if (nodes == null) {
+            nodes = new FastTreeMap();
+            nodes.put(s, f);
+        } else if (nodes.containsKey(s)) {
+            has = false;
+        } else {
+            nodes.put(s, f);
+        }
+        return has;
     }
 
     public void print() {
@@ -48,8 +54,10 @@ public class MorphemeGraph {
     }
 
     public static void main(String[] args) throws FileNotFoundException {
+
         WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(args[0]));
         MorphemeGraph g = new MorphemeGraph("gel", vectors);
+
         g.add("gelmek", 3);
         g.add("gelmişti", 1);
         g.add("gelmiş", 1);
