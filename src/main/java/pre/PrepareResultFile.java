@@ -15,6 +15,7 @@ public class PrepareResultFile {
 
     public static void main(String[] args) throws IOException {
 
+        prepareFile();
 
     }
 
@@ -53,9 +54,9 @@ public class PrepareResultFile {
 
     public static void prepareFile() throws IOException {
         BufferedReader reader = null;
-        reader = new BufferedReader(new FileReader("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\resegmented"));
+        reader = new BufferedReader(new FileReader("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\resegmented_allomorphs"));
 
-        PrintWriter writer = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\resegmented_ready", "UTF-8");
+        PrintWriter writer = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\resegmented_allomorphs_ready", "UTF-8");
 
         String line;
         while ((line = reader.readLine()) != null) {

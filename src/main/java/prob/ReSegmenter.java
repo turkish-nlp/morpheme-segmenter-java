@@ -245,7 +245,6 @@ public class ReSegmenter {
                 }
 
                 while (st.hasMoreTokens()) {
-                    next = st.nextToken();
 
                     next = st.nextToken();
                     if (!next.equals("ken")) {
@@ -288,7 +287,7 @@ public class ReSegmenter {
             double freq = Double.parseDouble(st.nextToken());
             String word = st.nextToken();
 
-            reSegmentWithDB(word, freq, withStemProbabilities);
+            reSegmentWithDBforAllomorphs(word, freq, withStemProbabilities);
         }
     }
 }
