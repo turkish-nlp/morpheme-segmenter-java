@@ -1,6 +1,5 @@
 package core;
 
-import org.apache.commons.collections.FastHashMap;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import org.jboss.logging.Logger;
@@ -16,10 +15,10 @@ import java.util.StringTokenizer;
  */
 public class NestedSegmenter {
 
-    private Map<String, Double> stems = new FastHashMap();
-    private Map<String, Double> affixes = new FastHashMap();
-    private Map<String, Double> results = new FastHashMap();
-    private Map<String, Double> notFound = new FastHashMap();
+    private Map<String, Double> stems = new HashMap<>();
+    private Map<String, Double> affixes = new HashMap<>();
+    private Map<String, Double> results = new HashMap<>();
+    private Map<String, Double> notFound = new HashMap<>();
 
     private String fileSegmentationInput;
 

@@ -3,7 +3,6 @@ package prob;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
-import org.apache.commons.collections.*;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -68,8 +67,8 @@ public class ReSegmenter {
         this.stemProbabilities = stemProbabilities;
         this.morphemeBiagramProbabilities = morphemeBiagramProbabilities;
 
-        results = new FastHashMap();
-        notFounds = new FastHashMap();
+        results = new HashMap<>();
+        notFounds = new HashMap<>();
 
     }
 
@@ -83,8 +82,8 @@ public class ReSegmenter {
         db = mongo.getDB("nlp-db");
         collection = db.getCollection(collectionName);
 
-        results = new FastHashMap();
-        notFounds = new FastHashMap();
+        results = new HashMap<>();
+        notFounds = new HashMap<>();
     }
 
     public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, Map<String, Double> stemProbabilities,

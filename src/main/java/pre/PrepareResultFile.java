@@ -1,7 +1,6 @@
 package pre;
 
 import com.mongodb.BasicDBObject;
-import org.apache.commons.collections.FastTreeMap;
 
 import java.io.*;
 import java.util.Map;
@@ -24,7 +23,7 @@ public class PrepareResultFile {
         BufferedReader r1 = new BufferedReader(new FileReader("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\segmentation.final"));
 
         String line;
-        Map<String, String> words = new FastTreeMap();
+        Map<String, String> words = new TreeMap<>();
 
         while ((line = r1.readLine()) != null) {
 

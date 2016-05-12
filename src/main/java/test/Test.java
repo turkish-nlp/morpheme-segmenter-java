@@ -1,6 +1,5 @@
 package test;
 
-import org.apache.commons.collections.FastHashMap;
 import prob.ReSegmenter;
 import prob.Utilities;
 
@@ -8,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
@@ -120,9 +120,9 @@ public class Test {
     }
 
     public void singleThreadTest(String inputFileName) throws IOException {
-        Map<String, Double> stems = new FastHashMap();
-        Map<String, Double> affixes = new FastHashMap();
-        Map<String, Double> stemProbabilities = new FastHashMap();
+        Map<String, Double> stems = new HashMap<>();
+        Map<String, Double> affixes = new HashMap<>();
+        Map<String, Double> stemProbabilities = new HashMap<>();
 
         System.out.println("------------------------------------------------------------");
         System.out.println("--------------Stems & Affixes are constructing--------------");

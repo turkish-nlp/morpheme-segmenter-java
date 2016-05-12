@@ -1,6 +1,5 @@
 package tree;
 
-import org.apache.commons.collections.FastHashMap;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
 import java.util.*;
@@ -68,7 +67,7 @@ public class MorphemeNode {
     public void addChild(MorphemeNode morpheme, double morphemeFreq) {
 
         if (children == null) {
-            children = new FastHashMap();
+            children = new HashMap<>();
             size = size + 1;
         }
         if (children.containsKey(morpheme)) {

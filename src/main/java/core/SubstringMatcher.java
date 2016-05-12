@@ -7,21 +7,16 @@ package core;
 import java.io.*;
 import java.util.*;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.FastHashMap;
-import org.apache.lucene.util.CollectionUtil;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
-import org.deeplearning4j.text.corpora.treeparser.CollapseUnaries;
-import org.jboss.logging.Logger;
 import tree.MorphemeGraph;
 
 public class SubstringMatcher {
 
-    private Map<String, Double> stems = new FastHashMap();
-    private Map<String, Double> affixes = new FastHashMap();
-    private Map<String, Double> results = new FastHashMap();
-    private Map<String, MorphemeGraph> graphList = new FastHashMap();
+    private Map<String, Double> stems = new HashMap<>();
+    private Map<String, Double> affixes = new HashMap<>();
+    private Map<String, Double> results = new HashMap<>();
+    private Map<String, MorphemeGraph> graphList = new HashMap<>();
 
     private String fileSegmentationInput;
 

@@ -8,12 +8,10 @@ import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import org.apache.commons.collections.FastHashMap;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by ahmetu on 02.05.2016.

@@ -1,11 +1,11 @@
 package tree;
 
-import org.apache.commons.collections.FastTreeMap;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
 import java.io.*;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -39,7 +39,7 @@ public class MorphemeGraph {
 
         boolean has = true;
         if (nodes == null) {
-            nodes = new FastTreeMap();
+            nodes = new TreeMap<>();
             nodes.put(s, f);
         } else if (nodes.containsKey(s)) {
             has = false;

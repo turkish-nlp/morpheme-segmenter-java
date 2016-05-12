@@ -1,10 +1,9 @@
 package prob;
 
-import org.apache.commons.collections.FastHashMap;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -32,19 +31,19 @@ public class MorphemeTransition {
     }
 
     public MorphemeTransition(String inputFileName) {
-        stemCount = new FastHashMap();
-        morphemeCount = new FastHashMap();
-        morphemeBiagramCount = new FastHashMap();
-        morphemeBiagramProbabilities = new FastHashMap();
-        stemPropabilities = new FastHashMap();
+        stemCount = new HashMap<>();
+        morphemeCount = new HashMap<>();
+        morphemeBiagramCount = new HashMap<>();
+        morphemeBiagramProbabilities = new HashMap<>();
+        stemPropabilities = new HashMap<>();
         fileName = inputFileName;
     }
 
     public MorphemeTransition(Map<String, Double> results) {
-        morphemeCount = new FastHashMap();
-        morphemeBiagramCount = new FastHashMap();
-        morphemeBiagramProbabilities = new FastHashMap();
-        stemPropabilities = new FastHashMap();
+        morphemeCount = new HashMap<>();
+        morphemeBiagramCount = new HashMap<>();
+        morphemeBiagramProbabilities = new HashMap<>();
+        stemPropabilities = new HashMap<>();
         this.results = results;
     }
 
@@ -146,7 +145,7 @@ public class MorphemeTransition {
                     transitions.put(next, frequency);
                 }
             } else {
-                transitions = new FastHashMap();
+                transitions = new HashMap<>();
                 transitions.put(next, frequency);
             }
             morphemeBiagramCount.put(curr, transitions);
@@ -175,7 +174,7 @@ public class MorphemeTransition {
                 transitions.put(next, frequency);
             }
         } else {
-            transitions = new FastHashMap();
+            transitions = new HashMap<>();
             transitions.put(next, frequency);
         }
         morphemeBiagramCount.put(curr, transitions);
@@ -217,7 +216,7 @@ public class MorphemeTransition {
                     transitions.put(next, frequency);
                 }
             } else {
-                transitions = new FastHashMap();
+                transitions = new HashMap<>();
                 transitions.put(next, frequency);
             }
             morphemeBiagramCount.put(curr, transitions);
@@ -246,7 +245,7 @@ public class MorphemeTransition {
                 transitions.put(next, frequency);
             }
         } else {
-            transitions = new FastHashMap();
+            transitions = new HashMap<>();
             transitions.put(next, frequency);
         }
         morphemeBiagramCount.put(curr, transitions);
@@ -304,7 +303,7 @@ public class MorphemeTransition {
             Map<String, Double> transitionProbabilities;
             if (morphemeBiagramCount.containsKey(firstMorpheme)) {
                 transitions = morphemeBiagramCount.get(firstMorpheme);
-                transitionProbabilities = new FastHashMap();
+                transitionProbabilities = new HashMap<>();
                 for (String secondMorpheme : morphemeCount.keySet()) {
                     if (transitions.containsKey(secondMorpheme)) {
                         transitionProbabilities.put(secondMorpheme, (transitions.get(secondMorpheme) + additive) / noF_denominator);
@@ -313,7 +312,7 @@ public class MorphemeTransition {
                     }
                 }
             } else {
-                transitionProbabilities = new FastHashMap();
+                transitionProbabilities = new HashMap<>();
                 for (String secondMorpheme : morphemeCount.keySet()) {
                     transitionProbabilities.put(secondMorpheme, noF);
                 }
