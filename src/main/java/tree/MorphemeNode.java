@@ -2,6 +2,9 @@ package tree;
 
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 /**
@@ -96,8 +99,8 @@ public class MorphemeNode {
         return this.morpheme;
     }
 
-    public void printTree() {
-
+    public void printTree(String root) throws FileNotFoundException, UnsupportedEncodingException {
+        PrintWriter writer_graph = new PrintWriter("graphs/"+root+"_graph.txt", "UTF-8");
         System.out.println("");
 
         List<String> paths = new ArrayList<>();
@@ -105,10 +108,10 @@ public class MorphemeNode {
         print(paths, path);
 
         for (String s : paths) {
-            System.out.println(s);
+            writer_graph.println(s);
         }
-
-        System.out.println("");
+        writer_graph.close();
+        System.out.println(root+"_graph finished.");
     }
 
     public void print(List<String> paths, String path) {

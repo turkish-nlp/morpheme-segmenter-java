@@ -53,11 +53,11 @@ public class MorphemeGraph {
         return has;
     }
 
-    public void print() {
-        root.printTree();
+    public void print() throws FileNotFoundException, UnsupportedEncodingException {
+        root.printTree(root.getMorpheme());
     }
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
 
         WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(args[0]));
         MorphemeGraph g = new MorphemeGraph("gel", vectors);

@@ -43,7 +43,7 @@ public class SubstringMatcher {
         this.fileSegmentationInput = fileSegmentationInput;
     }
 
-    private void findMostFrequentLongestSubsequence(String word, double freq, int numberOfneighboors) {
+    private void findMostFrequentLongestSubsequence(String word, double freq, int numberOfneighboors) throws FileNotFoundException, UnsupportedEncodingException {
 
 
         System.out.println("Control Word: " + word);
@@ -85,18 +85,20 @@ public class SubstringMatcher {
             System.out.println("Stem: " + stem);
         }
 
-        String suffixFar = "";
-        String suffixClose = "";
+        // Stream kısmının içinde (effectively ?) final variable'lar kullanmak gerekiyormuş, stem hiç değişmediği için onu bir final variable'a attım.
+        // aynı sebepten suffixfar ve suffixClose'u stream bloğunun içine aldım, yoksa hata veriyordu.
+        final String final_stem = stem;
 
-        /*
         neighboors.parallelStream().forEach((n) -> {
+            String suffixFar = "";
+            String suffixClose = "";
             if (n.startsWith(word)) {
 
                 //graph.add(n, freq);
-                recursiveAdd(n, stem, freq, numberOfneighboors, graph);
+                recursiveAddLevelOne(n, final_stem, freq, numberOfneighboors, graph);
 
                 suffixFar = n.substring(word.length());
-                suffixClose = n.substring(stem.length(), word.length());
+                suffixClose = n.substring(final_stem.length(), word.length());
 
                 if (affixes.containsKey(suffixClose)) {
                     affixes.put(suffixClose, affixes.get(suffixClose) + freq);
@@ -109,12 +111,12 @@ public class SubstringMatcher {
                 } else {
                     affixes.put(suffixFar, freq);
                 }
-            } else if (n.startsWith(stem)) {
+            } else if (n.startsWith(final_stem)) {
 
                 //graph.add(n, freq);
-                recursiveAdd(n, stem, freq, numberOfneighboors, graph);
+                recursiveAddLevelOne(n, final_stem, freq, numberOfneighboors, graph);
 
-                suffixClose = n.substring(stem.length());
+                suffixClose = n.substring(final_stem.length());
 
                 if (affixes.containsKey(suffixClose)) {
                     affixes.put(suffixClose, affixes.get(suffixClose) + freq);
@@ -123,44 +125,6 @@ public class SubstringMatcher {
                 }
             }
         });
-        */
-
-        for (String n : neighboors) {
-
-            if (n.startsWith(word)) {
-
-                //graph.add(n, freq);
-                recursiveAdd(n, stem, freq, numberOfneighboors, graph);
-
-                suffixFar = n.substring(word.length());
-                suffixClose = n.substring(stem.length(), word.length());
-
-                if (affixes.containsKey(suffixClose)) {
-                    affixes.put(suffixClose, affixes.get(suffixClose) + freq);
-                } else {
-                    affixes.put(suffixClose, freq);
-                }
-
-                if (affixes.containsKey(suffixFar)) {
-                    affixes.put(suffixFar, affixes.get(suffixFar) + freq);
-                } else {
-                    affixes.put(suffixFar, freq);
-                }
-            } else if (n.startsWith(stem)) {
-
-                //graph.add(n, freq);
-                recursiveAdd(n, stem, freq, numberOfneighboors, graph);
-
-                suffixClose = n.substring(stem.length());
-
-                if (affixes.containsKey(suffixClose)) {
-                    affixes.put(suffixClose, affixes.get(suffixClose) + freq);
-                } else {
-                    affixes.put(suffixClose, freq);
-                }
-            }
-        }
-
 
         if (stems.containsKey(stem)) {
             stems.put(stem, stems.get(stem) + freq);
@@ -168,13 +132,6 @@ public class SubstringMatcher {
             stems.put(stem, freq);
         }
 
-        /*
-        if (affixes.containsKey(affix)) {
-            affixes.put(affix, affixes.get(affix) + freq);
-        } else {
-            affixes.put(affix, freq);
-        }
-        */
 
         String result = stem + "+" + affix;
         if (results.containsKey(result)) {
@@ -193,21 +150,67 @@ public class SubstringMatcher {
 
     }
 
-    private void recursiveAdd(String word, String stem, double freq, int numberOfneighboors, MorphemeGraph graph) {
+    private void recursiveAddLevelOne(String word, String stem, double freq, int numberOfneighboors, MorphemeGraph graph) {
 
-        Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
-        boolean notFound = false;
-
-        if (neighboors.isEmpty()) {
-            notFound = true;
-        }
 
         int max_f = 0;
         String affix = "NLL";
 
         if (graph.add(word, freq)) {
 
-            System.out.println("Child: " + word);
+           // System.out.println("Child_1: " + word);
+            Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
+
+            neighboors.parallelStream().forEach((n) -> {
+                String suffixFar = "";
+                String suffixClose = "";
+                if (n.startsWith(word)) {
+
+                    //graph.add(n, freq);
+                    recursiveAdd(n, stem, freq, numberOfneighboors, graph);
+
+                    suffixFar = n.substring(word.length());
+                    suffixClose = n.substring(stem.length(), word.length());
+
+                    if (affixes.containsKey(suffixClose)) {
+                        affixes.put(suffixClose, affixes.get(suffixClose) + freq);
+                    } else {
+                        affixes.put(suffixClose, freq);
+                    }
+
+                    if (affixes.containsKey(suffixFar)) {
+                        affixes.put(suffixFar, affixes.get(suffixFar) + freq);
+                    } else {
+                        affixes.put(suffixFar, freq);
+                    }
+                } else if (n.startsWith(stem)) {
+
+                    //graph.add(n, freq);
+                    recursiveAdd(n, stem, freq, numberOfneighboors, graph);
+
+                    suffixClose = n.substring(stem.length());
+
+                    if (affixes.containsKey(suffixClose)) {
+                        affixes.put(suffixClose, affixes.get(suffixClose) + freq);
+                    } else {
+                        affixes.put(suffixClose, freq);
+                    }
+                }
+            });
+        }
+    }
+
+
+    private void recursiveAdd(String word, String stem, double freq, int numberOfneighboors, MorphemeGraph graph) {
+
+        int max_f = 0;
+        String affix = "NLL";
+
+        if (graph.add(word, freq)) {
+
+          //  System.out.println("Child_2: " + word);
+            System.out.println("tn: " + Thread.getAllStackTraces().keySet().size());
+            Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
 
             String suffixFar = "";
             String suffixClose = "";
@@ -260,14 +263,25 @@ public class SubstringMatcher {
 
             double freq = Double.parseDouble(st.nextToken());
             String word = st.nextToken();
-
-            findMostFrequentLongestSubsequence(word, freq, 50);
-
+            boolean found = false;
+            for (Map.Entry<String, MorphemeGraph> entry : graphList.entrySet())
+            {
+                if(entry.getValue().hasNode(word))
+                    found = true;
+            }
+            if(!found) {
+                findMostFrequentLongestSubsequence(word, freq, 50);
+            }
+            else {
+                found = false;
+                System.out.println(word + " has been skipped");
+            }
         }
+
     }
 
     public static void main(String[] args) throws IOException {
-        SubstringMatcher ssm = new SubstringMatcher(args[0], "outputs/recursion.test");
+        SubstringMatcher ssm = new SubstringMatcher("outputs/vectors.txt", args[0]);
         ssm.findSegmentsAndAffixes();
 
         /*
