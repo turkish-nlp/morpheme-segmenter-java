@@ -100,18 +100,21 @@ public class MorphemeNode {
     }
 
     public void printTree(String root) throws FileNotFoundException, UnsupportedEncodingException {
-        PrintWriter writer_graph = new PrintWriter("graphs/"+root+"_graph.txt", "UTF-8");
-        System.out.println("");
+        if(root!= null) {
+            PrintWriter writer_graph = new PrintWriter("graphs/" + root + "_graph.txt", "UTF-8");
+            System.out.println("");
 
-        List<String> paths = new ArrayList<>();
-        String path = "";
-        print(paths, path);
+            List<String> paths = new ArrayList<>();
+            String path = "";
+            print(paths, path);
 
-        for (String s : paths) {
-            writer_graph.println(s);
-        }
-        writer_graph.close();
-        System.out.println(root+"_graph finished.");
+            for (String s : paths) {
+                writer_graph.println(s);
+            }
+            writer_graph.close();
+            System.out.println(root + "_graph finished.");
+        }else
+            System.out.println("no word");
     }
 
     public void print(List<String> paths, String path) {

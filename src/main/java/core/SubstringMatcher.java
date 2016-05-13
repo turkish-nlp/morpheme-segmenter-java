@@ -264,10 +264,13 @@ public class SubstringMatcher {
             double freq = Double.parseDouble(st.nextToken());
             String word = st.nextToken();
             boolean found = false;
+
             for (Map.Entry<String, MorphemeGraph> entry : graphList.entrySet())
             {
-                if(entry.getValue().hasNode(word))
-                    found = true;
+                if( entry.getValue() != null) {
+                    if (entry.getValue().hasNode(word))
+                        found = true;
+                }
             }
             if(!found) {
                 findMostFrequentLongestSubsequence(word, freq, 50);

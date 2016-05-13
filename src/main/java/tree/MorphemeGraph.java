@@ -28,7 +28,10 @@ public class MorphemeGraph {
     }
 
     public boolean hasNode(String morpheme) {
-        return nodes.containsKey(morpheme);
+        if(nodes == null)
+            return false;
+        else
+            return nodes.containsKey(morpheme);
     }
 
     public void finish() {
