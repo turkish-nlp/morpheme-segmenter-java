@@ -35,18 +35,24 @@ public class MorphemeGraph {
     }
 
     public void finish() {
+
         if (!(nodes == null)) {
+            Map<String, Double> sorted_nodes = new TreeMap<>();
             for (String s : nodes.keySet()) {
-                root.addChild(new MorphemeNode(s, vectors), nodes.get(s));
+                sorted_nodes.put(s, nodes.get(s));
             }
-        }
+
+                for (String s : sorted_nodes.keySet()) {
+                    root.addChild(new MorphemeNode(s, vectors), nodes.get(s));
+                }
+            }
     }
 
     public boolean add(String s, double f) {
 
         boolean has = true;
         if (nodes == null) {
-            nodes = new TreeMap<>();
+            nodes = new ConcurrentHashMap<>();
             nodes.put(s, f);
         } else if (nodes.containsKey(s)) {
             has = false;
