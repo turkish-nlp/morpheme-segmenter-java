@@ -39,7 +39,7 @@ public class Test {
         System.out.println("------------------------------------------------------------");
         System.out.println("--------------Stems & Affixes are constructing--------------");
         System.out.println("");
-        Utilities.constructStemAndAffixMaps("outputs/results_nested", stems, affixes);
+        Utilities.constructStemAndAffixMaps("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\25_result\\results_nested", stems, affixes);
 
         double totalStemCount = 0;
         for (String s : stems.keySet()) {
@@ -54,7 +54,7 @@ public class Test {
         System.out.println("--------------ReSegmentation started with " + threadNumber + " threads --------------");
         System.out.println("");
 
-        ReSegmenter rs = new ReSegmenter(inputFileName, stems, affixes, stemProbabilities, results, notfounds, "bigram_allomorphs");
+        ReSegmenter rs = new ReSegmenter(inputFileName, stems, affixes, stemProbabilities, results, notfounds, "bigrams");
 
         final BufferedReader reader = new BufferedReader(new FileReader(inputFileName), 1024 * 1024);
 
@@ -81,7 +81,7 @@ public class Test {
                                 double freq = Double.parseDouble(st.nextToken());
                                 String word = st.nextToken();
 
-                                rs.reSegmentWithDBforAllomorphs(word, freq, true);
+                                rs.reSegmentWithDBandPrior(word, freq, true);
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -102,8 +102,8 @@ public class Test {
         Map<String, Double> newResults = rs.getResults();
         Map<String, Double> newNotFound = rs.getNotFounds();
 
-        PrintWriter writer_res_new = new PrintWriter("outputs/results_re", "UTF-8");
-        PrintWriter writer_noF_new = new PrintWriter("outputs/absent_re", "UTF-8");
+        PrintWriter writer_res_new = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\25_result\\results_re", "UTF-8");
+        PrintWriter writer_noF_new = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\25_result\\absent_re", "UTF-8");
 
         for (Map.Entry<String, Double> entry : newResults.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();

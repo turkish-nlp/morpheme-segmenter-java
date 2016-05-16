@@ -102,6 +102,13 @@ public class Utilities {
         return (double) (double) bigrams.findOne(object).get("probability");
     }
 
+    public static double getPrior(String morpheme) {
+        double coefficient = 1.0 / 29.0;
+        int power = morpheme.length() + 1;
+
+        return Math.pow(coefficient, power);
+    }
+
     public static void constructStemAndAffixMaps(String inputFileName, Map<String, Double> stems, Map<String, Double> affixes) throws IOException {
 
         BufferedReader reader = null;
@@ -212,26 +219,23 @@ public class Utilities {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        /*
-        Map<String, Double> stems = new FastHashMap();
-        stems.put("gel", 5d);
-        stems.put("geliyor", 3d);
-        stems.put("geliyormuş", 6d);
+/*
+        Map<String, Double> stems = new HashMap();
+        stems.put("sepet", 5d);
 
-        Map<String, Double> affixes = new FastHashMap();
-        affixes.put("iyor", 3d);
-        affixes.put("muş", 2d);
-        affixes.put("sun", 1d);
-        affixes.put("muşsun", 1d);
-        affixes.put("iyormuş", 1d);
-        affixes.put("su", 1d);
+        Map<String, Double> affixes = new HashMap();
+        affixes.put("ler", 2d);
+        affixes.put("le", 1d);
+        affixes.put("i", 1d);
+        affixes.put("in", 1d);
+        affixes.put("r", 1d);
         affixes.put("n", 1d);
 
         Set<String> s = stems.keySet();
         Set<String> a = affixes.keySet();
 
         long start = System.nanoTime();
-        List<String> results = getPossibleSegmentations("geliyormuşsun", s, a);
+        List<String> results = getPossibleSegmentations("sepetlerin", s, a);
         long stop = System.nanoTime();
 
         System.out.println(stop - start);
@@ -239,9 +243,9 @@ public class Utilities {
         for (String r : results) {
             System.out.println(r);
         }
-        */
+*/
 
-        multiThreadWriteToDB(args[0], 16);
+        //multiThreadWriteToDB(args[0], 16);
 
         /*
         MongoClient mongo = new MongoClient("localhost", 27017);
