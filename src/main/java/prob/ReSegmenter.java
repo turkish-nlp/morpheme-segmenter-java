@@ -211,6 +211,61 @@ public class ReSegmenter {
         }
     }
 
+    public void reSegmentWithDBandPrior(String word, double frequency, boolean withStemProbability) {
+
+        /*
+        ** Prior information must be added to the production due to prevent undersegmentation.
+        ** Affix lenght can be used for prior with coefficient of n in the equation (1/29)^n
+         */
+
+        List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet());
+        if (segmentations.isEmpty()) {
+            if (notFounds.containsKey(word)) {
+                notFounds.put(word, notFounds.get(word) + frequency);
+            } else {
+                notFounds.put(word, frequency);
+            }
+        } else {
+
+            double max = -1 * Double.MAX_VALUE;
+            String argmax = word;
+
+            for (String segmentation : segmentations) {
+                String seperator = "+";
+                StringTokenizer st = new StringTokenizer(segmentation, seperator);
+
+                String stem = st.nextToken();
+                String curr = startMorpheme;
+                String next = null;
+
+                double probability = 0d;
+                if (withStemProbability) {
+                    probability = probability + Math.log(stemProbabilities.get(stem)) + Math.log(Utilities.getPrior(stem));
+                }
+
+                while (st.hasMoreTokens()) {
+                    next = st.nextToken();
+                    probability = probability + Math.log(Utilities.getProbabilityForBigram(collection, curr, next)) + Math.log(Utilities.getPrior(next));
+                    curr = next;
+                }
+
+                next = endMorphmeme;
+                probability = probability + Math.log(Utilities.getProbabilityForBigram(collection, curr, next));
+
+                if (probability > max) {
+                    max = probability;
+                    argmax = segmentation;
+                }
+            }
+
+            if (results.containsKey(argmax)) {
+                results.put(argmax, results.get(argmax) + frequency);
+            } else {
+                results.put(argmax, frequency);
+            }
+        }
+    }
+
     public void reSegmentWithDBforAllomorphs(String word, double frequency, boolean withStemProbability) {
 
         /*
