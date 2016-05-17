@@ -3,10 +3,10 @@ package prob;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
+import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -28,6 +28,8 @@ public class ReSegmenter {
     MongoClient mongo;
     DB db;
     DBCollection collection;
+
+    WordVectors vectors;
 
     String startMorpheme = "STR";
     String endMorphmeme = "END";
@@ -60,7 +62,8 @@ public class ReSegmenter {
         this.morphemeBiagramProbabilities = morphemeBiagramProbabilities;
     }
 
-    public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, Map<String, Map<String, Double>> morphemeBiagramProbabilities, Map<String, Double> stemProbabilities) {
+    public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, Map<String, Map<String, Double>> morphemeBiagramProbabilities,
+                       Map<String, Double> stemProbabilities, WordVectors vectors) {
         this.fileSegmentationInput = fileSegmentationInput;
         this.stems = stems;
         this.affixes = affixes;
@@ -70,9 +73,11 @@ public class ReSegmenter {
         results = new HashMap<>();
         notFounds = new HashMap<>();
 
+        this.vectors = vectors;
     }
 
-    public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, Map<String, Double> stemProbabilities, String collectionName) {
+    public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, Map<String, Double> stemProbabilities,
+                       String collectionName, WordVectors vectors) {
         this.fileSegmentationInput = fileSegmentationInput;
         this.stems = stems;
         this.affixes = affixes;
@@ -84,10 +89,12 @@ public class ReSegmenter {
 
         results = new HashMap<>();
         notFounds = new HashMap<>();
+
+        this.vectors = vectors;
     }
 
     public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, Map<String, Double> stemProbabilities,
-                       Map<String, Double> results, Map<String, Double> notFounds, String collectionName) {
+                       Map<String, Double> results, Map<String, Double> notFounds, String collectionName, WordVectors vectors) {
         this.fileSegmentationInput = fileSegmentationInput;
         this.stems = stems;
         this.affixes = affixes;
@@ -99,16 +106,18 @@ public class ReSegmenter {
 
         this.results = results;
         this.notFounds = notFounds;
+
+        this.vectors = vectors;
     }
 
-    public void reSegmentWithMap(String word, double frequency, boolean withStemProbability) {
+    public void reSegmentWithMap(String word, double frequency, boolean withStemProbability) throws FileNotFoundException {
 
         /*
         ** Prior information must be added to the production due to prevent undersegmentation.
         ** Affix lenght can be used for prior with coefficient of n in the equation (1/29)^n
          */
 
-        List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet());
+        List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet()/*, vectors*/);
         if (segmentations.isEmpty()) {
             if (notFounds.containsKey(word)) {
                 notFounds.put(word, notFounds.get(word) + frequency);
@@ -156,14 +165,14 @@ public class ReSegmenter {
         }
     }
 
-    public void reSegmentWithDB(String word, double frequency, boolean withStemProbability) {
+    public void reSegmentWithDB(String word, double frequency, boolean withStemProbability) throws FileNotFoundException {
 
         /*
         ** Prior information must be added to the production due to prevent undersegmentation.
         ** Affix lenght can be used for prior with coefficient of n in the equation (1/29)^n
          */
 
-        List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet());
+        List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet()/*, vectors*/);
         if (segmentations.isEmpty()) {
             if (notFounds.containsKey(word)) {
                 notFounds.put(word, notFounds.get(word) + frequency);
@@ -211,14 +220,14 @@ public class ReSegmenter {
         }
     }
 
-    public void reSegmentWithDBandPrior(String word, double frequency, boolean withStemProbability) {
+    public void reSegmentWithDBandPrior(String word, double frequency, boolean withStemProbability) throws FileNotFoundException {
 
         /*
         ** Prior information must be added to the production due to prevent undersegmentation.
         ** Affix lenght can be used for prior with coefficient of n in the equation (1/29)^n
          */
 
-        List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet());
+        List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet()/*, vectors*/);
         if (segmentations.isEmpty()) {
             if (notFounds.containsKey(word)) {
                 notFounds.put(word, notFounds.get(word) + frequency);
@@ -266,14 +275,14 @@ public class ReSegmenter {
         }
     }
 
-    public void reSegmentWithDBforAllomorphs(String word, double frequency, boolean withStemProbability) {
+    public void reSegmentWithDBforAllomorphs(String word, double frequency, boolean withStemProbability) throws FileNotFoundException {
 
         /*
         ** Prior information must be added to the production due to prevent undersegmentation.
         ** Affix lenght can be used for prior with coefficient of n in the equation (1/29)^n
          */
 
-        List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet());
+        List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet()/*, vectors*/);
         if (segmentations.isEmpty()) {
             if (notFounds.containsKey(word)) {
                 notFounds.put(word, notFounds.get(word) + frequency);
