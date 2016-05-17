@@ -62,8 +62,8 @@ public class MorphemeGraph {
         return has;
     }
 
-    public void print() throws FileNotFoundException, UnsupportedEncodingException {
-        root.printTree(root.getMorpheme());
+    public void print(String keyWord) throws FileNotFoundException, UnsupportedEncodingException {
+        root.printTree(keyWord);
     }
 
     public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
@@ -85,6 +85,6 @@ public class MorphemeGraph {
         g.finish();
         //      MorphemeNode a = g.get("gelmek");
         //     System.out.println("get: " + a);
-        g.print();
+        g.print("gel");
     }
 }

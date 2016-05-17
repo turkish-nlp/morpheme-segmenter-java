@@ -145,7 +145,7 @@ public class SubstringMatcher {
 
         graph.finish();
 
-        graph.print();
+        graph.print(word);
         graphList.put(word, graph);
 
     }

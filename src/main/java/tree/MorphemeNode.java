@@ -49,8 +49,7 @@ public class MorphemeNode {
         setCosineSimilarity();
     }
 
-    public int getSize()
-    {
+    public int getSize() {
         return this.size;
     }
 
@@ -60,7 +59,7 @@ public class MorphemeNode {
 
     private void setCosineSimilarity() {
 
-        if (vectors.hasWord(morpheme) && vectors.hasWord(parent.getMorpheme())){
+        if (vectors.hasWord(morpheme) && vectors.hasWord(parent.getMorpheme())) {
             cosineSimilarity = vectors.similarity(morpheme, parent.getMorpheme());
         } else {
             cosineSimilarity = -0.5;
@@ -69,39 +68,42 @@ public class MorphemeNode {
 
     public void addChild(MorphemeNode morpheme, double morphemeFreq) {
 
-        if (children == null) {
-            children = new HashMap<>();
-            size = size + 1;
-        }
-        if (children.containsKey(morpheme)) {
-            children.put(morpheme, children.get(morpheme) + morphemeFreq);
+        if (this.morpheme.equals(morpheme.getMorpheme())) {
+            // do nothing
         } else {
-            boolean found = false;
-            for (MorphemeNode mn : children.keySet()) {
-                if (morpheme.getMorpheme().contains(mn.getMorpheme())) {
-                    mn.addChild(morpheme, morphemeFreq);
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                children.put(morpheme, morphemeFreq);
-                morpheme.setParent(this);
-                this.setLeaf(false);
+            if (children == null) {
+                children = new HashMap<>();
                 size = size + 1;
             }
 
+            if (children.containsKey(morpheme)) {
+                children.put(morpheme, children.get(morpheme) + morphemeFreq);
+            } else {
+                boolean found = false;
+                for (MorphemeNode mn : children.keySet()) {
+                    if (morpheme.getMorpheme().contains(mn.getMorpheme())) {
+                        mn.addChild(morpheme, morphemeFreq);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    children.put(morpheme, morphemeFreq);
+                    morpheme.setParent(this);
+                    this.setLeaf(false);
+                    size = size + 1;
+                }
+            }
         }
-
     }
 
     public String toString() {
         return this.morpheme;
     }
 
-    public void printTree(String root) throws FileNotFoundException, UnsupportedEncodingException {
-        if(root!= null) {
-            PrintWriter writer_graph = new PrintWriter("graphs/" + root + "_graph.txt", "UTF-8");
+    public void printTree(String keyWord) throws FileNotFoundException, UnsupportedEncodingException {
+        if (keyWord != null) {
+            PrintWriter writer_graph = new PrintWriter("graphs/" + keyWord + "_graph.txt", "UTF-8");
             System.out.println("");
 
             List<String> paths = new ArrayList<>();
@@ -112,8 +114,8 @@ public class MorphemeNode {
                 writer_graph.println(s);
             }
             writer_graph.close();
-            System.out.println(root + "_graph finished.");
-        }else
+            System.out.println(keyWord + "_graph finished.");
+        } else
             System.out.println("no word");
     }
 
