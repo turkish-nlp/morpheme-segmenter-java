@@ -38,20 +38,31 @@ public class Utilities {
 
     private static void getPossibleAffixSequence(Set<String> affixes, String head, String tail, List<String> segmentations) {
 
-        for (int i = 1; i < tail.length() + 1; i++) {
-            String morpheme = tail.substring(0, i);
+        if (tail.length() == 0) {
+            segmentations.add(head);
+        } else if (tail.length() == 1) {
+            if (affixes.contains(tail)) {
+                segmentations.add(head + "+" + tail);
+            }
+        } else {
 
-            if (morpheme.length() == tail.length()) {
-                if (affixes.contains(morpheme)) {
-                    segmentations.add(head + "+" + morpheme);
-                }
-            } else {
-                String tailMorph = tail.substring(i);
-                if (affixes.contains(morpheme)) {
-                    String headMorph = head + "+" + morpheme;
-                    getPossibleAffixSequence(affixes, headMorph, tailMorph, segmentations);
+            //////////////
+            for (int i = 1; i < tail.length() + 1; i++) {
+                String morpheme = tail.substring(0, i);
+
+                if (morpheme.length() == tail.length()) {
+                    if (affixes.contains(morpheme)) {
+                        segmentations.add(head + "+" + morpheme);
+                    }
+                } else {
+                    String tailMorph = tail.substring(i);
+                    if (affixes.contains(morpheme)) {
+                        String headMorph = head + "+" + morpheme;
+                        getPossibleAffixSequence(affixes, headMorph, tailMorph, segmentations);
+                    }
                 }
             }
+            ////////////////
         }
     }
 
@@ -219,9 +230,12 @@ public class Utilities {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-/*
+
         Map<String, Double> stems = new HashMap();
         stems.put("sepet", 5d);
+        stems.put("sepetlerin", 1d);
+        stems.put("sepetleri", 1d);
+        stems.put("sepetler", 1d);
 
         Map<String, Double> affixes = new HashMap();
         affixes.put("ler", 2d);
@@ -243,7 +257,7 @@ public class Utilities {
         for (String r : results) {
             System.out.println(r);
         }
-*/
+
 
         //multiThreadWriteToDB(args[0], 16);
 

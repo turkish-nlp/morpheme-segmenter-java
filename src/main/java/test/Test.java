@@ -81,7 +81,7 @@ public class Test {
                                 double freq = Double.parseDouble(st.nextToken());
                                 String word = st.nextToken();
 
-                                rs.reSegmentWithDBandPrior(word, freq, true);
+                                rs.reSegmentWithDB(word, freq, true);
                             }
                         } catch (IOException e) {
                             e.printStackTrace();

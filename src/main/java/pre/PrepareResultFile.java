@@ -53,9 +53,9 @@ public class PrepareResultFile {
 
     public static void prepareFile() throws IOException {
         BufferedReader reader = null;
-        reader = new BufferedReader(new FileReader("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\resegmented_with_prior.txt"));
+        reader = new BufferedReader(new FileReader("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\resegmented_prior_last.txt"));
 
-        PrintWriter writer = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\resegmented_with_prior_ready", "UTF-8");
+        PrintWriter writer = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\resegmented_prior_last_ready", "UTF-8");
 
         String line;
         while ((line = reader.readLine()) != null) {
