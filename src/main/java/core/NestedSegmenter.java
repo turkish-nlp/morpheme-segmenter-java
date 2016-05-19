@@ -5,20 +5,20 @@ import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import org.jboss.logging.Logger;
 
 import java.io.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 import java.util.StringTokenizer;
-import java.util.HashMap;
 
 /**
  * Created by ahmetu on 29.04.2016.
  */
 public class NestedSegmenter {
 
-    private Map<String, Double> stems = new HashMap<String, Double>();
-    private Map<String, Double> affixes = new HashMap<String, Double>();
-    private Map<String, Double> results = new HashMap<String, Double>();
-    private Map<String, Double> notFound = new HashMap<String, Double>();
+    private Map<String, Double> stems = new HashMap<>();
+    private Map<String, Double> affixes = new HashMap<>();
+    private Map<String, Double> results = new HashMap<>();
+    private Map<String, Double> notFound = new HashMap<>();
 
     private String fileSegmentationInput;
 
@@ -141,22 +141,20 @@ public class NestedSegmenter {
         Map<String, Double> r = ns.getResults();
         Map<String, Double> n = ns.getNotFound();
 
-        PrintWriter writer_seg = new PrintWriter("outputs/stems", "UTF-8");
-        PrintWriter writer_af = new PrintWriter("outputs/affixes", "UTF-8");
-        PrintWriter writer_res = new PrintWriter("outputs/results", "UTF-8");
-        PrintWriter writer_noF = new PrintWriter("outputs/absent", "UTF-8");
+        PrintWriter writer_seg = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\25_result\\stems", "UTF-8");
+        PrintWriter writer_af = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\25_result\\affixes", "UTF-8");
+        PrintWriter writer_res = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\25_result\\results", "UTF-8");
+        PrintWriter writer_noF = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\25_result\\absent", "UTF-8");
 
         for (Map.Entry<String, Double> entry : s.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
             writer_seg.println(line);
         }
-        writer_seg.close();
 
         for (Map.Entry<String, Double> entry : a.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
             writer_af.println(line);
         }
-        writer_af.close();
 
         for (Map.Entry<String, Double> entry : r.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();

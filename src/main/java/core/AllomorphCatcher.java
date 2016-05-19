@@ -46,7 +46,7 @@ public class AllomorphCatcher {
     }
 
     public static void main(String[] args) {
-
+        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
         AllomorphCatcher ac = new AllomorphCatcher(args[0], args[1]);
         ac.TestAnalogy();
     }
