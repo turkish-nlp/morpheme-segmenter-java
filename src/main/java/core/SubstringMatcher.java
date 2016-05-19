@@ -4,12 +4,15 @@ package core;
  * Created by ahmetu on 25.04.2016.
  */
 
-import java.io.*;
-import java.util.*;
-
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tree.MorphemeGraph;
+
+import java.io.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 public class SubstringMatcher {
 
@@ -45,7 +48,6 @@ public class SubstringMatcher {
 
     private void findMostFrequentLongestSubsequence(String word, double freq, int numberOfneighboors) throws FileNotFoundException, UnsupportedEncodingException {
 
-
         System.out.println("Control Word: " + word);
 
         Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
@@ -60,7 +62,7 @@ public class SubstringMatcher {
         String affix = "NLL";
 
         // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
-        for (int i = 0; i < word.length() - 2; i++) {
+        for (int i = 0; i < word.length() - 1; i++) {
 
             if (notFound) {
                 break;
@@ -84,7 +86,7 @@ public class SubstringMatcher {
             graph.add(word, freq);
             System.out.println("Stem: " + stem);
         }
-
+/*
         // Stream kısmının içinde (effectively ?) final variable'lar kullanmak gerekiyormuş, stem hiç değişmediği için onu bir final variable'a attım.
         // aynı sebepten suffixfar ve suffixClose'u stream bloğunun içine aldım, yoksa hata veriyordu.
         final String final_stem = stem;
@@ -147,7 +149,7 @@ public class SubstringMatcher {
 
         graph.print(word);
         graphList.put(word, graph);
-
+*/
     }
 
     private void recursiveAddLevelOne(String word, String stem, double freq, int numberOfneighboors, MorphemeGraph graph) {

@@ -4,6 +4,7 @@ import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
 import java.io.*;
+import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,7 +70,12 @@ public class MorphemeGraph {
     public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
 
         WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(args[0]));
-        MorphemeGraph g = new MorphemeGraph("gel", vectors);
+        Collection<String> neighboors = vectors.wordsNearest("zorundadır", 50);
+        for(String s: neighboors)
+            System.out.println(s);
+
+
+     /*   MorphemeGraph g = new MorphemeGraph("gel", vectors);
 
         g.add("gelmek", 3);
         g.add("gelmişti", 1);
@@ -85,6 +91,6 @@ public class MorphemeGraph {
         g.finish();
         //      MorphemeNode a = g.get("gelmek");
         //     System.out.println("get: " + a);
-        g.print("gel");
+        g.print("gel");*/
     }
 }
