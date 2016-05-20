@@ -27,7 +27,7 @@ public class Test {
         root.setLevel(Level.ERROR);
     }
 
-    public void multiThreadTest(String inputFileName, int threadNumber, String vectorFile) throws InterruptedException, IOException {
+    public void multiThreadTest(String inputFileName, int threadNumber, String vectorFile, String priorType) throws InterruptedException, IOException {
 
         WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(vectorFile));
 
@@ -82,7 +82,12 @@ public class Test {
                                 double freq = Double.parseDouble(st.nextToken());
                                 String word = st.nextToken();
 
-                                rs.reSegmentWithDBandSemanticPrior(word, freq, true);
+                                if (priorType.equalsIgnoreCase("binomial_c")) {
+                                    rs.reSegmentWithDBandBinomialPrior_C(word, freq, true);
+                                } else if (priorType.equalsIgnoreCase("binomial_np")) {
+                                    rs.reSegmentWithDBandBinomialPrior_NP(word, freq, true);
+                                }
+
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -103,8 +108,8 @@ public class Test {
         Map<String, Double> newResults = rs.getResults();
         Map<String, Double> newNotFound = rs.getNotFounds();
 
-        PrintWriter writer_res_new = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\cleared_result\\results_re", "UTF-8");
-        PrintWriter writer_noF_new = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\cleared_result\\absent_re", "UTF-8");
+        PrintWriter writer_res_new = new PrintWriter("outputs/results_" + priorType, "UTF-8");
+        PrintWriter writer_noF_new = new PrintWriter("outputs/absents_" + priorType, "UTF-8");
 
         for (Map.Entry<String, Double> entry : newResults.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
@@ -224,6 +229,7 @@ public class Test {
         */
 
         Test test = new Test();
-        test.multiThreadTest(args[1], 16, args[0]);
+        test.multiThreadTest(args[1], 16, args[0], "binomial_c");
+        test.multiThreadTest(args[1], 16, args[0], "binomial_np");
     }
 }
