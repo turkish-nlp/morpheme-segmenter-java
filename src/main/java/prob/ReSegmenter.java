@@ -275,6 +275,225 @@ public class ReSegmenter {
         }
     }
 
+    public void reSegmentWithDBandSemanticPrior(String word, double frequency, boolean withStemProbability) throws FileNotFoundException {
+
+        /*
+        ** Prior information must be added to the production due to prevent undersegmentation.
+        ** Affix lenght can be used for prior with coefficient of n in the equation (1/29)^n
+         */
+
+        List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet()/*, vectors*/);
+        if (segmentations.isEmpty()) {
+            if (notFounds.containsKey(word)) {
+                notFounds.put(word, notFounds.get(word) + frequency);
+            } else {
+                notFounds.put(word, frequency);
+            }
+        } else {
+
+            double max = -1 * Double.MAX_VALUE;
+            String argmax = word;
+
+            for (String segmentation : segmentations) {
+                String seperator = "+";
+                StringTokenizer st = new StringTokenizer(segmentation, seperator);
+
+                String stem = st.nextToken();
+                String curr = startMorpheme;
+                String next = null;
+
+                double probability = 0d;
+                int semanticCoefficient = 0;
+                if (withStemProbability) {
+                    probability = probability + Math.log(stemProbabilities.get(stem));
+                }
+
+                String c_stem = stem;
+                while (st.hasMoreTokens()) {
+                    next = st.nextToken();
+                    probability = probability + Math.log(Utilities.getProbabilityForBigram(collection, curr, next));
+
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(c_stem);
+                    sb.append(next);
+                    String n_stem = sb.toString();
+                    if (vectors.hasWord(c_stem) || vectors.hasWord(n_stem)) {
+                        semanticCoefficient = semanticCoefficient - 1;
+                    } else if (0.25 > vectors.similarity(c_stem, n_stem)) {
+                        semanticCoefficient = semanticCoefficient - 1;
+                    } else {
+                        semanticCoefficient = semanticCoefficient + 1;
+                    }
+
+                    curr = next;
+                    c_stem = n_stem;
+                }
+
+                next = endMorphmeme;
+                probability = probability + Math.log(Utilities.getProbabilityForBigram(collection, curr, next));
+
+                double semanticPior = Math.pow(10, semanticCoefficient / 3);
+                probability = probability + Math.log(semanticPior);
+
+                if (probability > max) {
+                    max = probability;
+                    argmax = segmentation;
+                }
+            }
+
+            if (results.containsKey(argmax)) {
+                results.put(argmax, results.get(argmax) + frequency);
+            } else {
+                results.put(argmax, frequency);
+            }
+        }
+    }
+
+    public void reSegmentWithDBandBinomialPrior_NP(String word, double frequency, boolean withStemProbability) throws FileNotFoundException {
+
+        /*
+        ** Prior information must be added to the production due to prevent undersegmentation.
+        ** Binomial distribution modeled for prior; p^a * (1-p)^b ==> p = 0.8, a = number of pozitive, b = number of negative
+         */
+
+        List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet()/*, vectors*/);
+        if (segmentations.isEmpty()) {
+            if (notFounds.containsKey(word)) {
+                notFounds.put(word, notFounds.get(word) + frequency);
+            } else {
+                notFounds.put(word, frequency);
+            }
+        } else {
+
+            double max = -1 * Double.MAX_VALUE;
+            String argmax = word;
+
+            for (String segmentation : segmentations) {
+                String seperator = "+";
+                StringTokenizer st = new StringTokenizer(segmentation, seperator);
+
+                String stem = st.nextToken();
+                String curr = startMorpheme;
+                String next = null;
+
+                double probability = 0d;
+                int negative = 0;
+                int pozitive = 0;
+
+                if (withStemProbability) {
+                    probability = probability + Math.log(stemProbabilities.get(stem));
+                }
+
+                String c_stem = stem;
+                while (st.hasMoreTokens()) {
+                    next = st.nextToken();
+                    probability = probability + Math.log(Utilities.getProbabilityForBigram(collection, curr, next));
+
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(c_stem);
+                    sb.append(next);
+                    String n_stem = sb.toString();
+                    if (!(vectors.hasWord(c_stem) || vectors.hasWord(n_stem))) {
+                        negative = negative + 1;
+                    } else if (0.25 > vectors.similarity(c_stem, n_stem)) {
+                        negative = negative + 1;
+                    } else {
+                        pozitive = pozitive + 1;
+                    }
+
+                    curr = next;
+                    c_stem = n_stem;
+                }
+
+                next = endMorphmeme;
+                probability = probability + Math.log(Utilities.getProbabilityForBigram(collection, curr, next));
+
+                double semanticPior = Math.pow(0.85, pozitive) * Math.pow(0.15, negative);
+                probability = probability + Math.log(semanticPior);
+
+                if (probability > max) {
+                    max = probability;
+                    argmax = segmentation;
+                }
+            }
+
+            if (results.containsKey(argmax)) {
+                results.put(argmax, results.get(argmax) + frequency);
+            } else {
+                results.put(argmax, frequency);
+            }
+        }
+    }
+
+    public void reSegmentWithDBandBinomialPrior_C(String word, double frequency, boolean withStemProbability) throws FileNotFoundException {
+
+        /*
+        ** Prior information must be added to the production due to prevent undersegmentation.
+        ** Binomial distribution modeled for prior which is cosine distance for each transition
+         */
+
+        List<String> segmentations = Utilities.getPossibleSegmentations(word, stems.keySet(), affixes.keySet()/*, vectors*/);
+        if (segmentations.isEmpty()) {
+            if (notFounds.containsKey(word)) {
+                notFounds.put(word, notFounds.get(word) + frequency);
+            } else {
+                notFounds.put(word, frequency);
+            }
+        } else {
+
+            double max = -1 * Double.MAX_VALUE;
+            String argmax = word;
+
+            for (String segmentation : segmentations) {
+                String seperator = "+";
+                StringTokenizer st = new StringTokenizer(segmentation, seperator);
+
+                String stem = st.nextToken();
+                String curr = startMorpheme;
+                String next = null;
+
+                double probability = 0d;
+
+                if (withStemProbability) {
+                    probability = probability + Math.log(stemProbabilities.get(stem));
+                }
+
+                String c_stem = stem;
+                while (st.hasMoreTokens()) {
+                    next = st.nextToken();
+                    probability = probability + Math.log(Utilities.getProbabilityForBigram(collection, curr, next));
+
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(c_stem);
+                    sb.append(next);
+                    String n_stem = sb.toString();
+                    if (!(vectors.hasWord(c_stem) || vectors.hasWord(n_stem))) {
+                        probability = probability + Math.log(0.05);
+                    } else {
+                        probability = probability + Math.log(vectors.similarity(c_stem, n_stem));
+                    }
+
+                    curr = next;
+                    c_stem = n_stem;
+                }
+
+                next = endMorphmeme;
+                probability = probability + Math.log(Utilities.getProbabilityForBigram(collection, curr, next));
+
+                if (probability > max) {
+                    max = probability;
+                    argmax = segmentation;
+                }
+            }
+
+            if (results.containsKey(argmax)) {
+                results.put(argmax, results.get(argmax) + frequency);
+            } else {
+                results.put(argmax, frequency);
+            }
+        }
+    }
+
     public void reSegmentWithDBforAllomorphs(String word, double frequency, boolean withStemProbability) throws FileNotFoundException {
 
         /*

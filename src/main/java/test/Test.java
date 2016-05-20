@@ -27,9 +27,9 @@ public class Test {
         root.setLevel(Level.ERROR);
     }
 
-    public void multiThreadTest(String inputFileName, int threadNumber, String vectorFile) throws InterruptedException, IOException {
+    public void multiThreadTest(String inputFileName, int threadNumber, String vectorFile, String priorType) throws InterruptedException, IOException {
 
-        //WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(vectorFile));
+        WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(vectorFile));
 
         Map<String, Double> stems = new ConcurrentHashMap<>();
         Map<String, Double> affixes = new ConcurrentHashMap();
@@ -55,7 +55,7 @@ public class Test {
         System.out.println("--------------ReSegmentation started with " + threadNumber + " threads --------------");
         System.out.println("");
 
-        ReSegmenter rs = new ReSegmenter(inputFileName, stems, affixes, stemProbabilities, results, notfounds, "bigrams", null);
+        ReSegmenter rs = new ReSegmenter(inputFileName, stems, affixes, stemProbabilities, results, notfounds, "bigrams", vectors);
 
         final BufferedReader reader = new BufferedReader(new FileReader(inputFileName), 1024 * 1024);
 
@@ -82,7 +82,12 @@ public class Test {
                                 double freq = Double.parseDouble(st.nextToken());
                                 String word = st.nextToken();
 
-                                rs.reSegmentWithDB(word, freq, true);
+                                if (priorType.equalsIgnoreCase("binomial_c")) {
+                                    rs.reSegmentWithDBandBinomialPrior_C(word, freq, true);
+                                } else if (priorType.equalsIgnoreCase("binomial_np")) {
+                                    rs.reSegmentWithDBandBinomialPrior_NP(word, freq, true);
+                                }
+
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -103,8 +108,8 @@ public class Test {
         Map<String, Double> newResults = rs.getResults();
         Map<String, Double> newNotFound = rs.getNotFounds();
 
-        PrintWriter writer_res_new = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\25_result\\results_re", "UTF-8");
-        PrintWriter writer_noF_new = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\25_result\\absent_re", "UTF-8");
+        PrintWriter writer_res_new = new PrintWriter("outputs/results_" + priorType, "UTF-8");
+        PrintWriter writer_noF_new = new PrintWriter("outputs/absents_" + priorType, "UTF-8");
 
         for (Map.Entry<String, Double> entry : newResults.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
@@ -130,7 +135,7 @@ public class Test {
 
         System.out.println("------------------------------------------------------------");
         System.out.println("--------------Stems & Affixes are constructing--------------");
-        Utilities.constructStemAndAffixMaps("outputs/results_nested", stems, affixes);
+        Utilities.constructStemAndAffixMaps("outputs/results", stems, affixes);
 
         double totalStemCount = 0;
         for (String s : stems.keySet()) {
@@ -224,6 +229,7 @@ public class Test {
         */
 
         Test test = new Test();
-        test.multiThreadTest(args[1], 16, args[0]);
+        test.multiThreadTest(args[1], 16, args[0], "binomial_c");
+        test.multiThreadTest(args[1], 16, args[0], "binomial_np");
     }
 }

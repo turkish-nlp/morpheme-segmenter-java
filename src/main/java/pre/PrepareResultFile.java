@@ -50,9 +50,9 @@ public class PrepareResultFile {
 
     public static void prepareFile() throws IOException {
         BufferedReader reader = null;
-        reader = new BufferedReader(new FileReader("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\csp_last"));
+        reader = new BufferedReader(new FileReader("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\nested_cleared.txt"));
 
-        PrintWriter writer = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\csp_last_ready", "UTF-8");
+        PrintWriter writer = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\nested_cleared_ready", "UTF-8");
 
         String line;
         while ((line = reader.readLine()) != null) {
