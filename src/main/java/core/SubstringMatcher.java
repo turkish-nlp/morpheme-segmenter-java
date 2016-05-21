@@ -76,10 +76,10 @@ public class SubstringMatcher {
 
         // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
         int[] stem_candidates = new int[word.length()+1];
-         if (!neighboors.isEmpty()) {
+        if (!neighboors.isEmpty()) {
 
             for (String n : neighboors) {
-              //  System.out.print(n + ": ");
+                //System.out.print(n + ": ");
                 if(n.substring(0,limit).equals(word.substring(0,limit))) {
                     //      System.out.println(substring(word, n));
                     stem_candidates[substring(word, n)]++;
@@ -88,8 +88,7 @@ public class SubstringMatcher {
         }
         int max= IntStream.of(stem_candidates).max().getAsInt();
         int maxIndex = Ints.indexOf(stem_candidates, max);
-        //  for(Integer i : stem_candidates)
-        //      System.out.print(i + " - ");
+          for(Integer i : stem_candidates) System.out.print(i + " - ");
         //    System.out.println(max + "index:" + maxIndex);
 
         stem = word.substring(0, maxIndex);
@@ -174,7 +173,7 @@ public class SubstringMatcher {
 
         if (graph.add(word, freq)) {
 
-           // System.out.println("Child_1: " + word);
+            // System.out.println("Child_1: " + word);
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
 
             neighboors.parallelStream().forEach((n) -> {
@@ -224,7 +223,7 @@ public class SubstringMatcher {
 
         if (graph.add(word, freq)) {
 
-          //  System.out.println("Child_2: " + word);
+            //  System.out.println("Child_2: " + word);
             System.out.println("tn: " + Thread.getAllStackTraces().keySet().size());
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
 
@@ -289,7 +288,7 @@ public class SubstringMatcher {
                 }
             }
             if(!found) {
-                findMostFrequentLongestSubsequence(word, freq, 50);
+                findMostFrequentLongestSubsequence(word, freq, 25);
             }
             else {
                 found = false;
