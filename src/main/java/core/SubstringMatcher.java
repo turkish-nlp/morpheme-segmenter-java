@@ -60,7 +60,7 @@ public class SubstringMatcher {
         String affix = "NLL";
 
         // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
-        for (int i = 0; i < word.length() - 2; i++) {
+        for (int i = 0; i < word.length() - 1; i++) {
 
             if (notFound) {
                 break;
