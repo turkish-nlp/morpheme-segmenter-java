@@ -1,10 +1,7 @@
 package pre;
 
-import com.mongodb.BasicDBObject;
-
 import java.io.*;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.TreeMap;
 
 /**
@@ -53,9 +50,9 @@ public class PrepareResultFile {
 
     public static void prepareFile() throws IOException {
         BufferedReader reader = null;
-        reader = new BufferedReader(new FileReader("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\resegmented_with_prior.txt"));
+        reader = new BufferedReader(new FileReader("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\nested_cleared.txt"));
 
-        PrintWriter writer = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\resegmented_with_prior_ready", "UTF-8");
+        PrintWriter writer = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\nested_cleared_ready", "UTF-8");
 
         String line;
         while ((line = reader.readLine()) != null) {

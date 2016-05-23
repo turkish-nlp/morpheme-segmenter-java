@@ -1,9 +1,9 @@
 package tree;
 
-import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -65,11 +65,37 @@ public class MorphemeGraph {
     public void print(String keyWord) throws FileNotFoundException, UnsupportedEncodingException {
         root.printTree(keyWord);
     }
+    public static int substring(String word, String n)
+    {
+        int common = 0;
+        for(int i=0;i < n.length();i++)
+        {
+            System.out.println(i + "-- " + n.substring(0,i));
+            if(word.startsWith(n.substring(0,i)) && !word.startsWith(n.substring(0,i+1)))
+            {
+                common = i;
+                break;
+            }
+        }
+        if(common == 0)
+            return n.length();
+        else
+            return common;
+    }
+
+
 
     public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
 
-        WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(args[0]));
-        MorphemeGraph g = new MorphemeGraph("gel", vectors);
+        System.out.println("gelirken".substring(0, substring("gelirken", "gel")) );
+
+           /*   MorphemeGraph g = new MorphemeGraph("gel", vectors);
+  WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(args[0]));
+        Collection<String> neighboors = vectors.wordsNearest("zorundadır", 50);
+        for(String s: neighboors)
+            System.out.println(s);
+
+
 
         g.add("gelmek", 3);
         g.add("gelmişti", 1);
@@ -85,6 +111,6 @@ public class MorphemeGraph {
         g.finish();
         //      MorphemeNode a = g.get("gelmek");
         //     System.out.println("get: " + a);
-        g.print("gel");
+        g.print("gel");*/
     }
 }

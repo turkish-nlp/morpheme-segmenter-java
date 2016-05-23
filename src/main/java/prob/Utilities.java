@@ -8,6 +8,8 @@ import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
+import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
@@ -18,7 +20,7 @@ import java.util.*;
  */
 public class Utilities {
 
-    public static List<String> getPossibleSegmentations(String word, Set<String> stems, Set<String> affixes) {
+    public static List<String> getPossibleSegmentations(String word, Set<String> stems, Set<String> affixes/*, WordVectors vectors*/) throws FileNotFoundException {
 
         ArrayList<String> segmentations = new ArrayList<String>();
 
@@ -33,26 +35,72 @@ public class Utilities {
             }
         }
 
+        //List<String> news = checkConstraint(segmentations, vectors);
+
+        //if (news.isEmpty()){
         return segmentations;
+        //} else {
+        //return news;
+        //}
     }
 
     private static void getPossibleAffixSequence(Set<String> affixes, String head, String tail, List<String> segmentations) {
+        /*
+        if (tail.length() == 0) {
+            segmentations.add(head);
+        } else
+        */
+        if (tail.length() == 1) {
+            if (affixes.contains(tail)) {
+                segmentations.add(head + "+" + tail);
+            }
+        } else {
 
-        for (int i = 1; i < tail.length() + 1; i++) {
-            String morpheme = tail.substring(0, i);
+            //////////////
+            for (int i = 1; i < tail.length() + 1; i++) {
+                String morpheme = tail.substring(0, i);
 
-            if (morpheme.length() == tail.length()) {
-                if (affixes.contains(morpheme)) {
-                    segmentations.add(head + "+" + morpheme);
-                }
-            } else {
-                String tailMorph = tail.substring(i);
-                if (affixes.contains(morpheme)) {
-                    String headMorph = head + "+" + morpheme;
-                    getPossibleAffixSequence(affixes, headMorph, tailMorph, segmentations);
+                if (morpheme.length() == tail.length()) {
+                    if (affixes.contains(morpheme)) {
+                        segmentations.add(head + "+" + morpheme);
+                    }
+                } else {
+                    String tailMorph = tail.substring(i);
+                    if (affixes.contains(morpheme)) {
+                        String headMorph = head + "+" + morpheme;
+                        getPossibleAffixSequence(affixes, headMorph, tailMorph, segmentations);
+                    }
                 }
             }
+            ////////////////
         }
+    }
+
+    private static List<String> checkConstraint(List<String> segmentations, WordVectors vectors) throws FileNotFoundException {
+
+        double threshold = 0.25;
+
+        List<String> satifiedSegmentations = new ArrayList<>();
+
+        for (String s : segmentations) {
+            boolean satify = true;
+
+            StringTokenizer st = new StringTokenizer(s, "+");
+            String c_word = st.nextToken();
+            String n_word = "";
+            while (st.hasMoreTokens() && satify) {
+                n_word = c_word + st.nextToken();
+                if (threshold > vectors.similarity(c_word, n_word)) {
+                    satify = false;
+                }
+                c_word = n_word;
+            }
+            if (satify) {
+                satifiedSegmentations.add(s);
+            }
+        }
+
+        return satifiedSegmentations;
     }
 
     public static void writeFileBigramProbabilities(Map<String, Map<String, Double>> morphemeBiagramProbabilities) throws FileNotFoundException, UnsupportedEncodingException {
@@ -219,23 +267,27 @@ public class Utilities {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-/*
+        WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(args[0]));
+
         Map<String, Double> stems = new HashMap();
-        stems.put("sepet", 5d);
+        stems.put("korunm", 5d);
+        //stems.put("sep", 1d);
 
         Map<String, Double> affixes = new HashMap();
-        affixes.put("ler", 2d);
-        affixes.put("le", 1d);
-        affixes.put("i", 1d);
+        affixes.put("ıdırlar", 2d);
+        affixes.put("al", 1d);
+        //affixes.put("i", 1d);
         affixes.put("in", 1d);
         affixes.put("r", 1d);
-        affixes.put("n", 1d);
+        //affixes.put("n", 1d);
+        affixes.put("et", 1d);
+        affixes.put("isss", 1d);
 
         Set<String> s = stems.keySet();
         Set<String> a = affixes.keySet();
 
         long start = System.nanoTime();
-        List<String> results = getPossibleSegmentations("sepetlerin", s, a);
+        List<String> results = getPossibleSegmentations("korunmalıdırlar", s, a/*, vectors*/);
         long stop = System.nanoTime();
 
         System.out.println(stop - start);
@@ -243,7 +295,7 @@ public class Utilities {
         for (String r : results) {
             System.out.println(r);
         }
-*/
+
 
         //multiThreadWriteToDB(args[0], 16);
 

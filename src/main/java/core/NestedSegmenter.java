@@ -141,10 +141,10 @@ public class NestedSegmenter {
         Map<String, Double> r = ns.getResults();
         Map<String, Double> n = ns.getNotFound();
 
-        PrintWriter writer_seg = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\25_result\\stems", "UTF-8");
-        PrintWriter writer_af = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\25_result\\affixes", "UTF-8");
-        PrintWriter writer_res = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\25_result\\results", "UTF-8");
-        PrintWriter writer_noF = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\25_result\\absent", "UTF-8");
+        PrintWriter writer_seg = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\cleared_result\\stems", "UTF-8");
+        PrintWriter writer_af = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\cleared_result\\affixes", "UTF-8");
+        PrintWriter writer_res = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\cleared_result\\results", "UTF-8");
+        PrintWriter writer_noF = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\cleared_result\\absent", "UTF-8");
 
         for (Map.Entry<String, Double> entry : s.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
