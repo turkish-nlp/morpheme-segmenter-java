@@ -4,12 +4,17 @@ package core;
  * Created by ahmetu on 25.04.2016.
  */
 
-import java.io.*;
-import java.util.*;
-
+import com.google.common.primitives.Ints;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tree.MorphemeGraph;
+
+import java.io.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.stream.IntStream;
 
 public class SubstringMatcher {
 
@@ -42,49 +47,59 @@ public class SubstringMatcher {
         vectors = WordVectorSerializer.loadTxtVectors(new File(fileVectorInput));
         this.fileSegmentationInput = fileSegmentationInput;
     }
+    public int substring(String word, String n)
+    {
+        int common = 0;
+        for(int i=0;i < n.length();i++)
+        {
+            if(word.startsWith(n.substring(0,i)) && !word.startsWith(n.substring(0,i+1)))
+            {
+                common = i;
+                break;
+            }
+        }
+        if(common == 0)
+            return n.length();
+        else
+            return common;
+    }
 
     private void findMostFrequentLongestSubsequence(String word, double freq, int numberOfneighboors) throws FileNotFoundException, UnsupportedEncodingException {
 
-
         System.out.println("Control Word: " + word);
+        int limit = 2;
 
         Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
-        boolean notFound = false;
 
-        if (neighboors.isEmpty()) {
-            notFound = true;
-        }
-
-        int max_f = 0;
         String stem = word;
         String affix = "NLL";
 
         // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
-        for (int i = 0; i < word.length() - 2; i++) {
+        int[] stem_candidates = new int[word.length()+1];
+        if (!neighboors.isEmpty()) {
 
-            if (notFound) {
-                break;
-            }
-
-            int f = 0;
             for (String n : neighboors) {
-                if (n.startsWith(word.substring(0, word.length() - i))) {
-                    f++;
+                //System.out.print(n + ": ");
+                if(n.substring(0,limit).equals(word.substring(0,limit))) {
+                    //      System.out.println(substring(word, n));
+                    stem_candidates[substring(word, n)]++;
                 }
             }
-            if (f > max_f) {
-                max_f = f;
-                stem = word.substring(0, word.length() - i);
-                affix = word.substring(word.length() - i, word.length());
-            }
         }
+        int max= IntStream.of(stem_candidates).max().getAsInt();
+        int maxIndex = Ints.indexOf(stem_candidates, max);
+          for(Integer i : stem_candidates) System.out.print(i + " - ");
+        //    System.out.println(max + "index:" + maxIndex);
 
+        stem = word.substring(0, maxIndex);
+        affix = word.substring(maxIndex);
         MorphemeGraph graph = new MorphemeGraph(stem, vectors);
-        if (!stem.equals(word)) {
-            graph.add(word, freq);
-            System.out.println("Stem: " + stem);
-        }
 
+        graph.add(word, freq);
+        System.out.println("stem: " + stem);
+        System.out.println("affix: " + affix);
+
+/*
         // Stream kısmının içinde (effectively ?) final variable'lar kullanmak gerekiyormuş, stem hiç değişmediği için onu bir final variable'a attım.
         // aynı sebepten suffixfar ve suffixClose'u stream bloğunun içine aldım, yoksa hata veriyordu.
         final String final_stem = stem;
@@ -147,7 +162,7 @@ public class SubstringMatcher {
 
         graph.print(word);
         graphList.put(word, graph);
-
+*/
     }
 
     private void recursiveAddLevelOne(String word, String stem, double freq, int numberOfneighboors, MorphemeGraph graph) {
@@ -158,7 +173,7 @@ public class SubstringMatcher {
 
         if (graph.add(word, freq)) {
 
-           // System.out.println("Child_1: " + word);
+            // System.out.println("Child_1: " + word);
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
 
             neighboors.parallelStream().forEach((n) -> {
@@ -208,7 +223,7 @@ public class SubstringMatcher {
 
         if (graph.add(word, freq)) {
 
-          //  System.out.println("Child_2: " + word);
+            //  System.out.println("Child_2: " + word);
             System.out.println("tn: " + Thread.getAllStackTraces().keySet().size());
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
 
@@ -273,7 +288,7 @@ public class SubstringMatcher {
                 }
             }
             if(!found) {
-                findMostFrequentLongestSubsequence(word, freq, 50);
+                findMostFrequentLongestSubsequence(word, freq, 25);
             }
             else {
                 found = false;

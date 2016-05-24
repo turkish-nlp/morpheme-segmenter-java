@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="org.mongodb:mongo-java-driver:3.2.21" type="repository">
+    <properties maven-id="org.mongodb:mongo-java-driver:3.2.2" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/mongodb/mongo-java-driver/3.2.2/mongo-java-driver-3.2.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
