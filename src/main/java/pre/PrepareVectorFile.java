@@ -72,7 +72,38 @@ public class PrepareVectorFile {
         System.out.println(count);
     }
 
+    public static void prepareData() throws IOException {
+        Set<String> wordInData = new HashSet<>();
+
+        BufferedReader reader = new BufferedReader(new FileReader("outputs/eng_ready_2"));
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            wordInData.add(line);
+        }
+
+        reader.close();
+
+        PrintWriter pw = new PrintWriter("outputs/eng_ready_baseline");
+
+        BufferedReader reader2 = new BufferedReader(new FileReader("outputs/baselineseg.final.2"));
+
+        while ((line = reader2.readLine()) != null) {
+            String space = " ";
+            StringTokenizer st = new StringTokenizer(line, space);
+            String freq = st.nextToken();
+            String word = st.nextToken().replaceAll("\\+", "");
+
+            if (wordInData.contains(word)) {
+                pw.println(line);
+            }
+        }
+
+        pw.close();
+
+    }
+
     public static void main(String[] args) throws IOException {
-        countLineNumber(args[0]);
+        prepareData();
     }
 }

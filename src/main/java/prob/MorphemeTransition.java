@@ -3,21 +3,21 @@ package prob;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by ahmetu on 02.05.2016.
  */
 public class MorphemeTransition {
 
-    private Map<String, Double> stemCount;
-    private Map<String, Double> morphemeCount;
-    private Map<String, Map<String, Double>> morphemeBiagramCount;
-    private Map<String, Map<String, Double>> morphemeBiagramProbabilities;
-    private Map<String, Double> stemPropabilities;
-    private Map<String, Double> results;
+    private ConcurrentHashMap<String, Double> stemCount;
+    private ConcurrentHashMap<String, Double> morphemeCount;
+    private ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> morphemeBiagramCount;
+    private ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> morphemeBiagramProbabilities;
+    private ConcurrentHashMap<String, Double> stemPropabilities;
+    private ConcurrentHashMap<String, Double> results;
 
     String fileName;
     String startMorpheme = "STR";
@@ -31,35 +31,35 @@ public class MorphemeTransition {
     }
 
     public MorphemeTransition(String inputFileName) {
-        stemCount = new HashMap<>();
-        morphemeCount = new HashMap<>();
-        morphemeBiagramCount = new HashMap<>();
-        morphemeBiagramProbabilities = new HashMap<>();
-        stemPropabilities = new HashMap<>();
+        stemCount = new ConcurrentHashMap<>();
+        morphemeCount = new ConcurrentHashMap<>();
+        morphemeBiagramCount = new ConcurrentHashMap<>();
+        morphemeBiagramProbabilities = new ConcurrentHashMap<>();
+        stemPropabilities = new ConcurrentHashMap<>();
         fileName = inputFileName;
     }
 
-    public MorphemeTransition(Map<String, Double> results) {
-        morphemeCount = new HashMap<>();
-        morphemeBiagramCount = new HashMap<>();
-        morphemeBiagramProbabilities = new HashMap<>();
-        stemPropabilities = new HashMap<>();
+    public MorphemeTransition(ConcurrentHashMap<String, Double> results) {
+        morphemeCount = new ConcurrentHashMap<>();
+        morphemeBiagramCount = new ConcurrentHashMap<>();
+        morphemeBiagramProbabilities = new ConcurrentHashMap<>();
+        stemPropabilities = new ConcurrentHashMap<>();
         this.results = results;
     }
 
-    public Map<String, Map<String, Double>> getMorphemeBiagramProbabilities() {
+    public ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> getMorphemeBiagramProbabilities() {
         return morphemeBiagramProbabilities;
     }
 
-    public Map<String, Map<String, Double>> getMorphemeBiagramCount() {
+    public ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> getMorphemeBiagramCount() {
         return morphemeBiagramCount;
     }
 
-    public Map<String, Double> getMorphemeCount() {
+    public ConcurrentHashMap<String, Double> getMorphemeCount() {
         return morphemeCount;
     }
 
-    public Map<String, Double> getStemCount() {
+    public ConcurrentHashMap<String, Double> getStemCount() {
         return stemCount;
     }
 
@@ -71,23 +71,23 @@ public class MorphemeTransition {
         return totalStemCount;
     }
 
-    public void setStemCount(Map<String, Double> stemCount) {
+    public void setStemCount(ConcurrentHashMap<String, Double> stemCount) {
         this.stemCount = stemCount;
     }
 
-    public void setMorphemeCount(Map<String, Double> morphemeCount) {
+    public void setMorphemeCount(ConcurrentHashMap<String, Double> morphemeCount) {
         this.morphemeCount = morphemeCount;
     }
 
-    public void setMorphemeBiagramCount(Map<String, Map<String, Double>> morphemeBiagramCount) {
+    public void setMorphemeBiagramCount(ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> morphemeBiagramCount) {
         this.morphemeBiagramCount = morphemeBiagramCount;
     }
 
-    public void setMorphemeBiagramProbabilities(Map<String, Map<String, Double>> morphemeBiagramProbabilities) {
+    public void setMorphemeBiagramProbabilities(ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> morphemeBiagramProbabilities) {
         this.morphemeBiagramProbabilities = morphemeBiagramProbabilities;
     }
 
-    public void setResults(Map<String, Double> results) {
+    public void setResults(ConcurrentHashMap<String, Double> results) {
         this.results = results;
     }
 
@@ -136,7 +136,7 @@ public class MorphemeTransition {
 
             next = st.nextToken();
 
-            Map<String, Double> transitions;
+            ConcurrentHashMap<String, Double> transitions;
             if (morphemeBiagramCount.containsKey(curr)) {
                 transitions = morphemeBiagramCount.get(curr);
                 if (transitions.containsKey(next)) {
@@ -145,7 +145,7 @@ public class MorphemeTransition {
                     transitions.put(next, frequency);
                 }
             } else {
-                transitions = new HashMap<>();
+                transitions = new ConcurrentHashMap<>();
                 transitions.put(next, frequency);
             }
             morphemeBiagramCount.put(curr, transitions);
@@ -165,7 +165,7 @@ public class MorphemeTransition {
             morphemeCount.put(next, frequency);
         }
 
-        Map<String, Double> transitions;
+        ConcurrentHashMap<String, Double> transitions;
         if (morphemeBiagramCount.containsKey(curr)) {
             transitions = morphemeBiagramCount.get(curr);
             if (transitions.containsKey(next)) {
@@ -174,7 +174,7 @@ public class MorphemeTransition {
                 transitions.put(next, frequency);
             }
         } else {
-            transitions = new HashMap<>();
+            transitions = new ConcurrentHashMap<>();
             transitions.put(next, frequency);
         }
         morphemeBiagramCount.put(curr, transitions);
@@ -207,7 +207,7 @@ public class MorphemeTransition {
                 next = next.replaceAll("k|ğ", "G");
             }
 
-            Map<String, Double> transitions;
+            ConcurrentHashMap<String, Double> transitions;
             if (morphemeBiagramCount.containsKey(curr)) {
                 transitions = morphemeBiagramCount.get(curr);
                 if (transitions.containsKey(next)) {
@@ -216,7 +216,7 @@ public class MorphemeTransition {
                     transitions.put(next, frequency);
                 }
             } else {
-                transitions = new HashMap<>();
+                transitions = new ConcurrentHashMap<>();
                 transitions.put(next, frequency);
             }
             morphemeBiagramCount.put(curr, transitions);
@@ -236,7 +236,7 @@ public class MorphemeTransition {
             morphemeCount.put(next, frequency);
         }
 
-        Map<String, Double> transitions;
+        ConcurrentHashMap<String, Double> transitions;
         if (morphemeBiagramCount.containsKey(curr)) {
             transitions = morphemeBiagramCount.get(curr);
             if (transitions.containsKey(next)) {
@@ -245,7 +245,7 @@ public class MorphemeTransition {
                 transitions.put(next, frequency);
             }
         } else {
-            transitions = new HashMap<>();
+            transitions = new ConcurrentHashMap<>();
             transitions.put(next, frequency);
         }
         morphemeBiagramCount.put(curr, transitions);
@@ -299,11 +299,11 @@ public class MorphemeTransition {
             double noF_denominator = ((morphemeCount.get(firstMorpheme) + morphemeCount.size() * additive));
             double noF = additive / noF_denominator;
 
-            Map<String, Double> transitions;
-            Map<String, Double> transitionProbabilities;
+            ConcurrentHashMap<String, Double> transitions;
+            ConcurrentHashMap<String, Double> transitionProbabilities;
             if (morphemeBiagramCount.containsKey(firstMorpheme)) {
                 transitions = morphemeBiagramCount.get(firstMorpheme);
-                transitionProbabilities = new HashMap<>();
+                transitionProbabilities = new ConcurrentHashMap<>();
                 for (String secondMorpheme : morphemeCount.keySet()) {
                     if (transitions.containsKey(secondMorpheme)) {
                         transitionProbabilities.put(secondMorpheme, (transitions.get(secondMorpheme) + additive) / noF_denominator);
@@ -312,7 +312,7 @@ public class MorphemeTransition {
                     }
                 }
             } else {
-                transitionProbabilities = new HashMap<>();
+                transitionProbabilities = new ConcurrentHashMap<>();
                 for (String secondMorpheme : morphemeCount.keySet()) {
                     transitionProbabilities.put(secondMorpheme, noF);
                 }
@@ -327,10 +327,10 @@ public class MorphemeTransition {
         mt.calculateTotalMorphemeCount();
         mt.calculateTransitionProbabilities(Smoothing.LAPLACE);
 
-        Map<String, Double> stemCount = mt.getStemCount();
-        Map<String, Double> morphemeCount = mt.getMorphemeCount();
-        Map<String, Map<String, Double>> morphemeBiagramCount = mt.getMorphemeBiagramCount();
-        Map<String, Map<String, Double>> morphemeBiagramProbabilities = mt.getMorphemeBiagramProbabilities();
+        ConcurrentHashMap<String, Double> stemCount = mt.getStemCount();
+        ConcurrentHashMap<String, Double> morphemeCount = mt.getMorphemeCount();
+        ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> morphemeBiagramCount = mt.getMorphemeBiagramCount();
+        ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> morphemeBiagramProbabilities = mt.getMorphemeBiagramProbabilities();
         System.out.println("...................FINISH...................");
     }
 }

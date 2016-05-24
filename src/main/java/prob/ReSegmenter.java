@@ -8,6 +8,7 @@ import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by ahmetu on 04.05.2016.
@@ -21,7 +22,7 @@ public class ReSegmenter {
     private Map<String, Double> notFounds;
 
     private Map<String, Double> stemProbabilities;
-    private Map<String, Map<String, Double>> morphemeBiagramProbabilities;
+    private ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> morphemeBiagramProbabilities;
 
     private String fileSegmentationInput;
 
@@ -58,20 +59,20 @@ public class ReSegmenter {
         this.notFounds = notFounds;
     }
 
-    public void setMorphemeBiagramProbabilities(Map<String, Map<String, Double>> morphemeBiagramProbabilities) {
+    public void setMorphemeBiagramProbabilities(ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> morphemeBiagramProbabilities) {
         this.morphemeBiagramProbabilities = morphemeBiagramProbabilities;
     }
 
-    public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, Map<String, Map<String, Double>> morphemeBiagramProbabilities,
-                       Map<String, Double> stemProbabilities, WordVectors vectors) {
+    public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> morphemeBiagramProbabilities,
+                       Map<String, Double> stemProbabilities, Map<String, Double> results, Map<String, Double> notFounds, WordVectors vectors) {
         this.fileSegmentationInput = fileSegmentationInput;
         this.stems = stems;
         this.affixes = affixes;
         this.stemProbabilities = stemProbabilities;
         this.morphemeBiagramProbabilities = morphemeBiagramProbabilities;
 
-        results = new HashMap<>();
-        notFounds = new HashMap<>();
+        this.results = results;
+        this.notFounds = notFounds;
 
         this.vectors = vectors;
     }

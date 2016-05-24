@@ -72,7 +72,7 @@ public class NestedSegmenter {
                 for (int i = 0; i < word.length() - 2; i++) {
                     String candidate = stem.substring(0, stem.length() - count);
                     double cosine = vectors.similarity(stem, candidate);
-                    if (cosine > treshold && cosine < 1d) {
+                    if (cosine > treshold && cosine < 0.9) {
                         String affix = stem.substring(stem.length() - count, stem.length());
 
                         localSuffixes.push(affix);

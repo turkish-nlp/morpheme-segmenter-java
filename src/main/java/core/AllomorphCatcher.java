@@ -48,7 +48,14 @@ public class AllomorphCatcher {
     public static void main(String[] args) {
         System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
         AllomorphCatcher ac = new AllomorphCatcher(args[0], args[1]);
-        ac.TestAnalogy();
+        //ac.TestAnalogy();
+        System.out.println(ac.vectors.similarity("fearlessly", "fearlessl"));
+        System.out.println(ac.vectors.similarity("fearlessly", "fearless"));
+        System.out.println(ac.vectors.similarity("fearles", "fearless"));
+        System.out.println(ac.vectors.similarity("fearle", "fearlessl"));
+        System.out.println(ac.vectors.similarity("fearl", "fearlessl"));
+        System.out.println(ac.vectors.similarity("fear", "fearless"));
+        System.out.println(ac.vectors.similarity("fe", "fear"));
     }
 
 }

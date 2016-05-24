@@ -52,7 +52,7 @@ public class PrepareResultFile {
         BufferedReader reader = null;
         reader = new BufferedReader(new FileReader("outputs/results"));
 
-        PrintWriter writer = new PrintWriter("outputs/eng_ready", "UTF-8");
+        PrintWriter writer = new PrintWriter("outputs/eng_ready_5", "UTF-8");
 
         String line;
         while ((line = reader.readLine()) != null) {

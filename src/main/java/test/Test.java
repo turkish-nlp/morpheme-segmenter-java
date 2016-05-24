@@ -2,6 +2,7 @@ package test;
 
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
+import prob.MorphemeTransition;
 import prob.ReSegmenter;
 import prob.Utilities;
 
@@ -86,6 +87,103 @@ public class Test {
                                     rs.reSegmentWithDBandBinomialPrior_C(word, freq, true);
                                 } else if (priorType.equalsIgnoreCase("binomial_np")) {
                                     rs.reSegmentWithDBandBinomialPrior_NP(word, freq, true);
+                                }
+
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } while (line != null);
+                }
+            });
+        }
+
+        for (int i = 0; i < threadNumber; i++) {
+            threads[i].start();
+        }
+
+        for (int i = 0; i < threadNumber; i++) {
+            threads[i].join();
+        }
+
+        Map<String, Double> newResults = rs.getResults();
+        Map<String, Double> newNotFound = rs.getNotFounds();
+
+        PrintWriter writer_res_new = new PrintWriter("outputs/results_" + priorType, "UTF-8");
+        PrintWriter writer_noF_new = new PrintWriter("outputs/absents_" + priorType, "UTF-8");
+
+        for (Map.Entry<String, Double> entry : newResults.entrySet()) {
+            String line = entry.getValue() + " " + entry.getKey();
+            writer_res_new.println(line);
+        }
+
+        for (Map.Entry<String, Double> entry : newNotFound.entrySet()) {
+            String line = entry.getValue() + " " + entry.getKey();
+            writer_noF_new.println(line);
+        }
+
+        writer_res_new.close();
+        writer_noF_new.close();
+    }
+
+    public void multiThreadTestViaMap(String inputFileName, int threadNumber, Map<String, Double> stems,
+                                      Map<String, Double> affixes,
+                                      ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> morphemeProb,
+                                      double totalStemCount,
+                                      String vectorFile, String priorType) throws InterruptedException, IOException {
+
+        WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(vectorFile));
+
+        Map<String, Double> stemProbabilities = new ConcurrentHashMap();
+        Map<String, Double> results = new ConcurrentHashMap();
+        Map<String, Double> notfounds = new ConcurrentHashMap();
+
+        System.out.println("------------------------------------------------------------");
+        System.out.println("--------------Stems & Affixes are constructing--------------");
+        System.out.println("");
+
+        for (String stem : stems.keySet()) {
+            stemProbabilities.put(stem, (stems.get(stem) / totalStemCount));
+        }
+
+        System.out.println("-------------------------------------------------------------------------------------");
+        System.out.println("--------------ReSegmentation started with " + threadNumber + " threads --------------");
+        System.out.println("");
+
+        ReSegmenter rs = new ReSegmenter(inputFileName, stems, affixes, morphemeProb,
+                stemProbabilities, results, notfounds, vectors);
+
+        final BufferedReader reader = new BufferedReader(new FileReader(inputFileName), 1024 * 1024);
+
+        Thread[] threads = new Thread[threadNumber];
+        for (int i = 0; i < threadNumber; i++) {
+            threads[i] = new Thread(new Runnable() {
+
+                @Override
+                public void run() {
+                    //method testing
+
+                    System.out.println("Thread starting: " + Thread.currentThread().getName());
+
+                    String line = null;
+                    do {
+                        try {
+                            synchronized (reader) {
+                                line = reader.readLine();
+                            }
+                            if (line != null) {
+                                String space = " ";
+                                StringTokenizer st = new StringTokenizer(line, space);
+
+                                double freq = Double.parseDouble(st.nextToken());
+                                String word = st.nextToken();
+
+                                if (priorType.equalsIgnoreCase("binomial_c")) {
+                                    rs.reSegmentWithDBandBinomialPrior_C(word, freq, true);
+                                } else if (priorType.equalsIgnoreCase("binomial_np")) {
+                                    rs.reSegmentWithDBandBinomialPrior_NP(word, freq, true);
+                                } else {
+                                    rs.reSegmentWithMap(word, freq, true);
                                 }
 
                             }
@@ -216,20 +314,26 @@ public class Test {
         writer_noF.close();
         */
 
-        /*
+
         System.out.println("---------------------------------------------------------------");
         System.out.println("------------Transition probabilities are calculating-----------");
-        MorphemeTransition mt = new MorphemeTransition("outputs/results_nested");
+        MorphemeTransition mt = new MorphemeTransition("outputs/results");
         mt.doItForFile();
         mt.calculateTransitionProbabilities(MorphemeTransition.Smoothing.LAPLACE);
 
         mt.setMorphemeBiagramCount(null);
 
-        Utilities.writeFileBigramProbabilities(mt.getMorphemeBiagramProbabilities());
-        */
+        //Utilities.writeFileBigramProbabilities(mt.getMorphemeBiagramProbabilities());
+
+
+        ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> bigramsProb = mt.getMorphemeBiagramProbabilities();
+        ConcurrentHashMap<String, Double> morphemes = mt.getMorphemeCount();
+        ConcurrentHashMap<String, Double> stems = mt.getStemCount();
+        double totalMorphs = mt.getTotalMorphemeCount();
+        double totalStems = mt.getTotalStemCount();
 
         Test test = new Test();
-        test.multiThreadTest(args[1], 16, args[0], "binomial_c");
-        test.multiThreadTest(args[1], 16, args[0], "binomial_np");
+        test.multiThreadTestViaMap(args[1], 16, stems, morphemes, bigramsProb, totalStems, null, "non_prior");
+        //test.multiThreadTest(args[1], 16, args[0], "binomial_np");
     }
 }
