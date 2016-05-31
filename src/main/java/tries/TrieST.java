@@ -8,6 +8,7 @@ package tries;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -42,6 +43,7 @@ public class TrieST {
     private static final int R = 1024;        // extended ASCII
 
     private Node root;      // root of trie
+
     private int N;          // number of keys in trie
     private AtomicInteger atom = new AtomicInteger();
 
@@ -49,7 +51,7 @@ public class TrieST {
         return wordList;
     }
 
-    private Map<String, Integer> wordList = new HashMap<>();
+    private Map<String, Integer> wordList = new ConcurrentHashMap<>();
 
     // R-way trie node
     private static class Node {
@@ -111,7 +113,7 @@ public class TrieST {
      // * @param val the Integer
      * @throws NullPointerException if <tt>key</tt> is <tt>null</tt>
      */
-    public void put(String key) {
+    public boolean put(String key) {
         Integer val = (Integer) atom.getAndIncrement();
         if (val == null) {
             delete(key);
@@ -119,6 +121,7 @@ public class TrieST {
             StringBuilder sb = new StringBuilder();
             root = put(root, key, val, 0, sb);
         }
+        return this.contains(key);
     }
 
     private Node put(Node x, String key, Integer val, int d, StringBuilder stringBuilder) {
@@ -330,7 +333,7 @@ public class TrieST {
     */
     public static void main(String[] args) {
 
-        String line = "geldi gelirken gelir gelmeli gelince gelz";
+        String line = "geldi gel$ gelirken gelir gelmeli gelince gelz";
         StringTokenizer stz = new StringTokenizer(line, " ");
 
         TrieST st = new TrieST();
@@ -350,5 +353,7 @@ public class TrieST {
         }
 
         System.out.println(st.wordList.toString());
+
+        System.out.println(st.contains("geld"));
     }
 }
