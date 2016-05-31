@@ -10,10 +10,7 @@ import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tree.MorphemeGraph;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.stream.IntStream;
 
 public class SubstringMatcher {
@@ -22,7 +19,7 @@ public class SubstringMatcher {
     private Map<String, Double> affixes = new HashMap<>();
     private Map<String, Double> results = new HashMap<>();
     private Map<String, MorphemeGraph> graphList = new HashMap<>();
-
+    public static ArrayList<String> stemsList = new ArrayList<String>();
     private String fileSegmentationInput;
 
     private WordVectors vectors;
@@ -77,29 +74,33 @@ public class SubstringMatcher {
         // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
         int[] stem_candidates = new int[word.length()+1];
         if (!neighboors.isEmpty()) {
-
             for (String n : neighboors) {
-                //System.out.print(n + ": ");
-                if(n.substring(0,limit).equals(word.substring(0,limit))) {
-                    //      System.out.println(substring(word, n));
-                    stem_candidates[substring(word, n)]++;
+          //      System.out.println(n);
+                if(n.length() >=limit && word.length() >=limit) {
+                    if (n.substring(0, limit).equals(word.substring(0, limit))) {
+                        //      System.out.println(substring(word, n));
+                        stem_candidates[substring(word, n)]++;
+                    }
                 }
             }
         }
         int max= IntStream.of(stem_candidates).max().getAsInt();
         int maxIndex = Ints.indexOf(stem_candidates, max);
-          for(Integer i : stem_candidates) System.out.print(i + " - ");
-        //    System.out.println(max + "index:" + maxIndex);
 
+        String result = "";
         stem = word.substring(0, maxIndex);
         affix = word.substring(maxIndex);
+
+        result = word + " -> " + stem + "+" + affix;
+        if(stem.equals("") && neighboors.isEmpty())
+            result = result + " emptySet";
+        System.out.println(result);
+        stemsList.add(result);
+
         MorphemeGraph graph = new MorphemeGraph(stem, vectors);
+/*        graph.add(word, freq);
 
-        graph.add(word, freq);
-        System.out.println("stem: " + stem);
-        System.out.println("affix: " + affix);
 
-/*
         // Stream kısmının içinde (effectively ?) final variable'lar kullanmak gerekiyormuş, stem hiç değişmediği için onu bir final variable'a attım.
         // aynı sebepten suffixfar ve suffixClose'u stream bloğunun içine aldım, yoksa hata veriyordu.
         final String final_stem = stem;
@@ -288,7 +289,7 @@ public class SubstringMatcher {
                 }
             }
             if(!found) {
-                findMostFrequentLongestSubsequence(word, freq, 25);
+                findMostFrequentLongestSubsequence(word, freq, 50);
             }
             else {
                 found = false;
@@ -301,6 +302,11 @@ public class SubstringMatcher {
     public static void main(String[] args) throws IOException {
         SubstringMatcher ssm = new SubstringMatcher("outputs/vectors.txt", args[0]);
         ssm.findSegmentsAndAffixes();
+
+        PrintWriter writer_stem = new PrintWriter("stemList.txt", "UTF-8");
+        for(String s: stemsList)
+            writer_stem.println(s);
+        writer_stem.close();
 
         /*
         Map<String, Double> s = ssm.getStems();
