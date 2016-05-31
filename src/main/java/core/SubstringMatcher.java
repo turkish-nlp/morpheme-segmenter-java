@@ -8,9 +8,11 @@ import com.google.common.primitives.Ints;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tree.MorphemeGraph;
+import tries.TrieST;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 public class SubstringMatcher {
@@ -21,7 +23,6 @@ public class SubstringMatcher {
     private Map<String, MorphemeGraph> graphList = new HashMap<>();
     public static ArrayList<String> stemsList = new ArrayList<String>();
     private String fileSegmentationInput;
-
     private WordVectors vectors;
 
     public Map<String, Double> getStems() {
@@ -70,7 +71,8 @@ public class SubstringMatcher {
 
         String stem = word;
         String affix = "NLL";
-
+        TrieST st = new TrieST();
+        st.put(word);
         // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
         int[] stem_candidates = new int[word.length()+1];
         if (!neighboors.isEmpty()) {
@@ -79,18 +81,36 @@ public class SubstringMatcher {
                 if(n.length() >=limit && word.length() >=limit) {
                     if (n.substring(0, limit).equals(word.substring(0, limit))) {
                         //      System.out.println(substring(word, n));
-                        stem_candidates[substring(word, n)]++;
+                     //   stem_candidates[substring(word, n)]++;
+                        System.out.println("similiar:" + n);
+
+                        st.put( n);
                     }
                 }
             }
         }
-        int max= IntStream.of(stem_candidates).max().getAsInt();
-        int maxIndex = Ints.indexOf(stem_candidates, max);
+
+        Map<String, Integer> WordList = st.getWordList();
+        int max = 0;
+        String maxKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+        for(String s: WordList.keySet())
+        {
+            if( WordList.get(s) > max && s.length() < maxKey.length()) {
+                maxKey = s;
+                max = WordList.get(s);
+            }
+        }
+        
+   //     int max= IntStream.of(stem_candidates).max().getAsInt();
+   //     int maxIndex = Ints.indexOf(stem_candidates, max);
 
         String result = "";
-        stem = word.substring(0, maxIndex);
-        affix = word.substring(maxIndex);
+     //   stem = word.substring(0, maxIndex);
+     //   affix = word.substring(maxIndex);
 
+        stem = maxKey;
+        if(!maxKey.equals("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"))
+            affix = word.substring(maxKey.length());
         result = word + " -> " + stem + "+" + affix;
         if(stem.equals("") && neighboors.isEmpty())
             result = result + " emptySet";

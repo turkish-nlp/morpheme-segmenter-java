@@ -6,11 +6,9 @@ package tries;
  * and open the template in the editor.
  */
 
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Scanner;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * ****************************************************************************
@@ -24,13 +22,13 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 
 /**
- * The <tt>TrieST</tt> class represents an symbol table of key-value pairs, with string keys and generic values. It supports the usual <em>put</em>, <em>get</em>,
+ * The <tt>TrieST</tt> class represents an symbol table of key-Integer pairs, with string keys and generic Integers. It supports the usual <em>put</em>, <em>get</em>,
  * <em>contains</em>,
  * <em>delete</em>, <em>size</em>, and <em>is-empty</em> methods. It also provides character-based methods for finding the string in the symbol table that is the <em>longest
  * prefix</em> of a given prefix, finding all strings in the symbol table that <em>start with</em> a given prefix, and finding all strings in the symbol table that
- * <em>match</em> a given pattern. A symbol table implements the <em>associative array</em> abstraction: when associating a value with a key that is already in the symbol
- * table, the convention is to replace the old value with the new value. Unlike {@link java.util.Map}, this class uses the convention that values cannot be
- * <tt>null</tt>&mdash;setting the value associated with a key to <tt>null</tt> is equivalent to deleting the key from the symbol table.
+ * <em>match</em> a given pattern. A symbol table implements the <em>associative array</em> abstraction: when associating a Integer with a key that is already in the symbol
+ * table, the convention is to replace the old Integer with the new Integer. Unlike {@link java.util.Map}, this class uses the convention that Integers cannot be
+ * <tt>null</tt>&mdash;setting the Integer associated with a key to <tt>null</tt> is equivalent to deleting the key from the symbol table.
  * <p>
  * This implementation uses a 256-way trie. The <em>put</em>, <em>contains</em>, <em>delete</em>, and
  * <em>longest prefix</em> operations take time proportional to the length of the key (in the worst case). Construction takes constant time. The <em>size</em>, and
@@ -39,18 +37,26 @@ import java.util.concurrent.ArrayBlockingQueue;
  * For additional documentation, see <a href="http://algs4.cs.princeton.edu/52trie">Section 5.2</a> of
  * <i>Algorithms, 4th Edition</i> by Robert Sedgewick and Kevin Wayne.
  */
-public class TrieST<Value> {
+public class TrieST {
 
-    private static final int R = 256;        // extended ASCII
+    private static final int R = 1024;        // extended ASCII
 
     private Node root;      // root of trie
     private int N;          // number of keys in trie
+    private AtomicInteger atom = new AtomicInteger();
+
+    public Map<String, Integer> getWordList() {
+        return wordList;
+    }
+
+    private Map<String, Integer> wordList = new HashMap<>();
 
     // R-way trie node
     private static class Node {
 
         private Object val;
         private Node[] next = new Node[R];
+        private ArrayList<Integer> used = new ArrayList<Integer>();
     }
 
     /**
@@ -60,18 +66,18 @@ public class TrieST<Value> {
     }
 
     /**
-     * Returns the value associated with the given key.
+     * Returns the Integer associated with the given key.
      *
      * @param key the key
-     * @return the value associated with the given key if the key is in the symbol table and <tt>null</tt> if the key is not in the symbol table
+     * @return the Integer associated with the given key if the key is in the symbol table and <tt>null</tt> if the key is not in the symbol table
      * @throws NullPointerException if <tt>key</tt> is <tt>null</tt>
      */
-    public Value get(String key) {
+    public Integer get(String key) {
         Node x = get(root, key, 0);
         if (x == null) {
             return null;
         }
-        return (Value) x.val;
+        return (Integer) x.val;
     }
 
     /**
@@ -98,22 +104,24 @@ public class TrieST<Value> {
     }
 
     /**
-     * Inserts the key-value pair into the symbol table, overwriting the old value with the new value if the key is already in the symbol table. If the value is <tt>null</tt>,
+     * Inserts the key-Integer pair into the symbol table, overwriting the old Integer with the new Integer if the key is already in the symbol table. If the Integer is <tt>null</tt>,
      * this effectively deletes the key from the symbol table.
      *
      * @param key the key
-     * @param val the value
+     // * @param val the Integer
      * @throws NullPointerException if <tt>key</tt> is <tt>null</tt>
      */
-    public void put(String key, Value val) {
+    public void put(String key) {
+        Integer val = (Integer) atom.getAndIncrement();
         if (val == null) {
             delete(key);
         } else {
-            root = put(root, key, val, 0);
+            StringBuilder sb = new StringBuilder();
+            root = put(root, key, val, 0, sb);
         }
     }
 
-    private Node put(Node x, String key, Value val, int d) {
+    private Node put(Node x, String key, Integer val, int d, StringBuilder stringBuilder) {
         if (x == null) {
             x = new Node();
         }
@@ -121,18 +129,28 @@ public class TrieST<Value> {
             if (x.val == null) {
                 N++;
             }
+            stringBuilder.append(key.charAt(d-1));
+            wordList.put(stringBuilder.toString(), x.used.size());
             x.val = val;
             return x;
         }
         char c = key.charAt(d);
-        x.next[c] = put(x.next[c], key, val, d + 1);
+
+        if (!(d == 0)) {
+            stringBuilder.append(key.charAt(d-1));
+            if (!x.used.contains((int) c))
+                x.used.add((int) c);
+            wordList.put(stringBuilder.toString(), x.used.size());
+        }
+        x.next[c] = put(x.next[c], key, val, d + 1, stringBuilder);
+
         return x;
     }
 
     /**
-     * Returns the number of key-value pairs in this symbol table.
+     * Returns the number of key-Integer pairs in this symbol table.
      *
-     * @return the number of key-value pairs in this symbol table
+     * @return the number of key-Integer pairs in this symbol table
      */
     public int size() {
         return N;
@@ -294,22 +312,34 @@ public class TrieST<Value> {
     /**
      * Unit tests the <tt>TrieST</tt> data type.
      */
+
+    /*
+    static private int noOfMostChildren(Node x)
+    {
+        int max = 0;
+        for(int j=0; j< x.used.size() ;j++)
+        {
+            int tmp = 0;
+            if(x.next[x.used.get(j)] != null)
+                tmp = x.next[x.used.get(j)].size;
+            if(tmp > max)
+                max = tmp;
+        }
+        return max;
+    }
+    */
     public static void main(String[] args) {
 
-        // build symbol table from standard input
-        System.out.println("Give the input in a line:");
-        Scanner scanner = new Scanner(System.in);
-        String line = scanner.nextLine();
+        String line = "geldi gelirken gelir gelmeli gelince gelz";
         StringTokenizer stz = new StringTokenizer(line, " ");
 
-        TrieST<Integer> st = new TrieST<Integer>();
+        TrieST st = new TrieST();
         int i = 0;
         while (stz.hasMoreTokens()) {
             String key = stz.nextToken();
-            st.put(key, i);
+            st.put(key);
             i++;
         }
-
         // print results
         if (st.size() < 100) {
             System.out.println("keys(\"\"):");
@@ -319,23 +349,6 @@ public class TrieST<Value> {
             System.out.println();
         }
 
-        System.out.println("longestPrefixOf(\"shellsort\"):");
-        System.out.println(st.longestPrefixOf("shellsort"));
-        System.out.println();
-
-        System.out.println("longestPrefixOf(\"quicksort\"):");
-        System.out.println(st.longestPrefixOf("quicksort"));
-        System.out.println();
-
-        System.out.println("keysWithPrefix(\"shor\"):");
-        for (String s : st.keysWithPrefix("shor")) {
-            System.out.println(s);
-        }
-        System.out.println();
-
-        System.out.println("keysThatMatch(\".he.l.\"):");
-        for (String s : st.keysThatMatch(".he.l.")) {
-            System.out.println(s);
-        }
+        System.out.println(st.wordList.toString());
     }
 }
