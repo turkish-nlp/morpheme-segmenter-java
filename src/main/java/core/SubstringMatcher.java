@@ -28,7 +28,7 @@ public class SubstringMatcher {
     private String fileSegmentationInput;
     private WordVectors vectors;
     int limit = 2;
-    private ConcurrentSkipListSet<String> set = new ConcurrentSkipListSet<>();
+    private ConcurrentSkipListSet<String> set;
 
     public Map<String, Double> getStems() {
         return stems;
@@ -72,7 +72,7 @@ public class SubstringMatcher {
         System.out.println("Control Word: " + word);
 
         Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
-
+        set = new ConcurrentSkipListSet<>();
         String stem = word;
         TrieST st = new TrieST();
         st.put(word);
@@ -82,7 +82,7 @@ public class SubstringMatcher {
             neighboors.parallelStream().forEach((n) -> {
                 if(n.length() >=limit && word.length() >=limit) {
                     if (n.substring(0, limit).equals(word.substring(0, limit))) {
-                        recursiveAddLevelOne(n, freq, numberOfneighboors, st);
+                        recursiveAddLevelOne(n, freq, numberOfneighboors, set);
                     }
                 }
             });
@@ -123,13 +123,13 @@ public class SubstringMatcher {
         graphList.put(word, st);
     }
 
-    private void recursiveAddLevelOne(String word, double freq, int numberOfneighboors, TrieST st) {
+    private void recursiveAddLevelOne(String word, double freq, int numberOfneighboors, Set set) {
         if (set.add(word+ "$")) {
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
              neighboors.parallelStream().forEach((n) -> {
                  if(n.length() >=limit && word.length() >=limit) {
                      if (n.substring(0, limit).equals(word.substring(0, limit))) {
-                         recursiveAdd(n, freq, numberOfneighboors, st);
+                         recursiveAdd(n, freq, numberOfneighboors, set);
                      }
                  }
             });
@@ -137,7 +137,7 @@ public class SubstringMatcher {
         }
     }
 
-    private void recursiveAdd(String word, double freq, int numberOfneighboors, TrieST st) {
+    private void recursiveAdd(String word, double freq, int numberOfneighboors, Set set) {
         if (set.add(word+ "$")) {
             //  System.out.println("Child_2: " + word);
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
@@ -145,7 +145,7 @@ public class SubstringMatcher {
             for (String n : neighboors) {
                 if(n.length() >=limit && word.length() >=limit) {
                     if (n.substring(0, limit).equals(word.substring(0, limit))) {
-                        recursiveAdd(n , freq, numberOfneighboors, st);
+                        recursiveAdd(n , freq, numberOfneighboors, set);
                     }
                 }
             }
