@@ -27,7 +27,8 @@ public class SubstringMatcher {
 
     private String fileSegmentationInput;
     private WordVectors vectors;
-    int limit = 2;
+    int limit = 3;
+    int childLimit = 3;
     private ConcurrentSkipListSet<String> set;
 
     public Map<String, Double> getStems() {
@@ -70,21 +71,17 @@ public class SubstringMatcher {
     private void findMostFrequentLongestSubsequence(String word, double freq, int numberOfneighboors) throws FileNotFoundException, UnsupportedEncodingException {
 
         System.out.println("Control Word: " + word);
-
+        PrintWriter writer = new PrintWriter("trie/"+ word+".txt", "UTF-8");
         Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
         set = new ConcurrentSkipListSet<>();
         String stem = word;
         TrieST st = new TrieST();
-        st.put(word);
+        set.add(word);
         // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
         int[] stem_candidates = new int[word.length()+1];
         if (!neighboors.isEmpty()) {
             neighboors.parallelStream().forEach((n) -> {
-                if(n.length() >=limit && word.length() >=limit) {
-                    if (n.substring(0, limit).equals(word.substring(0, limit))) {
-                        recursiveAddLevelOne(n, freq, numberOfneighboors, set);
-                    }
-                }
+                recursiveAddLevelOne(n, freq, numberOfneighboors, set);
             });
         }
 
@@ -93,29 +90,15 @@ public class SubstringMatcher {
             st.put(key);
         }
         Map<String, Integer> WordList = st.getWordList();
-        int max = 0;
-        String maxKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+
         for(String s: WordList.keySet())
         {
-            if( WordList.get(s) > max && s.length() < maxKey.length()) {
-                maxKey = s;
-                max = WordList.get(s);
-                stemCandi.clear();
+            if( WordList.get(s) >= childLimit ) {
                 stemCandi.add(s);
-            }
-            else if( WordList.get(s) == max)
-            {
-                stemCandi.add(s);
+                writer.println(s);
             }
         }
-
-        String resultPrint = "";
-
-        stem = maxKey;
-        resultPrint = word + " -> " + stem;
-        if(stem.equals("") && neighboors.isEmpty())
-            resultPrint = resultPrint + " emptySet";
-        System.out.println(resultPrint);
+        writer.close();
         System.out.println("-------------------------------------------------------------------");
         System.out.println(stemCandi.toString());
         System.out.println("For word >>>> " + word + " <<<< from root node to all leaf nodes, all paths: ");
@@ -127,11 +110,9 @@ public class SubstringMatcher {
         if (set.add(word+ "$")) {
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
              neighboors.parallelStream().forEach((n) -> {
-                 if(n.length() >=limit && word.length() >=limit) {
-                     if (n.substring(0, limit).equals(word.substring(0, limit))) {
-                         recursiveAdd(n, freq, numberOfneighboors, set);
-                     }
-                 }
+                      recursiveAdd(n, freq, numberOfneighboors, set);
+
+
             });
 
         }
@@ -143,15 +124,12 @@ public class SubstringMatcher {
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
 
             for (String n : neighboors) {
-                if(n.length() >=limit && word.length() >=limit) {
-                    if (n.substring(0, limit).equals(word.substring(0, limit))) {
-                        recursiveAdd(n , freq, numberOfneighboors, set);
-                    }
+                       recursiveAdd(n , freq, numberOfneighboors, set);
                 }
             }
         }
 
-    }
+
 
     private void findSegmentsAndAffixes() throws IOException {
         BufferedReader reader = null;
