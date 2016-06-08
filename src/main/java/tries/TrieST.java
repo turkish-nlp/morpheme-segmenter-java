@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class TrieST {
 
-    private static final int R = 1024;        // extended ASCII
+    private static final int R = 2048;        // extended ASCII
 
     private Node root;      // root of trie
 
