@@ -71,10 +71,38 @@ public class SubstringMatcher {
         System.out.println("Control Word: " + word);
         PrintWriter writer = new PrintWriter("trie/" + word + ".txt", "UTF-8");
         Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
-        set = new ConcurrentSkipListSet<>();
         String stem = word;
         TrieST st = new TrieST();
-        set.add(word + "$");
+        // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
+        int[] stem_candidates = new int[word.length() + 1];
+        if (!neighboors.isEmpty()) {
+            st.put(word + "$");
+
+            for (String w : neighboors)
+                st.put(w + "$");
+        }
+
+        Map<String, Integer> WordList = st.getWordList();
+
+        for (String s : WordList.keySet()) {
+            if (WordList.get(s) >= childLimit) {
+                writer.println("(" + s + ", " + WordList.get(s) + ")");
+            }
+        }
+        writer.close();
+        System.out.println("For word >>>> " + word + " <<<< from root node to all leaf nodes, all paths: ");
+        System.out.println("-------------------------------------------------------------------");
+
+    }
+
+    private void findMostFrequentLongestSubsequenceRecursive(String word, double freq, int numberOfneighboors) throws FileNotFoundException, UnsupportedEncodingException {
+
+        System.out.println("Control Word: " + word);
+        PrintWriter writer = new PrintWriter("trie/" + word + ".txt", "UTF-8");
+        Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
+        String firstWord = word;
+        TrieST st = new TrieST();
+
         // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
         int[] stem_candidates = new int[word.length() + 1];
         if (!neighboors.isEmpty()) {
@@ -83,90 +111,58 @@ public class SubstringMatcher {
                 System.out.println(s);
             }
             */
-            TrieST st1 = new TrieST();
-            st1.put(word + "$");
-
-            for (String w : neighboors)
-                st1.put(w + "$");
-
-            ArrayList<String> list = new ArrayList<>();
-
-            for (String s : st1.getWordList().keySet()) {
-                if ((st1.getWordList().get(s) >= childLimit) && (s.length() > 1)) {
-                    list.add(s.replaceAll("$", ""));
-                }
-            }
-            System.out.println(list.toString());
-
-            list.parallelStream().forEach((n) -> {
-                recursiveAddLevelOne(n, freq, numberOfneighboors, set);
+            st.put(word + "$");
+            neighboors.parallelStream().forEach((n) -> {
+                if(vectors.similarity(word, n) > 0.50)
+                    recursiveAddLevelOne(firstWord, n, freq, numberOfneighboors, st);
+                else
+                    System.out.println("skipped: " + n);
             });
         }
 
-        for (String key : set) {
-            System.out.println("key: " + key);
-            st.put(key);
-        }
         Map<String, Integer> WordList = st.getWordList();
 
         for (String s : WordList.keySet()) {
             if (WordList.get(s) >= childLimit) {
-                stemCandi.add(s);
-                writer.println(s);
+                 writer.println("(" + s + ", " + WordList.get(s) + ")");
             }
         }
         writer.close();
-        System.out.println("-------------------------------------------------------------------");
-        System.out.println(stemCandi.toString());
         System.out.println("For word >>>> " + word + " <<<< from root node to all leaf nodes, all paths: ");
+        System.out.println("-------------------------------------------------------------------");
 
         graphList.put(word, st);
     }
 
-    private void recursiveAddLevelOne(String word, double freq, int numberOfneighboors, Set set) {
-
-        if (set.add(word + "$")) {
+    private void recursiveAddLevelOne(String firstWord, String word, double freq, int numberOfneighboors, TrieST st) {
+        if (st.put(word + "$")) {
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
             if (!neighboors.isEmpty()) {
-                TrieST st1 = new TrieST();
-                st1.put(word + "$");
-
-                for (String w : neighboors)
-                    st1.put(w + "$");
-
-                ArrayList<String> list = new ArrayList<>();
-
-                for (String s : st1.getWordList().keySet()) {
-                    if ((st1.getWordList().get(s) >= childLimit) && (s.length() > 1)) {
-                        list.add(s.replaceAll("$", ""));
-                    }
-                }
-
-                list.parallelStream().forEach((n) -> {
-                    recursiveAddLevelOne(n, freq, numberOfneighboors, set);
+                    neighboors.parallelStream().forEach((n) -> {
+                    if(vectors.similarity(firstWord, n) > 0.50)
+                        recursiveAdd(firstWord, n, freq, numberOfneighboors, st);
+                    else
+                        System.out.println("skipped: " + n);
                 });
+
+
             }
         }
     }
 
-    private void recursiveAdd(String word, double freq, int numberOfneighboors, Set set) {
-        if (set.add(word + "$")) {
+    private void recursiveAdd(String firstWord, String word, double freq, int numberOfneighboors, TrieST st) {
+        System.out.println("l2:" + word);
+        if (st.put(word + "$")) {
             //  System.out.println("Child_2: " + word);
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
-
-            TrieST st1 = new TrieST();
-            st1.put(word + "$");
-
-            for (String w : neighboors)
-                st1.put(w + "$");
-
-            for (String s : st1.getWordList().keySet()) {
-                if ((st1.getWordList().get(s) >= childLimit) && (s.length() > 1)) {
-                    recursiveAddLevelOne(s.replaceAll("$", ""), freq, numberOfneighboors, set);
-
-                }
+            for (String w : neighboors) {
+                if(vectors.similarity(firstWord, w) > 0.50)
+                    recursiveAdd(firstWord, w, freq, numberOfneighboors, st);
+                else
+                    System.out.println("skipped: " + w);
             }
         }
+
     }
 
 
@@ -190,7 +186,7 @@ public class SubstringMatcher {
                 }
             }
             if (!found) {
-                findMostFrequentLongestSubsequence(word, freq, 50);
+                findMostFrequentLongestSubsequenceRecursive(word, freq, 50);
             } else {
                 found = false;
                 System.out.println(word + " has been skipped");
