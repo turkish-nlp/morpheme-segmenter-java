@@ -69,7 +69,7 @@ public class SubstringMatcher {
     private void findMostFrequentLongestSubsequence(String word, double freq, int numberOfneighboors) throws FileNotFoundException, UnsupportedEncodingException {
 
         System.out.println("Control Word: " + word);
-        PrintWriter writer = new PrintWriter("trie/" + word + ".txt", "UTF-8");
+        PrintWriter writer = new PrintWriter("tries-NonRecursive/" + word + ".txt", "UTF-8");
         Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
         String stem = word;
         TrieST st = new TrieST();
@@ -115,8 +115,6 @@ public class SubstringMatcher {
             neighboors.parallelStream().forEach((n) -> {
                 if(vectors.similarity(word, n) > 0.50)
                     recursiveAddLevelOne(firstWord, n, freq, numberOfneighboors, st);
-                else
-                    System.out.println("skipped: " + n);
             });
         }
 
@@ -135,17 +133,14 @@ public class SubstringMatcher {
     }
 
     private void recursiveAddLevelOne(String firstWord, String word, double freq, int numberOfneighboors, TrieST st) {
+        System.out.println("l1:" + word);
         if (st.put(word + "$")) {
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
             if (!neighboors.isEmpty()) {
                     neighboors.parallelStream().forEach((n) -> {
                     if(vectors.similarity(firstWord, n) > 0.50)
                         recursiveAdd(firstWord, n, freq, numberOfneighboors, st);
-                    else
-                        System.out.println("skipped: " + n);
                 });
-
-
             }
         }
     }
@@ -158,11 +153,8 @@ public class SubstringMatcher {
             for (String w : neighboors) {
                 if(vectors.similarity(firstWord, w) > 0.50)
                     recursiveAdd(firstWord, w, freq, numberOfneighboors, st);
-                else
-                    System.out.println("skipped: " + w);
             }
         }
-
     }
 
 
