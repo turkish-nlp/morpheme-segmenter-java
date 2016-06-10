@@ -29,7 +29,7 @@ public class SubstringMatcher {
     private WordVectors vectors;
     int limit = 2;
     int childLimit = 3;
-    private ConcurrentSkipListSet<String> set;
+    private ConcurrentSkipListSet<String> set = new ConcurrentSkipListSet<>();
 
     public Map<String, Double> getStems() {
         return stems;
@@ -101,23 +101,22 @@ public class SubstringMatcher {
         PrintWriter writer = new PrintWriter("trie/" + word + ".txt", "UTF-8");
         Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
         String firstWord = word;
-        TrieST st = new TrieST();
 
+        set.add(firstWord + "$");
         // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
         int[] stem_candidates = new int[word.length() + 1];
         if (!neighboors.isEmpty()) {
-            /*
-            for (String s : neighboors) {
-                System.out.println(s);
-            }
-            */
-            st.put(word + "$");
             neighboors.parallelStream().forEach((n) -> {
-                if(vectors.similarity(word, n) > 0.50)
-                    recursiveAddLevelOne(firstWord, n, freq, numberOfneighboors, st);
+                if (vectors.similarity(firstWord, n) > 0.50)
+                    recursiveAddLevelOne(firstWord, n, freq, numberOfneighboors);
             });
         }
+        TrieST st = new TrieST();
 
+        for (String str : set)
+        {
+            st.put(str);
+        }
         Map<String, Integer> WordList = st.getWordList();
 
         for (String s : WordList.keySet()) {
@@ -132,31 +131,30 @@ public class SubstringMatcher {
         graphList.put(word, st);
     }
 
-    private void recursiveAddLevelOne(String firstWord, String word, double freq, int numberOfneighboors, TrieST st) {
+    private void recursiveAddLevelOne(String firstWord, String word, double freq, int numberOfneighboors) {
         System.out.println("l1:" + word);
-        if (st.put(word + "$")) {
+        if (set.add(word + "$")) {
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
             if (!neighboors.isEmpty()) {
                     neighboors.parallelStream().forEach((n) -> {
                     if(vectors.similarity(firstWord, n) > 0.50)
-                        recursiveAdd(firstWord, n, freq, numberOfneighboors, st);
+                        recursiveAdd(firstWord, n, freq, numberOfneighboors);
                 });
             }
         }
     }
 
-    private void recursiveAdd(String firstWord, String word, double freq, int numberOfneighboors, TrieST st) {
+    private void recursiveAdd(String firstWord, String word, double freq, int numberOfneighboors) {
         System.out.println("l2:" + word);
-        if (st.put(word + "$")) {
+        if (set.add(word + "$")) {
             //  System.out.println("Child_2: " + word);
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
-            for (String w : neighboors) {
-                if(vectors.similarity(firstWord, w) > 0.50)
-                    recursiveAdd(firstWord, w, freq, numberOfneighboors, st);
+            for (String n : neighboors) {
+                if(vectors.similarity(firstWord, n) > 0.50)
+                    recursiveAdd(firstWord, n, freq, numberOfneighboors);
             }
         }
     }
-
 
     private void findSegmentsAndAffixes() throws IOException {
         BufferedReader reader = null;
