@@ -118,7 +118,7 @@ public class SubstringMatcher {
         for (String s : WordList.keySet()) {
 //            if (WordList.get(s) >= childLimit) {
 //                writer.println("(" + s + ", " + WordList.get(s) + ")");
-                System.out.println(s + "\t\t" + WordList.get(s));
+            System.out.println(s + "\t\t" + WordList.get(s));
 //            }
         }
 //        writer.close();
@@ -182,12 +182,70 @@ public class SubstringMatcher {
 
     }
 
-    private void getFrequency(Map<String, Integer> wordList, Map<String, Integer> morphemeList) {
-        String morphem = "";
-        /*
-        *
-        *
-         */
+    public void getFrequency(Map<String, Integer> wordList, Map<String, Integer> morphemeList) {
+
+        Stack<String> boundaries = new Stack();
+
+        String root = wordList.keySet().iterator().next();
+        boolean isRoot = false;
+
+        for (String s : wordList.keySet()) {
+            if (!isRoot && wordList.get(s) >= 3) {
+                root = s;
+                isRoot = true;
+                boundaries.add(root);
+
+                if (morphemeList.containsKey(s)) {
+                    morphemeList.put(s, morphemeList.get(s) + 1);
+                } else {
+                    morphemeList.put(s, 1);
+                }
+            } else if (s.startsWith(root) && isRoot) {
+                if (wordList.get(s) >= 3 && !s.endsWith("$")) {
+                    String morph = "";
+
+                    int size = boundaries.size();
+                    for (int i = 0; i < size; i++) {
+                        String surface = boundaries.peek();
+                        if (s.startsWith(surface)) {
+                            morph = s.substring(surface.length(), s.length());
+                            boundaries.add(s);
+                            break;
+                        } else {
+                            boundaries.pop();
+                        }
+                    }
+
+                    if (morphemeList.containsKey(morph)) {
+                        morphemeList.put(morph, morphemeList.get(morph) + 1);
+                    } else {
+                        morphemeList.put(morph, 1);
+                    }
+                } else {
+                    String morph = "";
+
+                    int size = boundaries.size();
+                    for (int i = 0; i < size; i++) {
+                        String surface = boundaries.peek();
+                        if (s.startsWith(surface)) {
+                            morph = s.substring(surface.length(), s.length() - 1);
+                            break;
+                        } else {
+                            boundaries.pop();
+                        }
+                    }
+
+                    if (morphemeList.containsKey(morph)) {
+                        morphemeList.put(morph, morphemeList.get(morph) + 1);
+                    } else {
+                        morphemeList.put(morph, 1);
+                    }
+                }
+            } else if (isRoot) {
+                root = s;
+                isRoot = false;
+            }
+        }
     }
 
     public static void main(String[] args) throws IOException {
