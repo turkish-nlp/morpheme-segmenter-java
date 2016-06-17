@@ -51,7 +51,7 @@ public class TrieST {
         return wordList;
     }
 
-    private Map<String, Integer> wordList = new ConcurrentHashMap<>();
+    private Map<String, Integer> wordList = new TreeMap<>();
 
     // R-way trie node
     private static class Node {
