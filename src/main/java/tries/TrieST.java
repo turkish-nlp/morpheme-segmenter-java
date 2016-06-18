@@ -6,6 +6,7 @@ package tries;
  * and open the template in the editor.
  */
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,7 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * For additional documentation, see <a href="http://algs4.cs.princeton.edu/52trie">Section 5.2</a> of
  * <i>Algorithms, 4th Edition</i> by Robert Sedgewick and Kevin Wayne.
  */
-public class TrieST {
+public class TrieST implements Serializable{
 
     private static final int R = 2048;        // extended ASCII
 
@@ -54,7 +55,7 @@ public class TrieST {
     private Map<String, Integer> wordList = new TreeMap<>();
 
     // R-way trie node
-    private static class Node {
+    private static class Node implements Serializable {
 
         private Object val;
         private Node[] next = new Node[R];
