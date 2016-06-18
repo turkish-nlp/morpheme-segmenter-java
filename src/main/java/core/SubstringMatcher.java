@@ -4,32 +4,28 @@ package core;
  * Created by ahmetu on 25.04.2016.
  */
 
-import com.google.common.primitives.Ints;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
-import tree.MorphemeGraph;
 import tries.TrieST;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 
 public class SubstringMatcher {
 
     private Map<String, Double> stems = new HashMap<>();
     private Map<String, Double> affixes = new HashMap<>();
     private Map<String, Double> results = new HashMap<>();
-    private Map<String, TrieST> graphList = new HashMap<>();
-    public static ArrayList<String> stemsList = new ArrayList<String>();
+    private Map<String, TrieST> trieList = new HashMap<>();
+    //public static ArrayList<String> stemsList = new ArrayList<String>();
     public ArrayList<String> stemCandi = new ArrayList<String>();
 
     private String fileSegmentationInput;
     private WordVectors vectors;
     int limit = 2;
     int childLimit = 3;
-    private ConcurrentSkipListSet<String> set;
+    private ConcurrentSkipListSet<String> set = new ConcurrentSkipListSet<>();
 
     public Map<String, Double> getStems() {
         return stems;
@@ -43,8 +39,8 @@ public class SubstringMatcher {
         return results;
     }
 
-    public Map<String, TrieST> getGraphList() {
-        return graphList;
+    public Map<String, TrieST> getTrieList() {
+        return trieList;
     }
 
     public SubstringMatcher(String fileVectorInput, String fileSegmentationInput) throws FileNotFoundException {
@@ -69,106 +65,93 @@ public class SubstringMatcher {
     private void findMostFrequentLongestSubsequence(String word, double freq, int numberOfneighboors) throws FileNotFoundException, UnsupportedEncodingException {
 
         System.out.println("Control Word: " + word);
-        PrintWriter writer = new PrintWriter("trie/" + word + ".txt", "UTF-8");
+        PrintWriter writer = new PrintWriter("tries-NonRecursive/" + word + ".txt", "UTF-8");
         Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
-        set = new ConcurrentSkipListSet<>();
         String stem = word;
         TrieST st = new TrieST();
-        set.add(word + "$");
         // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
         int[] stem_candidates = new int[word.length() + 1];
         if (!neighboors.isEmpty()) {
-            /*
-            for (String s : neighboors) {
-                System.out.println(s);
-            }
-            */
-            TrieST st1 = new TrieST();
-            st1.put(word + "$");
+            st.put(word + "$");
 
             for (String w : neighboors)
-                st1.put(w + "$");
-
-            ArrayList<String> list = new ArrayList<>();
-
-            for (String s : st1.getWordList().keySet()) {
-                if ((st1.getWordList().get(s) >= childLimit) && (s.length() > 1)) {
-                    list.add(s.replaceAll("$", ""));
-                }
-            }
-            System.out.println(list.toString());
-
-            list.parallelStream().forEach((n) -> {
-                recursiveAddLevelOne(n, freq, numberOfneighboors, set);
-            });
+                st.put(w + "$");
         }
 
-        for (String key : set) {
-            System.out.println("key: " + key);
-            st.put(key);
-        }
         Map<String, Integer> WordList = st.getWordList();
 
         for (String s : WordList.keySet()) {
             if (WordList.get(s) >= childLimit) {
-                stemCandi.add(s);
-                writer.println(s);
+                writer.println("(" + s + ", " + WordList.get(s) + ")");
             }
         }
         writer.close();
-        System.out.println("-------------------------------------------------------------------");
-        System.out.println(stemCandi.toString());
         System.out.println("For word >>>> " + word + " <<<< from root node to all leaf nodes, all paths: ");
+        System.out.println("-------------------------------------------------------------------");
 
-        graphList.put(word, st);
     }
 
-    private void recursiveAddLevelOne(String word, double freq, int numberOfneighboors, Set set) {
+    private void findMostFrequentLongestSubsequenceRecursive(String word, double freq, int numberOfneighboors) throws FileNotFoundException, UnsupportedEncodingException {
 
+        System.out.println("Control Word: " + word);
+//        PrintWriter writer = new PrintWriter("trie/" + word + ".txt", "UTF-8");
+        Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
+        String firstWord = word;
+
+        set.add(firstWord + "$");
+        // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
+        int[] stem_candidates = new int[word.length() + 1];
+        if (!neighboors.isEmpty()) {
+            neighboors.parallelStream().forEach((n) -> {
+                if (vectors.similarity(firstWord, n) > 0.50)
+                    recursiveAddLevelOne(firstWord, n, freq, numberOfneighboors);
+            });
+        }
+        TrieST st = new TrieST();
+
+        for (String str : set) {
+            st.put(str);
+        }
+
+        Map<String, Integer> WordList = st.getWordList();
+
+        for (String s : WordList.keySet()) {
+//            if (WordList.get(s) >= childLimit) {
+//                writer.println("(" + s + ", " + WordList.get(s) + ")");
+            System.out.println(s + "\t\t" + WordList.get(s));
+//            }
+        }
+//        writer.close();
+        System.out.println("For word >>>> " + word + " <<<< from root node to all leaf nodes, all paths: ");
+        System.out.println("-------------------------------------------------------------------");
+
+        trieList.put(word, st);
+    }
+
+    private void recursiveAddLevelOne(String firstWord, String word, double freq, int numberOfneighboors) {
+//        System.out.println("l1:" + word);
         if (set.add(word + "$")) {
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
             if (!neighboors.isEmpty()) {
-                TrieST st1 = new TrieST();
-                st1.put(word + "$");
-
-                for (String w : neighboors)
-                    st1.put(w + "$");
-
-                ArrayList<String> list = new ArrayList<>();
-
-                for (String s : st1.getWordList().keySet()) {
-                    if ((st1.getWordList().get(s) >= childLimit) && (s.length() > 1)) {
-                        list.add(s.replaceAll("$", ""));
-                    }
-                }
-
-                list.parallelStream().forEach((n) -> {
-                    recursiveAddLevelOne(n, freq, numberOfneighboors, set);
+                neighboors.parallelStream().forEach((n) -> {
+                    if (vectors.similarity(firstWord, n) > 0.50)
+                        recursiveAdd(firstWord, n, freq, numberOfneighboors);
                 });
             }
         }
     }
 
-    private void recursiveAdd(String word, double freq, int numberOfneighboors, Set set) {
+    private void recursiveAdd(String firstWord, String word, double freq, int numberOfneighboors) {
+//        System.out.println("l2:" + word);
         if (set.add(word + "$")) {
             //  System.out.println("Child_2: " + word);
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
-
-            TrieST st1 = new TrieST();
-            st1.put(word + "$");
-
-            for (String w : neighboors)
-                st1.put(w + "$");
-
-            for (String s : st1.getWordList().keySet()) {
-                if ((st1.getWordList().get(s) >= childLimit) && (s.length() > 1)) {
-                    recursiveAddLevelOne(s.replaceAll("$", ""), freq, numberOfneighboors, set);
-
-                }
+            for (String n : neighboors) {
+                if (vectors.similarity(firstWord, n) > 0.50)
+                    recursiveAdd(firstWord, n, freq, numberOfneighboors);
             }
         }
     }
-
 
     private void findSegmentsAndAffixes() throws IOException {
         BufferedReader reader = null;
@@ -183,14 +166,14 @@ public class SubstringMatcher {
             String word = st.nextToken();
             boolean found = false;
 
-            for (Map.Entry<String, TrieST> entry : graphList.entrySet()) {
+            for (Map.Entry<String, TrieST> entry : trieList.entrySet()) {
                 if (entry.getValue() != null) {
                     if (entry.getValue().contains(word))
                         found = true;
                 }
             }
             if (!found) {
-                findMostFrequentLongestSubsequence(word, freq, 50);
+                findMostFrequentLongestSubsequenceRecursive(word, freq, 50);
             } else {
                 found = false;
                 System.out.println(word + " has been skipped");
@@ -199,14 +182,85 @@ public class SubstringMatcher {
 
     }
 
+    public void getFrequency(Map<String, Integer> wordList, Map<String, Integer> morphemeList) {
+
+        Stack<String> boundaries = new Stack();
+
+        String root = wordList.keySet().iterator().next();
+        boolean isRoot = false;
+
+        for (String s : wordList.keySet()) {
+            if (!isRoot && wordList.get(s) >= 3) {
+                root = s;
+                isRoot = true;
+                boundaries.add(root);
+
+                if (morphemeList.containsKey(s)) {
+                    morphemeList.put(s, morphemeList.get(s) + 1);
+                } else {
+                    morphemeList.put(s, 1);
+                }
+            } else if (s.startsWith(root) && isRoot) {
+                if (wordList.get(s) >= 3 && !s.endsWith("$")) {
+                    String morph = "";
+
+                    int size = boundaries.size();
+                    for (int i = 0; i < size; i++) {
+                        String surface = boundaries.peek();
+                        if (s.startsWith(surface)) {
+                            morph = s.substring(surface.length(), s.length());
+                            boundaries.add(s);
+                            break;
+                        } else {
+                            boundaries.pop();
+                        }
+                    }
+
+                    if (morphemeList.containsKey(morph)) {
+                        morphemeList.put(morph, morphemeList.get(morph) + 1);
+                    } else {
+                        morphemeList.put(morph, 1);
+                    }
+                } else {
+                    String morph = "";
+
+                    int size = boundaries.size();
+                    for (int i = 0; i < size; i++) {
+                        String surface = boundaries.peek();
+                        if (s.startsWith(surface)) {
+                            morph = s.substring(surface.length(), s.length() - 1);
+                            break;
+                        } else {
+                            boundaries.pop();
+                        }
+                    }
+
+                    if (morphemeList.containsKey(morph)) {
+                        morphemeList.put(morph, morphemeList.get(morph) + 1);
+                    } else {
+                        morphemeList.put(morph, 1);
+                    }
+                }
+            } else if (isRoot) {
+                root = s;
+                isRoot = false;
+            }
+        }
+    }
+
     public static void main(String[] args) throws IOException {
-        SubstringMatcher ssm = new SubstringMatcher("outputs/vectors.txt", args[0]);
+
+        /*
+        * Vector dosyasını main methoda argüman olarak verilecek şekilde değiştiriyorum.
+        *
+         */
+        SubstringMatcher ssm = new SubstringMatcher(args[0], "outputs/test.txt");
         ssm.findSegmentsAndAffixes();
 
-        PrintWriter writer_stem = new PrintWriter("stemList.txt", "UTF-8");
+        /*PrintWriter writer_stem = new PrintWriter("stemList.txt", "UTF-8");
         for (String s : stemsList)
             writer_stem.println(s);
-        writer_stem.close();
+        writer_stem.close();*/
 
         /*
         Map<String, Double> s = ssm.getStems();
