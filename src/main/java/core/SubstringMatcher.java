@@ -4,40 +4,28 @@ package core;
  * Created by ahmetu on 25.04.2016.
  */
 
+import net.didion.jwnl.data.Word;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tries.TrieST;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public class SubstringMatcher {
 
-    private Map<String, Double> stems = new HashMap<>();
-    private Map<String, Double> affixes = new HashMap<>();
-    private Map<String, Double> results = new HashMap<>();
     private Map<String, TrieST> trieList = new HashMap<>();
-    //public static ArrayList<String> stemsList = new ArrayList<String>();
-    public ArrayList<String> stemCandi = new ArrayList<String>();
+    private Map<String, Integer> morphemeFreq = new TreeMap<>();
+    private Map<String, Set<String>> wordBoundary = new ConcurrentHashMap<>();
 
     private String fileSegmentationInput;
     private WordVectors vectors;
-    int limit = 2;
+
     int childLimit = 3;
-    private ConcurrentSkipListSet<String> set = new ConcurrentSkipListSet<>();
 
-    public Map<String, Double> getStems() {
-        return stems;
-    }
-
-    public Map<String, Double> getAffixes() {
-        return affixes;
-    }
-
-    public Map<String, Double> getResults() {
-        return results;
-    }
+    private ConcurrentSkipListSet<String> set = new ConcurrentSkipListSet<>();//
 
     public Map<String, TrieST> getTrieList() {
         return trieList;
@@ -67,13 +55,10 @@ public class SubstringMatcher {
         System.out.println("Control Word: " + word);
         PrintWriter writer = new PrintWriter("tries-NonRecursive/" + word + ".txt", "UTF-8");
         Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
-        String stem = word;
         TrieST st = new TrieST();
         // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
-        int[] stem_candidates = new int[word.length() + 1];
         if (!neighboors.isEmpty()) {
             st.put(word + "$");
-
             for (String w : neighboors)
                 st.put(w + "$");
         }
@@ -94,13 +79,11 @@ public class SubstringMatcher {
     private void findMostFrequentLongestSubsequenceRecursive(String word, double freq, int numberOfneighboors) throws FileNotFoundException, UnsupportedEncodingException {
 
         System.out.println("Control Word: " + word);
-//        PrintWriter writer = new PrintWriter("trie/" + word + ".txt", "UTF-8");
         Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
         String firstWord = word;
 
         set.add(firstWord + "$");
-        // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
-        int[] stem_candidates = new int[word.length() + 1];
+
         if (!neighboors.isEmpty()) {
             neighboors.parallelStream().forEach((n) -> {
                 if (vectors.similarity(firstWord, n) > 0.50)
@@ -114,18 +97,25 @@ public class SubstringMatcher {
         }
 
         Map<String, Integer> WordList = st.getWordList();
-
+        Set<String> boundaryList = new TreeSet<>();
+        // for baseline
         for (String s : WordList.keySet()) {
-//            if (WordList.get(s) >= childLimit) {
-//                writer.println("(" + s + ", " + WordList.get(s) + ")");
-            System.out.println(s + "\t\t" + WordList.get(s));
-//            }
+            if (WordList.get(s) >= childLimit) {
+                boundaryList.add(s);
+            }
         }
-//        writer.close();
+        wordBoundary.put(word, boundaryList);
+        calcuateFrequency(st, boundaryList);
+
+        for (String s : morphemeFreq.keySet()) {
+            System.out.println(s + " --> " + morphemeFreq.get(s));
+        }
+
         System.out.println("For word >>>> " + word + " <<<< from root node to all leaf nodes, all paths: ");
         System.out.println("-------------------------------------------------------------------");
 
         trieList.put(word, st);
+
     }
 
     private void recursiveAddLevelOne(String firstWord, String word, double freq, int numberOfneighboors) {
@@ -142,9 +132,7 @@ public class SubstringMatcher {
     }
 
     private void recursiveAdd(String firstWord, String word, double freq, int numberOfneighboors) {
-//        System.out.println("l2:" + word);
         if (set.add(word + "$")) {
-            //  System.out.println("Child_2: " + word);
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
             for (String n : neighboors) {
                 if (vectors.similarity(firstWord, n) > 0.50)
@@ -178,76 +166,105 @@ public class SubstringMatcher {
                 found = false;
                 System.out.println(word + " has been skipped");
             }
-        }
+        } // end of trie creation trielist, boundarylist
 
     }
 
-    public void getFrequency(Map<String, Integer> wordList, Map<String, Integer> morphemeList) {
+    private void calcuateFrequency(TrieST st, Set<String> boundaries) {
+        Map<String, Integer> nodeList = st.getWordList();
+        Set<String> wordList = new TreeSet<>();
 
-        Stack<String> boundaries = new Stack();
+        for (String boundary : boundaries) {
+            nodeList.put(boundary + "$", 1);
+        }
 
-        String root = wordList.keySet().iterator().next();
-        boolean isRoot = false;
-
-        for (String s : wordList.keySet()) {
-            if (!isRoot && wordList.get(s) >= 3) {
-                root = s;
-                isRoot = true;
-                boundaries.add(root);
-
-                if (morphemeList.containsKey(s)) {
-                    morphemeList.put(s, morphemeList.get(s) + 1);
-                } else {
-                    morphemeList.put(s, 1);
-                }
-            } else if (s.startsWith(root) && isRoot) {
-                if (wordList.get(s) >= 3 && !s.endsWith("$")) {
-                    String morph = "";
-
-                    int size = boundaries.size();
-                    for (int i = 0; i < size; i++) {
-                        String surface = boundaries.peek();
-                        if (s.startsWith(surface)) {
-                            morph = s.substring(surface.length(), s.length());
-                            boundaries.add(s);
-                            break;
-                        } else {
-                            boundaries.pop();
-                        }
-                    }
-
-                    if (morphemeList.containsKey(morph)) {
-                        morphemeList.put(morph, morphemeList.get(morph) + 1);
-                    } else {
-                        morphemeList.put(morph, 1);
-                    }
-                } else {
-                    String morph = "";
-
-                    int size = boundaries.size();
-                    for (int i = 0; i < size; i++) {
-                        String surface = boundaries.peek();
-                        if (s.startsWith(surface)) {
-                            morph = s.substring(surface.length(), s.length() - 1);
-                            break;
-                        } else {
-                            boundaries.pop();
-                        }
-                    }
-
-                    if (morphemeList.containsKey(morph)) {
-                        morphemeList.put(morph, morphemeList.get(morph) + 1);
-                    } else {
-                        morphemeList.put(morph, 1);
+        for (String node : nodeList.keySet()) {
+            if (node.endsWith("$")) {
+                String current = "";
+                boolean found = false;
+                for (String boundary : boundaries) {
+                    if (node.startsWith(boundary) && !node.equals(boundary + "$")) {
+                        current = boundary;
+                        found = true;
                     }
                 }
-            } else if (isRoot) {
-                root = s;
-                isRoot = false;
+                String morpheme = node.substring(current.length(), node.length() - 1);
+                if (morphemeFreq.containsKey(morpheme)) {
+                    morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + 1);
+                } else {
+                    morphemeFreq.put(morpheme, 1);
+                }
             }
         }
     }
 
+    /*
+        public void getFrequency(Map<String, Integer> wordList, List<String> boundaries) {
+
+            //Stack<String> boundaries = new Stack();
+
+            String root = wordList.keySet().iterator().next();
+            boolean isRoot = false;
+
+            for (String s : wordList.keySet()) {
+                if (!isRoot && wordList.get(s) >= 3) {
+                    root = s;
+                    isRoot = true;
+                    boundaries.add(root);
+
+                    if (morphemeList.containsKey(s)) {
+                        morphemeList.put(s, morphemeList.get(s) + 1);
+                    } else {
+                        morphemeList.put(s, 1);
+                    }
+                } else if (s.startsWith(root) && isRoot) {
+                    if (wordList.get(s) >= 3 && !s.endsWith("$")) {
+                        String morph = "";
+
+                        int size = boundaries.size();
+                        for (int i = 0; i < size; i++) {
+                            String surface = boundaries.peek();
+                            if (s.startsWith(surface)) {
+                                morph = s.substring(surface.length(), s.length());
+                                boundaries.add(s);
+                                break;
+                            } else {
+                                boundaries.pop();
+                            }
+                        }
+
+                        if (morphemeList.containsKey(morph)) {
+                            morphemeList.put(morph, morphemeList.get(morph) + 1);
+                        } else {
+                            morphemeList.put(morph, 1);
+                        }
+                    } else {
+                        String morph = "";
+
+                        int size = boundaries.size();
+                        for (int i = 0; i < size; i++) {
+                            String surface = boundaries.peek();
+                            if (s.startsWith(surface)) {
+                                morph = s.substring(surface.length(), s.length() - 1);
+                                break;
+                            } else {
+                                boundaries.pop();
+                            }
+                        }
+
+                        if (morphemeList.containsKey(morph)) {
+                            morphemeList.put(morph, morphemeList.get(morph) + 1);
+                        } else {
+                            morphemeList.put(morph, 1);
+                        }
+                    }
+                } else if (isRoot) {
+                    root = s;
+                    isRoot = false;
+                }
+            }
+        }
+    */
     public static void main(String[] args) throws IOException {
 
         /*

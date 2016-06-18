@@ -45,7 +45,7 @@ public class TrieST {
     private Node root;      // root of trie
 
     private int N;          // number of keys in trie
-    private AtomicInteger atom = new AtomicInteger();
+    private transient AtomicInteger atom = new AtomicInteger();
 
     public Map<String, Integer> getWordList() {
         return wordList;
