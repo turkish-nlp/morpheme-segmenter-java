@@ -90,7 +90,7 @@ public class SubstringMatcher {
         if (!neighboors.isEmpty()) {
             neighboors.parallelStream().forEach((n) -> {
                 if (vectors.similarity(firstWord, n) > 0.50)
-                    recursiveAddLevelOne(firstWord, n, freq, numberOfneighboors);
+                    recursiveAdd(firstWord, n, freq, numberOfneighboors);
             });
         }
         TrieST st = new TrieST();
