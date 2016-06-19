@@ -20,6 +20,7 @@ public class SubstringMatcher {
     private Map<String, TrieST> trieList = new HashMap<>();
     private Map<String, Integer> morphemeFreq = new TreeMap<>();
     private Map<String, Set<String>> wordBoundary = new ConcurrentHashMap<>();
+    Set<String> set = new ConcurrentSkipListSet<>();//
 
     private String fileSegmentationInput;
     private WordVectors vectors;
@@ -84,13 +85,12 @@ public class SubstringMatcher {
         Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
         String firstWord = word;
 
-        Set<String> set = new ConcurrentSkipListSet<>();//
         set.add(firstWord + "$");
 
         if (!neighboors.isEmpty()) {
             neighboors.parallelStream().forEach((n) -> {
                 if (vectors.similarity(firstWord, n) > 0.50)
-                    recursiveAddLevelOne(firstWord, n, freq, numberOfneighboors, set);
+                    recursiveAddLevelOne(firstWord, n, freq, numberOfneighboors);
             });
         }
         TrieST st = new TrieST();
@@ -98,7 +98,7 @@ public class SubstringMatcher {
         for (String str : set) {
             st.put(str);
         }
-
+        set.clear();
         serializeToFile(st, word);
         /*
         Map<String, Integer> WordList = st.getWordList();
@@ -139,25 +139,25 @@ public class SubstringMatcher {
         FileUtils.writeByteArrayToFile(new File(dir + "/" + word), yourBytes);
     }
 
-    private void recursiveAddLevelOne(String firstWord, String word, double freq, int numberOfneighboors, Set<String> set) {
+    private void recursiveAddLevelOne(String firstWord, String word, double freq, int numberOfneighboors) {
 //        System.out.println("l1:" + word);
         if (set.add(word + "$")) {
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
             if (!neighboors.isEmpty()) {
                 neighboors.parallelStream().forEach((n) -> {
                     if (vectors.similarity(firstWord, n) > 0.50)
-                        recursiveAdd(firstWord, n, freq, numberOfneighboors, set);
+                        recursiveAdd(firstWord, n, freq, numberOfneighboors);
                 });
             }
         }
     }
 
-    private void recursiveAdd(String firstWord, String word, double freq, int numberOfneighboors, Set<String> set) {
+    private void recursiveAdd(String firstWord, String word, double freq, int numberOfneighboors) {
         if (set.add(word + "$")) {
             Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
             for (String n : neighboors) {
                 if (vectors.similarity(firstWord, n) > 0.50)
-                    recursiveAdd(firstWord, n, freq, numberOfneighboors, set);
+                    recursiveAdd(firstWord, n, freq, numberOfneighboors);
             }
         }
     }
