@@ -2,7 +2,6 @@ package core;
 
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
-import org.jboss.logging.Logger;
 
 import java.io.*;
 import java.util.HashMap;

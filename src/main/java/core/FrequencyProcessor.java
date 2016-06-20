@@ -1,9 +1,5 @@
 package core;
 
-import com.sun.tools.javac.util.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.output.*;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import tries.TrieST;
 
 import java.io.*;
