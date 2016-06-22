@@ -1,4 +1,4 @@
-package prob;
+package nested.prob;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -322,7 +322,7 @@ public class MorphemeTransition {
     }
 
     public static void main(String[] args) throws Exception {
-        MorphemeTransition mt = new MorphemeTransition("outputs/test.txt");
+        MorphemeTransition mt = new MorphemeTransition("outputs/nested.pre.pre.test.txt");
         mt.doItForFile();
         mt.calculateTotalMorphemeCount();
         mt.calculateTransitionProbabilities(Smoothing.LAPLACE);

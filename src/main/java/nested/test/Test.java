@@ -1,10 +1,10 @@
-package test;
+package nested.test;
 
+import nested.prob.Utilities;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
-import prob.MorphemeTransition;
-import prob.ReSegmenter;
-import prob.Utilities;
+import nested.prob.MorphemeTransition;
+import nested.prob.ReSegmenter;
 
 import java.io.*;
 import java.util.HashMap;
@@ -334,6 +334,6 @@ public class Test {
 
         Test test = new Test();
         test.multiThreadTestViaMap(args[1], 16, stems, morphemes, bigramsProb, totalStems, null, "non_prior");
-        //test.multiThreadTest(args[1], 16, args[0], "binomial_np");
+        //nested.pre.pre.test.multiThreadTest(args[1], 16, args[0], "binomial_np");
     }
 }

@@ -1,4 +1,4 @@
-package pre;
+package nested.pre;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -7,17 +7,12 @@ package pre;
  */
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
-
-import sun.reflect.generics.tree.Tree;
 
 /**
  * @author ahmetu

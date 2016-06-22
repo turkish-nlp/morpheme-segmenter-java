@@ -1,4 +1,4 @@
-package prob;
+package nested.prob;
 
 import com.mongodb.DB;
 import com.mongodb.DBCollection;

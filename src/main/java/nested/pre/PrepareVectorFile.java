@@ -1,7 +1,6 @@
-package pre;
+package nested.pre;
 
 import java.io.*;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;

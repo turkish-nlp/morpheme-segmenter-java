@@ -4,6 +4,7 @@ package core;
  * Created by ahmetu on 25.04.2016.
  */
 
+import net.didion.jwnl.data.Word;
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
@@ -12,14 +13,14 @@ import tries.TrieST;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class SubstringMatcher {
 
     private Map<String, TrieST> trieList = new HashMap<>();
     private Map<String, Integer> morphemeFreq = new TreeMap<>();
     private Map<String, Set<String>> wordBoundary = new ConcurrentHashMap<>();
-    Set<String> set = new ConcurrentSkipListSet<>();//
+    Set<String> set = new CopyOnWriteArraySet<>();//
 
     private String fileSegmentationInput;
     private WordVectors vectors;
@@ -52,10 +53,10 @@ public class SubstringMatcher {
             return common;
     }
 
-    private void findMostFrequentLongestSubsequence(String word, double freq, int numberOfneighboors) throws FileNotFoundException, UnsupportedEncodingException {
+    private void findMostFrequentLongestSubsequence(String word, double freq, int numberOfneighboors) throws IOException {
 
         System.out.println("Control Word: " + word);
-        PrintWriter writer = new PrintWriter("tries-NonRecursive/" + word + ".txt", "UTF-8");
+        //PrintWriter writer = new PrintWriter("tries-NonRecursive/" + word + ".txt", "UTF-8");
         Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
         TrieST st = new TrieST();
         // In order to limit the control length limit; i<(word.lenght()-limit+1) can be used.
@@ -64,7 +65,9 @@ public class SubstringMatcher {
             for (String w : neighboors)
                 st.put(w + "$");
         }
+        serializeToFile(st, word);
 
+        /*
         Map<String, Integer> WordList = st.getWordList();
 
         for (String s : WordList.keySet()) {
@@ -73,6 +76,7 @@ public class SubstringMatcher {
             }
         }
         writer.close();
+        */
         System.out.println("For word >>>> " + word + " <<<< from root node to all leaf nodes, all paths: ");
         System.out.println("-------------------------------------------------------------------");
 
@@ -181,7 +185,7 @@ public class SubstringMatcher {
                 }
             }
             if (!found) {
-                findMostFrequentLongestSubsequenceRecursive(word, freq, 50);
+                findMostFrequentLongestSubsequence(word, freq, 50);
             } else {
                 found = false;
                 System.out.println(word + " has been skipped");
