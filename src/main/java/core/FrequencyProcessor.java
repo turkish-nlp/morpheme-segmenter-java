@@ -1,13 +1,11 @@
 package core;
 
-import com.sun.org.apache.xpath.internal.SourceTree;
 import org.canova.api.util.MathUtils;
 import tries.TrieST;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by ahmet on 18.06.2016.
@@ -27,7 +25,7 @@ public class FrequencyProcessor {
     public Map<TrieST, Set<String>> wordBoundary = new ConcurrentHashMap<>();
     public Map<TrieST, Double> triePoisson = new ConcurrentHashMap<>();
 
-    double lambda = 4;
+    double lambda = 5;
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
@@ -125,12 +123,12 @@ public class FrequencyProcessor {
                 System.out.println("BIG PROBLEM :)");
             }
         }
-
         for (String morp : newMorphemeFreq.keySet()) {
             if (candidateFrequencies.containsKey(morp)) {
                 int freq = candidateFrequencies.get(morp) + newMorphemeFreq.get(morp);
                 candidateFrequencies.put(morp, freq);
             } else {
+               // System.out.println("new: " + morp);
                 candidateFrequencies.put(morp, newMorphemeFreq.get(morp));
             }
         }
@@ -184,7 +182,6 @@ public class FrequencyProcessor {
                 //    System.out.println(segmentation);
             }
         }
-
 
         Map<String, Integer> tempFreq = new HashMap<>();
 

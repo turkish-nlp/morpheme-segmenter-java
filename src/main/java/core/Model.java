@@ -1,6 +1,5 @@
 package core;
 
-import org.canova.api.util.MathUtils;
 import tries.TrieST;
 
 import java.io.IOException;
@@ -34,16 +33,22 @@ public class Model {
         double oldScore = calculateOverallProbability(poissonOverall, fp.morphemeFreq, fp.trieSegmentations);
         int printCount = 0;
         System.out.println("Score: " + oldScore);
+        for (TrieST st : fp.trieList)
+        {
+            System.out.println(fp.wordBoundary.get(st));
+        }
+        ArrayList<String> init = new ArrayList<>();
         for (TrieST st : fp.trieSegmentations.keySet()) {
             for (String str : fp.trieSegmentations.get(st)) {
                 System.out.println(printCount+ ": " + str);
+                init.add(printCount+ ": " + str);
                 printCount++;
             }
         }
         System.out.println("----------------------");
         System.out.println("----------------------");
 
-        int count = 100;
+        int count = 10;
         while (count > 0) {
 
             double candidatePoissonOverall = poissonOverall;
@@ -75,7 +80,6 @@ public class Model {
                 candidateBoundaryList.add(candidateMorpheme);
                 candidatePoissonOverall = candidatePoissonOverall + Math.log(fp.poissonDistribution(originalTrie.getWordList().get(candidateMorpheme)));
             }
-            candidateBoundaryList.add(candidateMorpheme); // mark the random node as the boundary ? should we check contains
            // System.out.println("candidate morpheme: " + candidateMorpheme);
 
             core.FrequencyProcessor.Pair<Map<String, Integer>, Map<TrieST, ArrayList<String>>> candidatePair = fp.changePairForOneTrie(randTrie, originalBoundaryList, candidateBoundaryList);  // calculate the frequency changes between old and new boundary lists
@@ -85,24 +89,38 @@ public class Model {
             double acceptProb = (double) oldScore / newScore;
             // Is accepted value dynamic ????
            // System.out.println("before=" + originalBoundaryList);
+
             if (newScore > oldScore) {
                 originalBoundaryList.add(candidateMorpheme);
                 fp.morphemeFreq = candidatePair.getFirst();
+                fp.trieSegmentations = candidateSegmentationList;
                 oldScore = newScore;
+                System.out.println("accepted morpheme: " + candidateMorpheme);
             } else // accept the boundary with randProb probability
             {
                 int randProb = rand.nextInt(100);
-                if ((double) randProb / 100 < acceptProb) {
+                if ((double) randProb / 100 < 0.4) {
+                    System.out.println("accepted morpheme: " + candidateMorpheme);
+
                     fp.morphemeFreq = candidatePair.getFirst();
                     originalBoundaryList.add(candidateMorpheme);
                     oldScore = newScore;
+
                 } else
                     originalBoundaryList.remove(candidateMorpheme);
             }
             count--;
+            fp.trieList.parallelStream().forEach((n) -> {
+                fp.determineSegmentation(n);
+            });
         }
         printCount = 0;
         System.out.println("Final Score: " + oldScore);
+
+        for (TrieST st : fp.trieList)
+        {
+            System.out.println(fp.wordBoundary.get(st));
+        }
         for (TrieST st : fp.trieSegmentations.keySet()) {
             for (String str : fp.trieSegmentations.get(st)) {
                 System.out.println(printCount+ ": " + str);
@@ -149,7 +167,6 @@ public class Model {
     }
 
     public Map<String, Double> calculateMorphemeProbabilities(Map<String, Integer> candidateFrequencies) {
-
         Map<String, Double> morphemeProbabilities = new ConcurrentHashMap<>();
 
         int totalNumber = 0;
@@ -157,8 +174,9 @@ public class Model {
             totalNumber = totalNumber + candidateFrequencies.get(s);
         }
         for (String s : candidateFrequencies.keySet()) {
-            double logLikelihood = Math.log(candidateFrequencies.get(s) / totalNumber);
-
+            double logLikelihood = Math.log((double)candidateFrequencies.get(s) / totalNumber);
+          //  if(candidateFrequencies.get(s) == 0)
+           //     System.out.println("ERROR:" + s + "   >>>  " + candidateFrequencies.get(s) );
             morphemeProbabilities.put(s, logLikelihood);
         }
         return morphemeProbabilities;
