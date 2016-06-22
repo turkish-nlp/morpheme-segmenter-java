@@ -42,17 +42,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TrieST implements Serializable{
 
     private static final int R = 2048;        // extended ASCII
+    private static final long serialVersionUID = 5667024450138064887L;
 
     private Node root;      // root of trie
 
     private int N;          // number of keys in trie
     private transient AtomicInteger atom = new AtomicInteger();
+    private Map<String, Integer> wordList;
 
     public Map<String, Integer> getWordList() {
         return wordList;
     }
-
-    private Map<String, Integer> wordList = new TreeMap<>();
 
     // R-way trie node
     private static class Node implements Serializable {
@@ -66,8 +66,16 @@ public class TrieST implements Serializable{
      * Initializes an empty string symbol table.
      */
     public TrieST() {
+        wordList = new TreeMap<>();
+    }
+    public TrieST(Map<String, Integer> wordList) {
+        this.wordList = new TreeMap<>(wordList);
     }
 
+    public TrieST cloneTrie()
+    {
+        return new TrieST(this.wordList);
+    }
     /**
      * Returns the Integer associated with the given key.
      *

@@ -1,5 +1,6 @@
 package core;
 
+import com.sun.org.apache.xpath.internal.SourceTree;
 import tries.TrieST;
 
 import java.io.*;
@@ -15,60 +16,6 @@ public class FrequencyProcessor {
 
     public List<String> getSearchedWordList() {
         return searchedWordList;
-    }
-
-    /*    private class Morpheme {
-
-                public String name;
-                public List<TrieST> stList = new ArrayList<TrieST>();
-                public boolean isBoundary;
-
-                public Morpheme(String name, boolean isBoundary) {
-                    this.name = name;
-                    this.isBoundary = isBoundary;
-                }
-
-                public void trieToList(TriST st)
-                {
-                    this.stList.add(st);
-                }
-
-                @Override
-                public boolean equals(Object o) {
-                    if (this == o) return true;
-                    if (!(o instanceof Morpheme)) return false;
-
-                    Morpheme morpheme = (Morpheme) o;
-
-                    return name.equals(morpheme.name);
-
-                }
-
-                @Override
-                public int hashCode() {
-                    return name.hashCode();
-                }
-            }
-        */
-
-    public List<TrieST> getTrieList() {
-        return trieList;
-    }
-
-    public Map<TrieST, ArrayList<String>> getTrieSegmentations() {
-        return trieSegmentations;
-    }
-
-    public Map<String, Integer> getMorphemeFreq() {
-        return morphemeFreq;
-    }
-
-    public Map<String, CopyOnWriteArrayList<TrieST>> getMorphemeTrieList() {
-        return morphemeTrieList;
-    }
-
-    public Map<TrieST, Set<String>> getWordBoundary() {
-        return wordBoundary;
     }
 
     private List<String> searchedWordList = new ArrayList<String>();
@@ -167,16 +114,12 @@ public class FrequencyProcessor {
                 }
             }
         }
-
         return morphmeFrequencies;
     }
-
-    private Pair<Map<String, Integer>, Map<TrieST, ArrayList<String>>> changePairForOneTrie(TrieST st, Set<String> oldBoundaries, Set<String> newBoundaries) {
+    // changed to public
+    public Pair<Map<String, Integer>, Map<TrieST, ArrayList<String>>> changePairForOneTrie(TrieST st, Set<String> oldBoundaries, Set<String> newBoundaries) {
 
         Map<String, Integer> candidateFrequencies = new ConcurrentHashMap<>(morphemeFreq);
-
-        Map<String, Integer> oldMorphemeFreq = new HashMap<>();
-        Map<String, Integer> newMorphemeFreq = new HashMap<>();
 
         Map<String, Integer> oldMorphmeFrequencies = calcuateFrequencyWithMap(st, oldBoundaries);
         Pair<Map<String, Integer>, ArrayList<String>> newPair = determinePairForOneTrie(st, newBoundaries);
@@ -309,7 +252,8 @@ public class FrequencyProcessor {
                         found = true;
                     }
                 }
-                String morpheme = node.substring(current.length(), node.length() - 1);
+                System.out.println("cur: " + current + "  " + "node: " + node);
+                String morpheme = node.substring(current.length(), node.length() - 1); //   EXCEPTION
                 morphmeStack.add(morpheme);
 
                 String word = node.substring(0, current.length());
@@ -382,6 +326,7 @@ public class FrequencyProcessor {
             trieList.add(trie);
             searchedWordList.add(f.getName());
         }
+        generateBoundaryListforBaseline(3); /// !!!!!!!!!!!!!!!!!!
     }
 
     public void generateBoundaryListforBaseline(int childLimit) {
@@ -398,6 +343,61 @@ public class FrequencyProcessor {
             }
             wordBoundary.put(st, boundaryList);
         }
+    }
+
+
+    /*    private class Morpheme {
+
+                public String name;
+                public List<TrieST> stList = new ArrayList<TrieST>();
+                public boolean isBoundary;
+
+                public Morpheme(String name, boolean isBoundary) {
+                    this.name = name;
+                    this.isBoundary = isBoundary;
+                }
+
+                public void trieToList(TriST st)
+                {
+                    this.stList.add(st);
+                }
+
+                @Override
+                public boolean equals(Object o) {
+                    if (this == o) return true;
+                    if (!(o instanceof Morpheme)) return false;
+
+                    Morpheme morpheme = (Morpheme) o;
+
+                    return name.equals(morpheme.name);
+
+                }
+
+                @Override
+                public int hashCode() {
+                    return name.hashCode();
+                }
+            }
+        */
+
+    public List<TrieST> getTrieList() {
+        return trieList;
+    }
+
+    public Map<TrieST, ArrayList<String>> getTrieSegmentations() {
+        return trieSegmentations;
+    }
+
+    public Map<String, Integer> getMorphemeFreq() {
+        return morphemeFreq;
+    }
+
+    public Map<String, CopyOnWriteArrayList<TrieST>> getMorphemeTrieList() {
+        return morphemeTrieList;
+    }
+
+    public Map<TrieST, Set<String>> getWordBoundary() {
+        return wordBoundary;
     }
 
 }
