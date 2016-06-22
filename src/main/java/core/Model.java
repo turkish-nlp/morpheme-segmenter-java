@@ -30,7 +30,7 @@ public class Model {
 
         Random rand = new Random();
         double poissonOverall = fp.calculatePoissonOverall();
-
+        System.out.println("pp" + poissonOverall);
         double oldScore = calculateOverallProbability(poissonOverall, fp.morphemeFreq, fp.trieSegmentations);
         int printCount = 0;
         System.out.println("Score: " + oldScore);
@@ -87,11 +87,13 @@ public class Model {
            // System.out.println("before=" + originalBoundaryList);
             if (newScore > oldScore) {
                 originalBoundaryList.add(candidateMorpheme);
+                fp.morphemeFreq = candidatePair.getFirst();
                 oldScore = newScore;
             } else // accept the boundary with randProb probability
             {
                 int randProb = rand.nextInt(100);
                 if ((double) randProb / 100 < acceptProb) {
+                    fp.morphemeFreq = candidatePair.getFirst();
                     originalBoundaryList.add(candidateMorpheme);
                     oldScore = newScore;
                 } else
@@ -138,7 +140,6 @@ public class Model {
         return result;
     }
 
-
     public double calculateMLforOneTrie(ArrayList<String> segmentationList, Map<String, Double> morphemeProbabilities) {
         double prob = 0;
         for (String morph : segmentationList) {
@@ -155,9 +156,9 @@ public class Model {
         for (String s : candidateFrequencies.keySet()) {
             totalNumber = totalNumber + candidateFrequencies.get(s);
         }
-
         for (String s : candidateFrequencies.keySet()) {
             double logLikelihood = Math.log(candidateFrequencies.get(s) / totalNumber);
+
             morphemeProbabilities.put(s, logLikelihood);
         }
         return morphemeProbabilities;
