@@ -11,11 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by ahmet on 18.06.2016.
  */
 public class Baseline {
-
-
-    public List<String> getSearchedWordList() {
-        return searchedWordList;
-    }
+    double lambda = 5;
 
     public List<String> searchedWordList = new ArrayList<String>();
     public List<TrieST> trieList = new ArrayList<TrieST>();
@@ -24,9 +20,8 @@ public class Baseline {
     public Map<TrieST, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
     public Map<TrieST, Double> triePoisson = new ConcurrentHashMap<>();
 
-    double lambda = 5;
 
-    public Baseline(String dir) throws IOException, ClassNotFoundException {
+    public Baseline(String dir, double overallPoisson) throws IOException, ClassNotFoundException {
 
         generateTrieList(dir);
 
@@ -38,14 +33,14 @@ public class Baseline {
             this.determineSegmentation(n);
         });
 
-        calculatePoissonOverall();
+        overallPoisson = calculatePoissonOverall();
 
-        System.out.println("Initialization is finish");
+        System.out.println("Initialization is completed");
 
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        Baseline fp = new Baseline(args[0]);
+        Baseline fp = new Baseline(args[0], 0);
     }
 
     public double calculatePoissonOverall() {
@@ -57,7 +52,6 @@ public class Baseline {
         }
         return poissonOverall;
     }
-
     public double calculatePoisson(TrieST st, Set<String> boundaries) {
         double result = 0;
         for (String str : boundaries) {
@@ -65,8 +59,6 @@ public class Baseline {
         }
         return result;
     }
-
-
     public double poissonDistribution(int branchingFactor) {
         return (Math.pow(lambda, branchingFactor) * Math.exp(lambda)) / MathUtils.factorial(lambda);
     }
@@ -108,9 +100,7 @@ public class Baseline {
             }
         }
     }
-
-    // in order to avoid performing segmentation needlessly : normally, segmentation+frequency are performed together
-    private Map<String, Integer> calcuateFrequencyWithMap(TrieST st, Set<String> boundaries) {
+    private Map<String, Integer> calculateFrequencyWithMap(TrieST st, Set<String> boundaries) {
 
         Map<String, Integer> morphmeFrequencies = new HashMap<>();
 
@@ -149,14 +139,12 @@ public class Baseline {
         }
         return morphmeFrequencies;
     }
-
-    // changed to public
     public Map<String, Integer> changeFrequencyOneTrie(TrieST st, Set<String> oldBoundaries, Set<String> newBoundaries, Map<String, Integer> originalFrequencies) {
 
         Map<String, Integer> candidateFrequencies = new ConcurrentHashMap<>(originalFrequencies);
 
-        Map<String, Integer> oldMorphemeFreq = calcuateFrequencyWithMap(st, oldBoundaries);
-        Map<String, Integer> newMorphemeFreq = calcuateFrequencyWithMap(st, newBoundaries);
+        Map<String, Integer> oldMorphemeFreq = calculateFrequencyWithMap(st, oldBoundaries);
+        Map<String, Integer> newMorphemeFreq = calculateFrequencyWithMap(st, newBoundaries);
 
         for (String morph : oldMorphemeFreq.keySet()) {
             if (candidateFrequencies.containsKey(morph)) {
@@ -171,23 +159,11 @@ public class Baseline {
                 int freq = candidateFrequencies.get(morp) + newMorphemeFreq.get(morp);
                 candidateFrequencies.put(morp, freq);
             } else {
-                // System.out.println("new: " + morp);
                 candidateFrequencies.put(morp, newMorphemeFreq.get(morp));
             }
         }
 
         return candidateFrequencies;
-    }
-
-    public Map<TrieST, ArrayList<String>> changeSegmentSequenceForOneTrie(TrieST st, Set<String> oldBoundaries, Set<String> newBoundaries, Map<TrieST, ArrayList<String>> originalTrieSegments) {
-
-        Map<TrieST, ArrayList<String>> candidateTrieSegments = new ConcurrentHashMap<>(originalTrieSegments);
-
-        ArrayList<String> newSegmentsSeq = determineSegmentsForOneTrie(st, newBoundaries);
-
-        candidateTrieSegments.put(st, newSegmentsSeq);
-
-        return candidateTrieSegments;
     }
 
     public void determineSegmentation(TrieST st) {
@@ -229,49 +205,16 @@ public class Baseline {
                 System.out.println(segmentation);
             }
         }
-
         trieSegmentations.put(st, tokens);
     }
+    public Map<TrieST, ArrayList<String>> changeSegmentSequenceForOneTrie(TrieST st, Set<String> oldBoundaries, Set<String> newBoundaries, Map<TrieST, ArrayList<String>> originalTrieSegments) {
 
-    public ArrayList<String> tokenSegmentation(String segmentation) {
-        ArrayList<String> segments = new ArrayList<String>();
-        StringTokenizer tokens = new StringTokenizer(segmentation, "+");
-        while (tokens.hasMoreTokens()) {
-            segments.add(tokens.nextToken());
-        }
-        return segments;
+        Map<TrieST, ArrayList<String>> candidateTrieSegments = new ConcurrentHashMap<>(originalTrieSegments);
+        ArrayList<String> newSegmentsSeq = determineSegmentsForOneTrie(st, newBoundaries, false);
+        candidateTrieSegments.put(st, newSegmentsSeq);
+        return candidateTrieSegments;
     }
-
-    /*
-    public class Pair<F, S> {
-        private F first; //first member of pair
-        private S second; //second member of pair
-
-        public Pair(F first, S second) {
-            this.first = first;
-            this.second = second;
-        }
-
-        public void setFirst(F first) {
-            this.first = first;
-        }
-
-        public void setSecond(S second) {
-            this.second = second;
-        }
-
-        public F getFirst() {
-            return first;
-        }
-
-        public S getSecond() {
-            return second;
-        }
-
-    }
-    */
-
-    private ArrayList<String> determineSegmentsForOneTrie(TrieST st, Set<String> boundaries) {
+    public ArrayList<String> determineSegmentsForOneTrie(TrieST st, Set<String> boundaries, boolean print) {
 
         Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
 
@@ -307,21 +250,20 @@ public class Baseline {
                     segmentation = segmentation + "+" + popped;
                 }
                 tokenSegments.addAll(tokenSegmentation(segmentation));
-                //System.out.println(segmentation);
+                if(print)
+                    System.out.println(segmentation);
             }
         }
-
         return tokenSegments;
     }
-    /*
-    public Map<String, ArrayList<String>> getSimilarityWords(String selectedBoundary, ArrayList<String> segmentations) {
-        for (String segment : segmentations) {
-            if (segment.startsWith(selectedBoundary + "+")) {
-
-            }
+    public ArrayList<String> tokenSegmentation(String segmentation) {
+        ArrayList<String> segments = new ArrayList<String>();
+        StringTokenizer tokens = new StringTokenizer(segmentation, "+");
+        while (tokens.hasMoreTokens()) {
+            segments.add(tokens.nextToken());
         }
-    }*/
-
+        return segments;
+    }
     private void doSegmentation(String node, Set<String> boundaries, Stack<String> morphmeStack) {
 
         if (!node.equals("")) {
@@ -361,7 +303,6 @@ public class Baseline {
         }
         generateBoundaryListforBaseline(3); /// !!!!!!!!!!!!!!!!!!
     }
-
     public void generateBoundaryListforBaseline(int childLimit) {
 
         for (TrieST st : trieList) {
@@ -378,30 +319,39 @@ public class Baseline {
         }
     }
 
+
+    /*
+    public Map<String, ArrayList<String>> getSimilarityWords(String selectedBoundary, ArrayList<String> segmentations) {
+        for (String segment : segmentations) {
+            if (segment.startsWith(selectedBoundary + "+")) {
+
+            }
+        }
+    }*/
+
+    //Getters
     public List<TrieST> getTrieList() {
         return trieList;
     }
-
     public Map<TrieST, ArrayList<String>> getTrieSegmentations() {
         return trieSegmentations;
     }
-
     public Map<String, Integer> getMorphemeFreq() {
         return morphemeFreq;
     }
-
-    /*
-    public Map<String, CopyOnWriteArrayList<TrieST>> getMorphemeTrieList() {
-        return morphemeTrieList;
-    }*/
-
+    public List<String> getSearchedWordList() {
+        return searchedWordList;
+    }
     public Map<TrieST, Set<String>> getBaselineBoundaries() {
         return baselineBoundaries;
     }
 
 }
 
-
+   /*
+    public Map<String, CopyOnWriteArrayList<TrieST>> getMorphemeTrieList() {
+        return morphemeTrieList;
+    }*/
     /*    private class Morpheme {
 
                 public String name;
@@ -435,3 +385,31 @@ public class Baseline {
                 }
             }
         */
+   /*
+    public class Pair<F, S> {
+        private F first; //first member of pair
+        private S second; //second member of pair
+
+        public Pair(F first, S second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        public void setFirst(F first) {
+            this.first = first;
+        }
+
+        public void setSecond(S second) {
+            this.second = second;
+        }
+
+        public F getFirst() {
+            return first;
+        }
+
+        public S getSecond() {
+            return second;
+        }
+
+    }
+    */
