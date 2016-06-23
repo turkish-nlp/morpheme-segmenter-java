@@ -32,9 +32,8 @@ public class Model {
         morphemeFreq = new ConcurrentHashMap<>(fp.morphemeFreq);
         wordBoundary = new ConcurrentHashMap<>(fp.baselineBoundaries);
         triePoisson = new ConcurrentHashMap<>(fp.triePoisson);
-        oldScore = calculateOverallProbability(overallPoisson, morphemeFreq, trieSegmentations);
         overallPoisson = fp.overallPoisson;
-        System.out.println("baseline likelihood: " + oldScore);
+        oldScore = calculateOverallProbability(overallPoisson, morphemeFreq, trieSegmentations);
     }
 
     // private double acceptProb = 0.4;
@@ -76,30 +75,31 @@ public class Model {
 
             if (candidateBoundaryList.contains(candidateMorpheme)) {
                 candidateBoundaryList.remove(candidateMorpheme);
-                candidatePoissonOverall = overallPoisson - Math.log(fp.calculatePoisson(chosenTrie, candidateBoundaryList));
+                candidatePoissonOverall = overallPoisson - Math.log(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
             } else {
                 candidateBoundaryList.add(candidateMorpheme);
-                candidatePoissonOverall = overallPoisson + Math.log(fp.calculatePoisson(chosenTrie, candidateBoundaryList));
+                candidatePoissonOverall = overallPoisson + Math.log(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
             }
-            System.out.println(candidateMorpheme);
             Map<String, Integer> candidateFrequencies = fp.changeFrequencyOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.morphemeFreq);
             Map<TrieST, ArrayList<String>> candidateSegmentationList = fp.changeSegmentSequenceForOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.trieSegmentations);
 
             double newScore = calculateOverallProbability(candidatePoissonOverall, candidateFrequencies, candidateSegmentationList);
 
-           // double acceptProb = oldScore - newScore; // Is accepted value dynamic ????
-           // System.out.println("prob: " + acceptProb);
+            double acceptProb = newScore - oldScore; // Is accepted value dynamic ????
+            acceptProb = Math.pow(10, acceptProb);
 
             if (newScore > oldScore) {
-          //      System.out.println("accepted mor: " + candidateMorpheme);
-                update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList,candidatePoissonOverall);
+                //      System.out.println("accepted mor: " + candidateMorpheme);
+                update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall);
                 oldScore = newScore;
             } else // accept the boundary with randProb probability
             {
-                int randProb = rand.nextInt(100);
-                if ((double) randProb / 100 < 0.4  ) {
-               //     System.out.println("accepted mor2: " + candidateMorpheme);
-                    update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList,candidatePoissonOverall);
+                double randProb = rand.nextDouble();
+                if ((double) randProb < acceptProb) {
+                    System.out.println("prob: " + acceptProb);
+
+                    //     System.out.println("accepted mor2: " + candidateMorpheme);
+                    update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall);
                     oldScore = newScore;
                 }
             }
@@ -107,18 +107,12 @@ public class Model {
         }
         System.out.println("-------------------------------------------------------------------------------------");
 
-        System.out.println("Final Score: " + oldScore);
-
-        for (TrieST st : this.trieList) {
-            System.out.println(this.wordBoundary.get(st));
-        }
         for (TrieST st : this.trieSegmentations.keySet()) {
-        //    fp.determineSegmentsForOneTrie(st, this.wordBoundary.get(st), true);
+            fp.determineSegmentsForOneTrie(st, this.wordBoundary.get(st), true);
         }
     }
 
-    public void update(TrieST st, Set<String> candidateBoundaryList, Map<String, Integer> candidateFrequencies,Map<TrieST, ArrayList<String>> candidateSegmentationList, double candidatePoissonOverall  )
-    {
+    public void update(TrieST st, Set<String> candidateBoundaryList, Map<String, Integer> candidateFrequencies, Map<TrieST, ArrayList<String>> candidateSegmentationList, double candidatePoissonOverall) {
         this.wordBoundary.put(st, candidateBoundaryList);
         this.morphemeFreq = candidateFrequencies;
         this.trieSegmentations = candidateSegmentationList;
@@ -132,22 +126,33 @@ public class Model {
 
     public double calculateMaxLikelihoodForCorpus(Map<String, Integer> candidateFrequencies, Map<TrieST, ArrayList<String>> candidateSegmentationList) {
 
-        /*
-        * PARALEL !!!!!
-        *
-         */
+        ArrayList<Map<TrieST, ArrayList<String>>> listOftemplist = new ArrayList<>();
 
-        Map<TrieST, ArrayList<String>> candidateSegmentsSequence = new ConcurrentHashMap<>();
-        for (TrieST st : candidateSegmentationList.keySet()) {
-            for (String s : candidateSegmentationList.get(st)) {
-                candidateSegmentsSequence.put(st, tokenSegmentation(s));
-            }
-        }
         Map<String, Double> morphemeProbabilities = calculateMorphemeProbabilities(candidateFrequencies);
         CopyOnWriteArrayList<Double> values = new CopyOnWriteArrayList<>();
-        candidateSegmentsSequence.keySet().parallelStream().forEach((st) -> {
-            values.add(calculateMLforOneTrie(candidateSegmentsSequence.get(st), morphemeProbabilities));
-        });
+
+        int i = 0;
+        int paralelCount = 2;
+        Map<TrieST, ArrayList<String>> tempList = new ConcurrentHashMap<>();
+        for (TrieST st : candidateSegmentationList.keySet()) {
+            tempList.put(st, candidateSegmentationList.get(st));
+            i++;
+            if (i == paralelCount) {
+                listOftemplist.add(tempList);
+                tempList.clear();
+                i = 0;
+            }
+        }
+        if (!tempList.isEmpty()) {
+            listOftemplist.add(tempList);
+        }
+
+        for (Map<TrieST, ArrayList<String>> temp : listOftemplist) {
+            temp.keySet().parallelStream().forEach((st) -> {
+                values.add(calculateMLforOneTrie(candidateSegmentationList.get(st), morphemeProbabilities));
+            });
+        }
+
         double result = 0;
         for (double d : values) {
             result = result + d;
@@ -178,16 +183,6 @@ public class Model {
         }
         return morphemeProbabilities;
     }
-
-    public ArrayList<String> tokenSegmentation(String segmentation) {
-        ArrayList<String> segments = new ArrayList<String>();
-        StringTokenizer tokens = new StringTokenizer(segmentation, "+");
-        while (tokens.hasMoreTokens()) {
-            segments.add(tokens.nextToken());
-        }
-        return segments;
-    }
-
 }
 
 /*

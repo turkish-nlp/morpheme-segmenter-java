@@ -40,7 +40,36 @@ public class Baseline {
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        Baseline fp = new Baseline(args[0] );
+        ArrayList<String> allSegmentations = new ArrayList<>();
+        allSegmentations.add("okul+da+lar");
+        allSegmentations.add("okul+da+ki");
+
+        allSegmentations.add("okul");
+        allSegmentations.add("okul+da");
+        allSegmentations.add("ogremnt");
+        allSegmentations.add("okul$");
+        allSegmentations.add("okul+da+lar+da");
+        String boundaryNode = "okulda";
+        Set<String> similiar = new HashSet<>();
+        for (String s : allSegmentations) {
+            String replaced = s.replaceAll("\\+", "");
+            if (replaced.startsWith(boundaryNode)) {
+                String iterate = s;
+                while (!iterate.startsWith(boundaryNode)) {
+                    iterate = iterate.replaceFirst("\\+", "");
+                }
+                if (iterate.contains("+")) {
+                    String tempIterate = iterate.replaceFirst("\\+", "");
+                    if (tempIterate.contains("+")) {
+                        similiar.add(tempIterate.substring(0, tempIterate.indexOf("+")));
+                    } else {
+                        similiar.add(tempIterate);
+                    }
+                }
+
+            }
+        }
+        System.out.println(similiar);
     }
 
     public double calculatePoissonOverall() {
@@ -52,6 +81,7 @@ public class Baseline {
         }
         return poissonOverall;
     }
+
     public double calculatePoisson(TrieST st, Set<String> boundaries) {
         double result = 0;
         for (String str : boundaries) {
@@ -59,6 +89,7 @@ public class Baseline {
         }
         return result;
     }
+
     public double poissonDistribution(int branchingFactor) {
         return (Math.pow(lambda, branchingFactor) * Math.exp(lambda)) / MathUtils.factorial(lambda);
     }
@@ -100,6 +131,7 @@ public class Baseline {
             }
         }
     }
+
     private Map<String, Integer> calculateFrequencyWithMap(TrieST st, Set<String> boundaries) {
 
         Map<String, Integer> morphmeFrequencies = new HashMap<>();
@@ -139,6 +171,7 @@ public class Baseline {
         }
         return morphmeFrequencies;
     }
+
     public Map<String, Integer> changeFrequencyOneTrie(TrieST st, Set<String> oldBoundaries, Set<String> newBoundaries, Map<String, Integer> originalFrequencies) {
 
         Map<String, Integer> candidateFrequencies = new ConcurrentHashMap<>(originalFrequencies);
@@ -207,6 +240,7 @@ public class Baseline {
         }
         trieSegmentations.put(st, tokens);
     }
+
     public Map<TrieST, ArrayList<String>> changeSegmentSequenceForOneTrie(TrieST st, Set<String> oldBoundaries, Set<String> newBoundaries, Map<TrieST, ArrayList<String>> originalTrieSegments) {
 
         Map<TrieST, ArrayList<String>> candidateTrieSegments = new ConcurrentHashMap<>(originalTrieSegments);
@@ -214,13 +248,14 @@ public class Baseline {
         candidateTrieSegments.put(st, newSegmentsSeq);
         return candidateTrieSegments;
     }
+
     public ArrayList<String> determineSegmentsForOneTrie(TrieST st, Set<String> boundaries, boolean print) {
 
         Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
 
-        for (String boundary : boundaries) {
-            nodeList.put(boundary + "$", 1);
-        }
+        // for (String boundary : boundaries) {
+        //     nodeList.put(boundary + "$", 1);
+        //}
 
         ArrayList<String> tokenSegments = new ArrayList<String>(); // unique elements?? set??
 
@@ -250,12 +285,69 @@ public class Baseline {
                     segmentation = segmentation + "+" + popped;
                 }
                 tokenSegments.addAll(tokenSegmentation(segmentation));
-                if(print)
+                if (print)
                     System.out.println(segmentation);
             }
         }
         return tokenSegments;
     }
+
+    public Set<String> getSimilaryBoundary(TrieST st, Set<String> boundaries, String boundaryNode) {
+
+        Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
+
+        ArrayList<String> allSegmentations = new ArrayList<>();
+
+        for (String node : nodeList.keySet()) {
+            if (node.endsWith("$")) {
+
+                Stack<String> morphmeStack = new Stack<>();
+
+                String current = "";
+                boolean found = false;
+                for (String boundary : boundaries) {
+                    if (node.startsWith(boundary) && !node.equals(boundary + "$")) {
+                        current = boundary;
+                        found = true;
+                    }
+                }
+                String morpheme = node.substring(current.length(), node.length() - 1); //   EXCEPTION
+                morphmeStack.add(morpheme);
+
+                String word = node.substring(0, current.length());
+                doSegmentation(word, boundaries, morphmeStack);
+
+                String segmentation = morphmeStack.pop();
+                int a = morphmeStack.size();
+                for (int i = 0; i < a; i++) {
+                    String popped = morphmeStack.pop();
+                    segmentation = segmentation + "+" + popped;
+                }
+                allSegmentations.add(segmentation);
+            }
+        }
+        Set<String> similiar = new HashSet<>();
+        for (String s : allSegmentations) {
+            String replaced = s.replaceAll("\\+", "");
+            if (replaced.startsWith(boundaryNode)) {
+                String iterate = s;
+                while (!iterate.startsWith(boundaryNode)) {
+                    iterate = iterate.replaceFirst("\\+", "");
+                }
+                if (iterate.contains("+")) {
+                    String tempIterate = iterate.replaceFirst("\\+", "");
+                    if (tempIterate.contains("+")) {
+                        similiar.add(tempIterate.substring(0, tempIterate.indexOf("+")));
+                    } else {
+                        similiar.add(tempIterate);
+                    }
+                }
+
+            }
+        }
+        return similiar;
+    }
+
     public ArrayList<String> tokenSegmentation(String segmentation) {
         ArrayList<String> segments = new ArrayList<String>();
         StringTokenizer tokens = new StringTokenizer(segmentation, "+");
@@ -264,6 +356,7 @@ public class Baseline {
         }
         return segments;
     }
+
     private void doSegmentation(String node, Set<String> boundaries, Stack<String> morphmeStack) {
 
         if (!node.equals("")) {
@@ -303,6 +396,7 @@ public class Baseline {
         }
         generateBoundaryListforBaseline(3); /// !!!!!!!!!!!!!!!!!!
     }
+
     public void generateBoundaryListforBaseline(int childLimit) {
 
         for (TrieST st : trieList) {
@@ -333,15 +427,19 @@ public class Baseline {
     public List<TrieST> getTrieList() {
         return trieList;
     }
+
     public Map<TrieST, ArrayList<String>> getTrieSegmentations() {
         return trieSegmentations;
     }
+
     public Map<String, Integer> getMorphemeFreq() {
         return morphemeFreq;
     }
+
     public List<String> getSearchedWordList() {
         return searchedWordList;
     }
+
     public Map<TrieST, Set<String>> getBaselineBoundaries() {
         return baselineBoundaries;
     }
