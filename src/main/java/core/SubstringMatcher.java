@@ -67,18 +67,31 @@ public class SubstringMatcher {
         }
         serializeToFile(st, word);
 
-        /*
-        Map<String, Integer> WordList = st.getWordList();
 
-        for (String s : WordList.keySet()) {
-            if (WordList.get(s) >= childLimit) {
-                writer.println("(" + s + ", " + WordList.get(s) + ")");
+        Map<String, Integer> wordList = st.getWordList();
+        Set<String> boundaryList = new TreeSet<>();
+        // for baseline
+        for (String s : wordList.keySet()) {
+            if (wordList.get(s) >= childLimit) {
+                boundaryList.add(s);
             }
         }
-        writer.close();
-        */
+        wordBoundary.put(word, boundaryList);
+        calcuateFrequency(st, boundaryList);
+
+        for (String s : morphemeFreq.keySet()) {
+            System.out.println(s + " --> " + morphemeFreq.get(s));
+        }
+        System.out.println("-----------------------------------------------------------------------------------");
+        System.out.println("-----------------------------------------------------------------------------------");
+
+        for (String s : wordList.keySet()) {
+            System.out.println(s + " --> " + wordList.get(s));
+        }
+
+        System.out.println("-----------------------------------------------------------------------------------");
         System.out.println("For word >>>> " + word + " <<<< from root node to all leaf nodes, all paths: ");
-        System.out.println("-------------------------------------------------------------------");
+        System.out.println("-----------------------------------------------------------------------------------");
 
     }
 
@@ -112,7 +125,7 @@ public class SubstringMatcher {
                 boundaryList.add(s);
             }
         }
-        wordBoundary.put(word, boundaryList);
+        baselineBoundaries.put(word, boundaryList);
         calcuateFrequency(st, boundaryList);
 
         for (String s : morphemeFreq.keySet()) {

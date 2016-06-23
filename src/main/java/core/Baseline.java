@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by ahmet on 18.06.2016.
  */
-public class FrequencyProcessor {
+public class Baseline {
 
 
     public List<String> getSearchedWordList() {
@@ -21,40 +21,46 @@ public class FrequencyProcessor {
     public List<TrieST> trieList = new ArrayList<TrieST>();
     public Map<TrieST, ArrayList<String>> trieSegmentations = new ConcurrentHashMap<>(); // unique elements?? set??
     public Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
-    //public Map<String, CopyOnWriteArrayList<TrieST>> morphemeTrieList = new ConcurrentHashMap<>();
-    public Map<TrieST, Set<String>> wordBoundary = new ConcurrentHashMap<>();
+    public Map<TrieST, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
     public Map<TrieST, Double> triePoisson = new ConcurrentHashMap<>();
 
     double lambda = 5;
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
+    public Baseline(String dir) throws IOException, ClassNotFoundException {
 
+        generateTrieList(dir);
 
-        FrequencyProcessor fp = new FrequencyProcessor();
-        fp.generateTrieList(args[0]);
-
-        fp.trieList.parallelStream().forEach((n) -> {
-            fp.determineSegmentation(n);
+        this.trieList.parallelStream().forEach((n) -> {
+            this.calculateFrequency(n);
         });
 
-        for (String key : fp.morphemeFreq.keySet()) {
-            System.out.println(key + "-->" + fp.morphemeFreq.get(key));
-        }
+        this.trieList.parallelStream().forEach((n) -> {
+            this.determineSegmentation(n);
+        });
+
+        calculatePoissonOverall();
+
+        System.out.println("Initialization is finish");
+
+    }
+
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
+        Baseline fp = new Baseline(args[0]);
     }
 
     public double calculatePoissonOverall() {
         double poissonOverall = 0;
         for (TrieST st : trieList) {
-            triePoisson.put(st, calculatePoisson(st));
-            poissonOverall = poissonOverall + Math.log(calculatePoisson(st));
+            double poisson = calculatePoisson(st, baselineBoundaries.get(st));
+            triePoisson.put(st, poisson);
+            poissonOverall = poissonOverall + Math.log(poisson);
         }
         return poissonOverall;
     }
 
-    public double calculatePoisson(TrieST st) {
-        Set<String> boundary = wordBoundary.get(st);
+    public double calculatePoisson(TrieST st, Set<String> boundaries) {
         double result = 0;
-        for (String str : boundary) {
+        for (String str : boundaries) {
             result = result + Math.log(poissonDistribution(st.getWordList().get(str)));
         }
         return result;
@@ -63,6 +69,44 @@ public class FrequencyProcessor {
 
     public double poissonDistribution(int branchingFactor) {
         return (Math.pow(lambda, branchingFactor) * Math.exp(lambda)) / MathUtils.factorial(lambda);
+    }
+
+    private void calculateFrequency(TrieST st) {
+
+        Set<String> boundaries = baselineBoundaries.get(st);
+        Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
+
+        for (String boundary : boundaries) {
+            nodeList.put(boundary + "$", 1);
+        }
+
+        for (String node : nodeList.keySet()) {
+            if (node.endsWith("$")) {
+                String current = "";
+                boolean found = false;
+                for (String boundary : boundaries) {
+                    if (node.startsWith(boundary) && !node.equals(boundary + "$")) {
+                        current = boundary;
+                        found = true;
+                    }
+                }
+                String morpheme = node.substring(current.length(), node.length() - 1);
+
+/*                if (morphemeTrieList.containsKey(morpheme) && !morphemeTrieList.get(morpheme).contains(st)) {
+                    morphemeTrieList.get(morpheme).add(st);
+                } else {
+                    CopyOnWriteArrayList tmp = new CopyOnWriteArrayList<>();
+                    tmp.add(st);
+                    morphemeTrieList.put(morpheme, tmp);
+                }
+*/
+                if (morphemeFreq.containsKey(morpheme)) {
+                    morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + 1);
+                } else {
+                    morphemeFreq.put(morpheme, 1);
+                }
+            }
+        }
     }
 
     // in order to avoid performing segmentation needlessly : normally, segmentation+frequency are performed together
@@ -107,13 +151,12 @@ public class FrequencyProcessor {
     }
 
     // changed to public
-    public Pair<Map<String, Integer>, Map<TrieST, ArrayList<String>>> changePairForOneTrie(TrieST st, Set<String> oldBoundaries, Set<String> newBoundaries) {
+    public Map<String, Integer> changeFrequencyOneTrie(TrieST st, Set<String> oldBoundaries, Set<String> newBoundaries, Map<String, Integer> originalFrequencies) {
 
-        Map<String, Integer> candidateFrequencies = new ConcurrentHashMap<>(morphemeFreq);
+        Map<String, Integer> candidateFrequencies = new ConcurrentHashMap<>(originalFrequencies);
 
         Map<String, Integer> oldMorphemeFreq = calcuateFrequencyWithMap(st, oldBoundaries);
-        Pair<Map<String, Integer>, ArrayList<String>> newPair = determinePairForOneTrie(st, newBoundaries);
-        Map<String, Integer> newMorphemeFreq = newPair.getFirst();
+        Map<String, Integer> newMorphemeFreq = calcuateFrequencyWithMap(st, newBoundaries);
 
         for (String morph : oldMorphemeFreq.keySet()) {
             if (candidateFrequencies.containsKey(morph)) {
@@ -128,27 +171,32 @@ public class FrequencyProcessor {
                 int freq = candidateFrequencies.get(morp) + newMorphemeFreq.get(morp);
                 candidateFrequencies.put(morp, freq);
             } else {
-               // System.out.println("new: " + morp);
+                // System.out.println("new: " + morp);
                 candidateFrequencies.put(morp, newMorphemeFreq.get(morp));
             }
         }
 
-        Map<TrieST, ArrayList<String>> candidateSegmentationList = new ConcurrentHashMap<>(trieSegmentations);
-        candidateSegmentationList.put(st, newPair.getSecond());
-        Pair<Map<String, Integer>, Map<TrieST, ArrayList<String>>> candidatePair = new Pair<>(candidateFrequencies, candidateSegmentationList);
+        return candidateFrequencies;
+    }
 
-        return candidatePair;
+    public Map<TrieST, ArrayList<String>> changeSegmentSequenceForOneTrie(TrieST st, Set<String> oldBoundaries, Set<String> newBoundaries, Map<TrieST, ArrayList<String>> originalTrieSegments) {
+
+        Map<TrieST, ArrayList<String>> candidateTrieSegments = new ConcurrentHashMap<>(originalTrieSegments);
+
+        ArrayList<String> newSegmentsSeq = determineSegmentsForOneTrie(st, newBoundaries);
+
+        candidateTrieSegments.put(st, newSegmentsSeq);
+
+        return candidateTrieSegments;
     }
 
     public void determineSegmentation(TrieST st) {
-        Set<String> boundaries = wordBoundary.get(st);
+        Set<String> boundaries = baselineBoundaries.get(st);
         Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
 
         for (String boundary : boundaries) {
             nodeList.put(boundary + "$", 1);
         }
-
-        ArrayList<String> segments = new ArrayList<String>(); // unique elements?? set??
 
         ArrayList<String> tokens = new ArrayList<String>(); // unique elements?? set??
 
@@ -178,24 +226,11 @@ public class FrequencyProcessor {
                     segmentation = segmentation + "+" + popped;
                 }
                 tokens.addAll(tokenSegmentation(segmentation));
-                segments.add(segmentation);
-                //    System.out.println(segmentation);
+                System.out.println(segmentation);
             }
         }
 
-        Map<String, Integer> tempFreq = new HashMap<>();
-
-        for (String s : tokens)
-            if (!tempFreq.containsKey(s))
-                tempFreq.put(s, Collections.frequency(segments, s));
-        for (String str : tempFreq.keySet()) {
-            if (morphemeFreq.containsKey(str)) {
-                morphemeFreq.put(str, morphemeFreq.get(str) + 1);
-            } else {
-                morphemeFreq.put(str, 1);
-            }
-        }
-        trieSegmentations.put(st, segments);
+        trieSegmentations.put(st, tokens);
     }
 
     public ArrayList<String> tokenSegmentation(String segmentation) {
@@ -207,6 +242,7 @@ public class FrequencyProcessor {
         return segments;
     }
 
+    /*
     public class Pair<F, S> {
         private F first; //first member of pair
         private S second; //second member of pair
@@ -233,16 +269,15 @@ public class FrequencyProcessor {
         }
 
     }
+    */
 
-    private Pair<Map<String, Integer>, ArrayList<String>> determinePairForOneTrie(TrieST st, Set<String> boundaries) {
+    private ArrayList<String> determineSegmentsForOneTrie(TrieST st, Set<String> boundaries) {
 
         Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
 
         for (String boundary : boundaries) {
             nodeList.put(boundary + "$", 1);
         }
-
-        ArrayList<String> candidateSegments = new ArrayList<String>(); // unique elements?? set??
 
         ArrayList<String> tokenSegments = new ArrayList<String>(); // unique elements?? set??
 
@@ -271,20 +306,12 @@ public class FrequencyProcessor {
                     String popped = morphmeStack.pop();
                     segmentation = segmentation + "+" + popped;
                 }
-                candidateSegments.add(segmentation);
                 tokenSegments.addAll(tokenSegmentation(segmentation));
                 //System.out.println(segmentation);
             }
         }
 
-        Map<String, Integer> tempFreq = new HashMap<>();
-
-        for (String s : tokenSegments)
-            if (!tempFreq.containsKey(s))
-                tempFreq.put(s, Collections.frequency(tokenSegments, s));
-
-        Pair<Map<String, Integer>, ArrayList<String>> candidatePair = new Pair<>(tempFreq, candidateSegments);
-        return candidatePair;
+        return tokenSegments;
     }
     /*
     public Map<String, ArrayList<String>> getSimilarityWords(String selectedBoundary, ArrayList<String> segmentations) {
@@ -347,7 +374,7 @@ public class FrequencyProcessor {
                     boundaryList.add(s);
                 }
             }
-            wordBoundary.put(st, boundaryList);
+            baselineBoundaries.put(st, boundaryList);
         }
     }
 
@@ -368,8 +395,8 @@ public class FrequencyProcessor {
         return morphemeTrieList;
     }*/
 
-    public Map<TrieST, Set<String>> getWordBoundary() {
-        return wordBoundary;
+    public Map<TrieST, Set<String>> getBaselineBoundaries() {
+        return baselineBoundaries;
     }
 
 }
@@ -408,37 +435,3 @@ public class FrequencyProcessor {
                 }
             }
         */
-  /*  private void calcuateFrequency(TrieST st, Set<String> boundaries) {
-        Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
-
-        for (String boundary : boundaries) {
-            nodeList.put(boundary + "$", 1);
-        }
-
-        for (String node : nodeList.keySet()) {
-            if (node.endsWith("$")) {
-                String current = "";
-                boolean found = false;
-                for (String boundary : boundaries) {
-                    if (node.startsWith(boundary) && !node.equals(boundary + "$")) {
-                        current = boundary;
-                        found = true;
-                    }
-                }
-                String morpheme = node.substring(current.length(), node.length() - 1);
-                if (morphemeTrieList.containsKey(morpheme) && !morphemeTrieList.get(morpheme).contains(st)) {
-                    morphemeTrieList.get(morpheme).add(st);
-                } else {
-                    CopyOnWriteArrayList tmp = new CopyOnWriteArrayList<>();
-                    tmp.add(st);
-                    morphemeTrieList.put(morpheme, tmp);
-                }
-                if (morphemeFreq.containsKey(morpheme)) {
-                    morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + 1);
-                } else {
-                    morphemeFreq.put(morpheme, 1);
-                }
-            }
-        }
-    }
-    */
