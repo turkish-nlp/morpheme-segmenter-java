@@ -19,9 +19,9 @@ public class Baseline {
     public Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
     public Map<TrieST, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
     public Map<TrieST, Double> triePoisson = new ConcurrentHashMap<>();
+    public double overallPoisson = 0;
 
-
-    public Baseline(String dir, double overallPoisson) throws IOException, ClassNotFoundException {
+    public Baseline(String dir) throws IOException, ClassNotFoundException {
 
         generateTrieList(dir);
 
@@ -40,7 +40,7 @@ public class Baseline {
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        Baseline fp = new Baseline(args[0], 0);
+        Baseline fp = new Baseline(args[0] );
     }
 
     public double calculatePoissonOverall() {
@@ -151,7 +151,7 @@ public class Baseline {
                 int freq = candidateFrequencies.get(morph) - oldMorphemeFreq.get(morph);
                 candidateFrequencies.put(morph, freq);
             } else {
-                System.out.println("BIG PROBLEM :)");
+                System.out.println("BIG PROBLEM :)  " + morph);
             }
         }
         for (String morp : newMorphemeFreq.keySet()) {
