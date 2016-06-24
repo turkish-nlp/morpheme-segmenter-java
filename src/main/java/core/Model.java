@@ -1,7 +1,10 @@
 package core;
 
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
+import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tries.TrieST;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,15 +20,20 @@ public class Model {
     public List<TrieST> trieList;
     public Map<TrieST, ArrayList<String>> trieSegmentations;
     public Map<String, Integer> morphemeFreq;
+    public Map<TrieST, Double> trieSimiliarityScores;
+
     public Map<TrieST, Set<String>> wordBoundary;
     public Map<TrieST, Double> triePoisson;
     public double overallPoisson;
+    public Map<TrieST, Double> boundarySimiliar;
     Baseline fp;
     public double oldScore;
+    public double overallSS;
 
-    public Model(String dir) throws IOException, ClassNotFoundException {
+    public Model(String dir, String vectorDir) throws IOException, ClassNotFoundException {
 
-        fp = new Baseline(dir);
+        fp = new Baseline(dir, vectorDir);
+        trieSimiliarityScores = new ConcurrentHashMap<>();
         searchedWordList = new ArrayList<String>(fp.searchedWordList);
         trieList = new ArrayList<TrieST>(fp.trieList);
         trieSegmentations = new ConcurrentHashMap<>(fp.trieSegmentations); // unique elements?? set??
@@ -33,24 +41,22 @@ public class Model {
         wordBoundary = new ConcurrentHashMap<>(fp.baselineBoundaries);
         triePoisson = new ConcurrentHashMap<>(fp.triePoisson);
         overallPoisson = fp.overallPoisson;
-        oldScore = calculateOverallProbability(overallPoisson, morphemeFreq, trieSegmentations);
+        boundarySimiliar = new ConcurrentHashMap<>(fp.boundarySimiliarScores);
+        overallSS = fp.overallSimilarityScore;
+        oldScore = calculateOverallProbability(overallPoisson, morphemeFreq, trieSegmentations, overallSS);
     }
 
     // private double acceptProb = 0.4;
 
-
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        Model m = new Model(args[0]);
+        Model m = new Model(args[0], args[1]);
         m.random();
-
     }
-
 
     public void random() throws IOException, ClassNotFoundException {
 
         Random rand = new Random();
-
         int count = 10000;
         while (count > 0) {
 
@@ -73,7 +79,7 @@ public class Model {
                 candidateMorpheme = (String) values[nodeRandom];  // new boundary candidate
             }
 
-            if (candidateBoundaryList.contains(candidateMorpheme)) {
+            if (originalBoundaryList.contains(candidateMorpheme)) {
                 candidateBoundaryList.remove(candidateMorpheme);
                 candidatePoissonOverall = overallPoisson - Math.log(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
             } else {
@@ -83,23 +89,23 @@ public class Model {
             Map<String, Integer> candidateFrequencies = fp.changeFrequencyOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.morphemeFreq);
             Map<TrieST, ArrayList<String>> candidateSegmentationList = fp.changeSegmentSequenceForOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.trieSegmentations);
 
-            double newScore = calculateOverallProbability(candidatePoissonOverall, candidateFrequencies, candidateSegmentationList);
+            double candidateTrieSim = fp.generateSimiliarWordsForOneTrie(chosenTrie,candidateBoundaryList);
+            double candidateSS = overallSS - boundarySimiliar.get(chosenTrie) + candidateTrieSim;
 
-            double acceptProb = newScore - oldScore; // Is accepted value dynamic ????
-            acceptProb = Math.pow(10, acceptProb);
+            double newScore = calculateOverallProbability(candidatePoissonOverall, candidateFrequencies, candidateSegmentationList, candidateSS);
 
             if (newScore > oldScore) {
                 //      System.out.println("accepted mor: " + candidateMorpheme);
-                update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall);
+                update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS,candidateTrieSim);
                 oldScore = newScore;
             } else // accept the boundary with randProb probability
             {
+                double acceptProb = newScore - oldScore; // Is accepted value dynamic ????
+                acceptProb = Math.pow(10, acceptProb);
                 double randProb = rand.nextDouble();
                 if ((double) randProb < acceptProb) {
                     System.out.println("prob: " + acceptProb);
-
-                    //     System.out.println("accepted mor2: " + candidateMorpheme);
-                    update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall);
+                    update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS, candidateTrieSim);
                     oldScore = newScore;
                 }
             }
@@ -112,16 +118,18 @@ public class Model {
         }
     }
 
-    public void update(TrieST st, Set<String> candidateBoundaryList, Map<String, Integer> candidateFrequencies, Map<TrieST, ArrayList<String>> candidateSegmentationList, double candidatePoissonOverall) {
+    public void update(TrieST st, Set<String> candidateBoundaryList, Map<String, Integer> candidateFrequencies, Map<TrieST, ArrayList<String>> candidateSegmentationList, double candidatePoissonOverall, double candidateOverallSimiliarityScore, double candidateTrieSimiliarityScore) {
         this.wordBoundary.put(st, candidateBoundaryList);
         this.morphemeFreq = candidateFrequencies;
         this.trieSegmentations = candidateSegmentationList;
         this.overallPoisson = candidatePoissonOverall;
+        this.overallSS = candidateOverallSimiliarityScore;
+        boundarySimiliar.put(st, candidateTrieSimiliarityScore);
     }
 
 
-    public double calculateOverallProbability(double candidatePoissonOverall, Map<String, Integer> candidateFrequencies, Map<TrieST, ArrayList<String>> candidateSegmentationList) {
-        return candidatePoissonOverall + calculateMaxLikelihoodForCorpus(candidateFrequencies, candidateSegmentationList);
+    public double calculateOverallProbability(double candidatePoissonOverall, Map<String, Integer> candidateFrequencies, Map<TrieST, ArrayList<String>> candidateSegmentationList, double similiarityScore) {
+        return candidatePoissonOverall + calculateMaxLikelihoodForCorpus(candidateFrequencies, candidateSegmentationList) + similiarityScore;
     }
 
     public double calculateMaxLikelihoodForCorpus(Map<String, Integer> candidateFrequencies, Map<TrieST, ArrayList<String>> candidateSegmentationList) {
@@ -177,8 +185,6 @@ public class Model {
         }
         for (String s : candidateFrequencies.keySet()) {
             double logLikelihood = Math.log((double) candidateFrequencies.get(s) / totalNumber);
-            //  if(candidateFrequencies.get(s) == 0)
-            //     System.out.println("ERROR:" + s + "   >>>  " + candidateFrequencies.get(s) );
             morphemeProbabilities.put(s, logLikelihood);
         }
         return morphemeProbabilities;

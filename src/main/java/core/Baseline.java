@@ -1,6 +1,8 @@
 package core;
 
 import org.canova.api.util.MathUtils;
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
+import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tries.TrieST;
 
 import java.io.*;
@@ -18,12 +20,17 @@ public class Baseline {
     public Map<TrieST, ArrayList<String>> trieSegmentations = new ConcurrentHashMap<>(); // unique elements?? set??
     public Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
     public Map<TrieST, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
+    public Map<TrieST, Double> boundarySimiliarScores = new ConcurrentHashMap<>();
+    private WordVectors vectors;
+
     public Map<TrieST, Double> triePoisson = new ConcurrentHashMap<>();
     public double overallPoisson = 0;
+    public double overallSimilarityScore = 0;
 
-    public Baseline(String dir) throws IOException, ClassNotFoundException {
+    public Baseline(String dir, String vectorDir) throws IOException, ClassNotFoundException {
 
         generateTrieList(dir);
+        vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
 
         this.trieList.parallelStream().forEach((n) -> {
             this.calculateFrequency(n);
@@ -34,42 +41,12 @@ public class Baseline {
         });
 
         overallPoisson = calculatePoissonOverall();
-
-        System.out.println("Initialization is completed");
-
+        overallSimilarityScore = calculateBaselineSimilarityScore();
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        ArrayList<String> allSegmentations = new ArrayList<>();
-        allSegmentations.add("okul+da+lar");
-        allSegmentations.add("okul+da+ki");
-
-        allSegmentations.add("okul");
-        allSegmentations.add("okul+da");
-        allSegmentations.add("ogremnt");
-        allSegmentations.add("okul$");
-        allSegmentations.add("okul+da+lar+da");
-        String boundaryNode = "okulda";
-        Set<String> similiar = new HashSet<>();
-        for (String s : allSegmentations) {
-            String replaced = s.replaceAll("\\+", "");
-            if (replaced.startsWith(boundaryNode)) {
-                String iterate = s;
-                while (!iterate.startsWith(boundaryNode)) {
-                    iterate = iterate.replaceFirst("\\+", "");
-                }
-                if (iterate.contains("+")) {
-                    String tempIterate = iterate.replaceFirst("\\+", "");
-                    if (tempIterate.contains("+")) {
-                        similiar.add(tempIterate.substring(0, tempIterate.indexOf("+")));
-                    } else {
-                        similiar.add(tempIterate);
-                    }
-                }
-
-            }
-        }
-        System.out.println(similiar);
+        Baseline b = new Baseline(args[0], args[1]);
+       // System.out.println(Math.log(b.vectors.similarity("had", "hademesi")));
     }
 
     public double calculatePoissonOverall() {
@@ -208,7 +185,6 @@ public class Baseline {
         }
 
         ArrayList<String> tokens = new ArrayList<String>(); // unique elements?? set??
-
         for (String node : nodeList.keySet()) {
             if (node.endsWith("$")) {
 
@@ -239,6 +215,7 @@ public class Baseline {
             }
         }
         trieSegmentations.put(st, tokens);
+
     }
 
     public Map<TrieST, ArrayList<String>> changeSegmentSequenceForOneTrie(TrieST st, Set<String> oldBoundaries, Set<String> newBoundaries, Map<TrieST, ArrayList<String>> originalTrieSegments) {
@@ -292,12 +269,32 @@ public class Baseline {
         return tokenSegments;
     }
 
-    public Set<String> getSimilaryBoundary(TrieST st, Set<String> boundaries, String boundaryNode) {
+    public double calculateBaselineSimilarityScore() {
+        double overalScore = 0;
+        for (TrieST st : baselineBoundaries.keySet()) {
+            double score = generateSimiliarWordsForOneTrie(st, baselineBoundaries.get(st));
+            boundarySimiliarScores.put(st, score);
+            overalScore = overalScore + score;
+        }
+        return overalScore;
+    }
+
+
+    public double generateSimiliarWordsForOneTrie(TrieST st, Set<String> boundaries) {
+        double score = 0;
+        for (String str : boundaries) {
+            Set<String> similiar = getSimilartyBoundaryForOneNode(st, boundaries, str);
+            for (String sim : similiar)
+                score = score + Math.log(vectors.similarity(str, sim));
+        }
+        return score;
+    }
+
+
+    public Set<String> getSimilartyBoundaryForOneNode(TrieST st, Set<String> boundaries, String boundaryNode) {
 
         Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
-
         ArrayList<String> allSegmentations = new ArrayList<>();
-
         for (String node : nodeList.keySet()) {
             if (node.endsWith("$")) {
 
