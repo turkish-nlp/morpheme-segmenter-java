@@ -287,8 +287,9 @@ public class Baseline {
             Set<String> similiar = getSimilartyBoundaryForOneNode(st, boundaries, str);
             for (String sim : similiar) {
                 double smlrty = vectors.similarity(str, sim);
-                if(smlrty > 0 && smlrty < 1)
-                    score = score + Math.log(smlrty);
+                if( smlrty < 0 || smlrty > 1)
+                    smlrty =  0.000000000001;
+                score = score + Math.log(smlrty);
             }
         }
         return score;

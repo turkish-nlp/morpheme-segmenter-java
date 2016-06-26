@@ -105,7 +105,6 @@ public class Model {
                     acceptProb = Math.pow(10, acceptProb);
                     double randProb = rand.nextDouble();
                     if ((double) randProb < acceptProb) {
-                        System.out.println("prob: " + acceptProb);
                         update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS, candidateTrieSim);
                         oldScore = newScore;
                     }
