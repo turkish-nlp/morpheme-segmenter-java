@@ -46,8 +46,8 @@ public class Baseline {
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        Baseline b = new Baseline(args[0], args[1],0);
-       // System.out.println(Math.log(b.vectors.similarity("had", "hademesi")));
+        Baseline b = new Baseline(args[0], args[1], 0);
+        // System.out.println(Math.log(b.vectors.similarity("had", "hademesi")));
     }
 
     public double calculatePoissonOverall() {
@@ -212,7 +212,6 @@ public class Baseline {
                     segmentation = segmentation + "+" + popped;
                 }
                 tokens.addAll(tokenSegmentation(segmentation));
-                System.out.println(segmentation);
             }
         }
         trieSegmentations.put(st, tokens);
@@ -284,9 +283,13 @@ public class Baseline {
     public double generateSimiliarWordsForOneTrie(TrieST st, Set<String> boundaries) {
         double score = 0;
         for (String str : boundaries) {
+
             Set<String> similiar = getSimilartyBoundaryForOneNode(st, boundaries, str);
-            for (String sim : similiar)
-                score = score + Math.log(vectors.similarity(str, sim));
+            for (String sim : similiar) {
+                double smlrty = vectors.similarity(str, sim);
+                if(smlrty > 0 && smlrty < 1)
+                    score = score + Math.log(smlrty);
+            }
         }
         return score;
     }

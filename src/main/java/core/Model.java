@@ -64,55 +64,62 @@ public class Model {
             int trieRandom = (int) rand.nextInt(this.trieList.size());  // rand number for the trie
             // System.out.println("randomly chosen trie:" + fp.getSearchedWordList().get(trieRandom).toString());
             TrieST chosenTrie = this.trieList.get(trieRandom); // chosen trie ( to be less verbose )
-            Set<String> originalBoundaryList = this.wordBoundary.get(chosenTrie); // original boundaryList of the chosen trie ( to be less verbose )
-            // original objects //
 
-            // copied objects //
-            Set<String> candidateBoundaryList = new TreeSet<>(originalBoundaryList); // deep copy of the randomly chosen trie's boundaryList
-            // copied objects //
-            String candidateMorpheme = "$";
+            if (chosenTrie.size() != 0) {
+                Set<String> originalBoundaryList = this.wordBoundary.get(chosenTrie); // original boundaryList of the chosen trie ( to be less verbose )
+                // original objects //
 
-            while (candidateMorpheme.contains("$")) {
-                int nodeRandom = (int) rand.nextInt(chosenTrie.size()); // rand number for the node in the random trie
-                Object[] values = chosenTrie.getWordList().keySet().toArray(); // convert the wordList of the chosen trie into array to be able to select a random node
-                candidateMorpheme = (String) values[nodeRandom];  // new boundary candidate
-            }
+                // copied objects //
+                Set<String> candidateBoundaryList = new TreeSet<>(originalBoundaryList); // deep copy of the randomly chosen trie's boundaryList
+                // copied objects //
+                String candidateMorpheme = "$";
 
-            if (originalBoundaryList.contains(candidateMorpheme)) {
-                candidateBoundaryList.remove(candidateMorpheme);
-                candidatePoissonOverall = overallPoisson - Math.log(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
-            } else {
-                candidateBoundaryList.add(candidateMorpheme);
-                candidatePoissonOverall = overallPoisson + Math.log(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
-            }
-            Map<String, Integer> candidateFrequencies = fp.changeFrequencyOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.morphemeFreq);
-            Map<TrieST, ArrayList<String>> candidateSegmentationList = fp.changeSegmentSequenceForOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.trieSegmentations);
+                while (candidateMorpheme.contains("$")) {
+                    int nodeRandom = (int) rand.nextInt(chosenTrie.size()); // rand number for the node in the random trie
+                    Object[] values = chosenTrie.getWordList().keySet().toArray(); // convert the wordList of the chosen trie into array to be able to select a random node
+                    candidateMorpheme = (String) values[nodeRandom];  // new boundary candidate
+                }
 
-            double candidateTrieSim = fp.generateSimiliarWordsForOneTrie(chosenTrie,candidateBoundaryList);
-            double candidateSS = overallSS - boundarySimiliar.get(chosenTrie) + candidateTrieSim;
+                if (originalBoundaryList.contains(candidateMorpheme)) {
+                    candidateBoundaryList.remove(candidateMorpheme);
+                    candidatePoissonOverall = overallPoisson - Math.log(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
+                } else {
+                    candidateBoundaryList.add(candidateMorpheme);
+                    candidatePoissonOverall = overallPoisson + Math.log(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
+                }
+                Map<String, Integer> candidateFrequencies = fp.changeFrequencyOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.morphemeFreq);
+                Map<TrieST, ArrayList<String>> candidateSegmentationList = fp.changeSegmentSequenceForOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.trieSegmentations);
 
-            double newScore = calculateOverallProbability(candidatePoissonOverall, candidateFrequencies, candidateSegmentationList, candidateSS);
+                double candidateTrieSim = fp.generateSimiliarWordsForOneTrie(chosenTrie, candidateBoundaryList);
+                double candidateSS = overallSS - boundarySimiliar.get(chosenTrie) + candidateTrieSim;
 
-            if (newScore > oldScore) {
-                //      System.out.println("accepted mor: " + candidateMorpheme);
-                update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS,candidateTrieSim);
-                oldScore = newScore;
-            } else // accept the boundary with randProb probability
-            {
-                double acceptProb = newScore - oldScore; // Is accepted value dynamic ????
-                acceptProb = Math.pow(10, acceptProb);
-                double randProb = rand.nextDouble();
-                if ((double) randProb < acceptProb) {
-                    System.out.println("prob: " + acceptProb);
+                double newScore = calculateOverallProbability(candidatePoissonOverall, candidateFrequencies, candidateSegmentationList, candidateSS);
+
+                if (newScore > oldScore) {
+                    //      System.out.println("accepted mor: " + candidateMorpheme);
                     update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS, candidateTrieSim);
                     oldScore = newScore;
+                } else // accept the boundary with randProb probability
+                {
+                    double acceptProb = newScore - oldScore; // Is accepted value dynamic ????
+                    acceptProb = Math.pow(10, acceptProb);
+                    double randProb = rand.nextDouble();
+                    if ((double) randProb < acceptProb) {
+                        System.out.println("prob: " + acceptProb);
+                        update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS, candidateTrieSim);
+                        oldScore = newScore;
+                    }
                 }
+                noOfIteration--;
             }
-            noOfIteration--;
         }
-        System.out.println("-------------------------------------------------------------------------------------");
-        for (TrieST st : this.trieSegmentations.keySet()) {
-            fp.determineSegmentsForOneTrie(st, this.wordBoundary.get(st), true);
+
+        for (TrieST st : this.wordBoundary.keySet()) {
+            System.out.println("-------------------------------------------------------------------------------------");
+            System.out.println(searchedWordList.get(trieList.indexOf(st)) + "--old-->" + fp.baselineBoundaries.get(st));
+            System.out.println(searchedWordList.get(trieList.indexOf(st)) + "--new-->" + this.wordBoundary.get(st));
+            System.out.println("-------------------------------------------------------------------------------------");
+
         }
         saveModel();
     }
