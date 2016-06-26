@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by ahmet on 18.06.2016.
  */
 public class Baseline {
-    double lambda = 5;
+    int lambda = 4;
 
     public List<String> searchedWordList = new ArrayList<String>();
     public List<TrieST> trieList = new ArrayList<TrieST>();
@@ -27,9 +27,10 @@ public class Baseline {
     public double overallPoisson = 0;
     public double overallSimilarityScore = 0;
 
-    public Baseline(String dir, String vectorDir) throws IOException, ClassNotFoundException {
+    public Baseline(String dir, String vectorDir, int lambda) throws IOException, ClassNotFoundException {
 
         generateTrieList(dir);
+        this.lambda = lambda;
         vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
 
         this.trieList.parallelStream().forEach((n) -> {
@@ -45,7 +46,7 @@ public class Baseline {
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        Baseline b = new Baseline(args[0], args[1]);
+        Baseline b = new Baseline(args[0], args[1],0);
        // System.out.println(Math.log(b.vectors.similarity("had", "hademesi")));
     }
 

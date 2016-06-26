@@ -1,11 +1,11 @@
 package core;
 
+import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tries.TrieST;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -29,10 +29,11 @@ public class Model {
     Baseline fp;
     public double oldScore;
     public double overallSS;
+    public int noOfIteration;
 
-    public Model(String dir, String vectorDir) throws IOException, ClassNotFoundException {
+    public Model(String dir, String vectorDir, String noOfIterationP, String lambda) throws IOException, ClassNotFoundException {
 
-        fp = new Baseline(dir, vectorDir);
+        fp = new Baseline(dir, vectorDir, Integer.parseInt(lambda));
         trieSimiliarityScores = new ConcurrentHashMap<>();
         searchedWordList = new ArrayList<String>(fp.searchedWordList);
         trieList = new ArrayList<TrieST>(fp.trieList);
@@ -44,21 +45,19 @@ public class Model {
         boundarySimiliar = new ConcurrentHashMap<>(fp.boundarySimiliarScores);
         overallSS = fp.overallSimilarityScore;
         oldScore = calculateOverallProbability(overallPoisson, morphemeFreq, trieSegmentations, overallSS);
+        this.noOfIteration = Integer.parseInt(noOfIterationP);
     }
-
-    // private double acceptProb = 0.4;
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        Model m = new Model(args[0], args[1]);
+        Model m = new Model(args[0], args[1], args[2], args[3]);
         m.random();
     }
 
     public void random() throws IOException, ClassNotFoundException {
 
         Random rand = new Random();
-        int count = 10000;
-        while (count > 0) {
+        while (noOfIteration > 0) {
 
             double candidatePoissonOverall = overallPoisson;
             // original objects //
@@ -109,13 +108,30 @@ public class Model {
                     oldScore = newScore;
                 }
             }
-            count--;
+            noOfIteration--;
         }
         System.out.println("-------------------------------------------------------------------------------------");
-
         for (TrieST st : this.trieSegmentations.keySet()) {
             fp.determineSegmentsForOneTrie(st, this.wordBoundary.get(st), true);
         }
+        saveModel();
+    }
+
+    public void saveModel() throws IOException {
+        HashMap<String, Integer> morphemeFreqCopy = new HashMap<>();
+        morphemeFreqCopy.putAll(this.morphemeFreq);
+        // toByteArray
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutput out = null;
+        byte[] yourBytes = null;
+        out = new ObjectOutputStream(bos);
+        out.writeObject(morphemeFreqCopy);
+        yourBytes = bos.toByteArray();
+
+        bos.close();
+        out.close();
+
+        FileUtils.writeByteArrayToFile(new File("model"), yourBytes);
     }
 
     public void update(TrieST st, Set<String> candidateBoundaryList, Map<String, Integer> candidateFrequencies, Map<TrieST, ArrayList<String>> candidateSegmentationList, double candidatePoissonOverall, double candidateOverallSimiliarityScore, double candidateTrieSimiliarityScore) {
