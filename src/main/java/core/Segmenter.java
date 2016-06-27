@@ -59,6 +59,9 @@ public class Segmenter {
         }*/
 
         Segmenter s = new Segmenter(args[0], args[1]);
+    //    for (String str : s.morphemeFreq.keySet())
+   //         if (!(s.morphemeFreq.get(str) > 0))
+    //            System.out.println(str + "-->" + s.morphemeFreq.get(str));
     }
 
     public void parallelSplit() {
@@ -71,8 +74,7 @@ public class Segmenter {
             }
         });
 
-        for (String str : finalSegmentation.keySet())
-        {
+        for (String str : finalSegmentation.keySet()) {
             System.out.println(str + "\t" + finalSegmentation.get(str));
         }
     }
@@ -90,6 +92,7 @@ public class Segmenter {
                 while (st.hasMoreTokens()) {
                     tmp = tmp + Math.log10(morphemeProb.get(st.nextToken()));
                 }
+                //   System.out.println(str + "-->" + tmp);
                 if (tmp > maxScore) {
                     maxScore = tmp;
                     segMax = str;
@@ -110,7 +113,12 @@ public class Segmenter {
         in.close();
 
         HashMap<String, Integer> morphemeFreqCopy = (HashMap<String, Integer>) o;
-        this.morphemeFreq.putAll(morphemeFreqCopy);
+
+        for (String str : morphemeFreqCopy.keySet())
+            if (morphemeFreqCopy.get(str) > 0)
+                this.morphemeFreq.put(str, morphemeFreqCopy.get(str));
+
+
     }
 
     public void readWords(String inputFile) throws IOException {

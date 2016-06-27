@@ -1,5 +1,6 @@
 package core;
 
+import org.apache.commons.io.FileUtils;
 import org.canova.api.util.MathUtils;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
@@ -13,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by ahmet on 18.06.2016.
  */
 public class Baseline {
-    int lambda = 4;
+    int lambda;
 
     public List<String> searchedWordList = new ArrayList<String>();
     public List<TrieST> trieList = new ArrayList<TrieST>();
@@ -46,8 +47,26 @@ public class Baseline {
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        Baseline b = new Baseline(args[0], args[1], 0);
-        // System.out.println(Math.log(b.vectors.similarity("had", "hademesi")));
+        Baseline b = new Baseline(args[0], args[1], Integer.parseInt(args[2]));
+        b.saveModel();
+    }
+
+
+    public void saveModel() throws IOException {
+        HashMap<String, Integer> morphemeFreqCopy = new HashMap<>();
+        morphemeFreqCopy.putAll(this.morphemeFreq);
+        // toByteArray
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutput out = null;
+        byte[] yourBytes = null;
+        out = new ObjectOutputStream(bos);
+        out.writeObject(morphemeFreqCopy);
+        yourBytes = bos.toByteArray();
+
+        bos.close();
+        out.close();
+
+        FileUtils.writeByteArrayToFile(new File("baselineModel"), yourBytes);
     }
 
     public double calculatePoissonOverall() {
