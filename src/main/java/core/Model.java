@@ -82,10 +82,10 @@ public class Model {
 
                 if (originalBoundaryList.contains(candidateMorpheme)) {
                     candidateBoundaryList.remove(candidateMorpheme);
-                    candidatePoissonOverall = overallPoisson - Math.log(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
+                    candidatePoissonOverall = overallPoisson - Math.log10(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
                 } else {
                     candidateBoundaryList.add(candidateMorpheme);
-                    candidatePoissonOverall = overallPoisson + Math.log(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
+                    candidatePoissonOverall = overallPoisson + Math.log10(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
                 }
                 Map<String, Integer> candidateFrequencies = fp.changeFrequencyOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.morphemeFreq);
                 Map<TrieST, ArrayList<String>> candidateSegmentationList = fp.changeSegmentSequenceForOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.trieSegmentations);
@@ -206,7 +206,7 @@ public class Model {
             totalNumber = totalNumber + candidateFrequencies.get(s);
         }
         for (String s : candidateFrequencies.keySet()) {
-            double logLikelihood = Math.log((double) candidateFrequencies.get(s) / totalNumber);
+            double logLikelihood = Math.log10((double) candidateFrequencies.get(s) / totalNumber);
             morphemeProbabilities.put(s, logLikelihood);
         }
         return morphemeProbabilities;

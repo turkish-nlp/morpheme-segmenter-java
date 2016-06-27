@@ -88,7 +88,7 @@ public class Segmenter {
                 double tmp = 0;
                 StringTokenizer st = new StringTokenizer(str, " ");
                 while (st.hasMoreTokens()) {
-                    tmp = tmp + Math.log(morphemeProb.get(st.nextToken()));
+                    tmp = tmp + Math.log10(morphemeProb.get(st.nextToken()));
                 }
                 if (tmp > maxScore) {
                     maxScore = tmp;

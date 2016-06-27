@@ -55,7 +55,7 @@ public class Baseline {
         for (TrieST st : trieList) {
             double poisson = calculatePoisson(st, baselineBoundaries.get(st));
             triePoisson.put(st, poisson);
-            poissonOverall = poissonOverall + Math.log(poisson);
+            poissonOverall = poissonOverall + Math.log10(poisson);
         }
         return poissonOverall;
     }
@@ -63,7 +63,7 @@ public class Baseline {
     public double calculatePoisson(TrieST st, Set<String> boundaries) {
         double result = 0;
         for (String str : boundaries) {
-            result = result + Math.log(poissonDistribution(st.getWordList().get(str)));
+            result = result + Math.log10(poissonDistribution(st.getWordList().get(str)));
         }
         return result;
     }
@@ -289,7 +289,7 @@ public class Baseline {
                 double smlrty = vectors.similarity(str, sim);
                 if( smlrty < 0 || smlrty > 1)
                     smlrty =  0.000000000001;
-                score = score + Math.log(smlrty);
+                score = score + Math.log10(smlrty);
             }
         }
         return score;
