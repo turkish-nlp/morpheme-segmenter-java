@@ -103,14 +103,23 @@ public class Baseline {
         for (String node : nodeList.keySet()) {
             if (node.endsWith("$")) {
                 String current = "";
-                boolean found = false;
+                //boolean found = false;
+
+                String oldMorph = node.substring(current.length(), node.length() - 1);
+                String newMorph = "";
+
                 for (String boundary : boundaries) {
                     if (node.startsWith(boundary) && !node.equals(boundary + "$")) {
                         current = boundary;
-                        found = true;
+                        //found = true;
+
+                        newMorph = node.substring(current.length(), node.length() - 1);
+                        if (newMorph.length() < oldMorph.length()) {
+                            oldMorph = newMorph;
+                        }
                     }
                 }
-                String morpheme = node.substring(current.length(), node.length() - 1);
+                //String morpheme = node.substring(current.length(), node.length() - 1);
 
 /*                if (morphemeTrieList.containsKey(morpheme) && !morphemeTrieList.get(morpheme).contains(st)) {
                     morphemeTrieList.get(morpheme).add(st);
@@ -120,10 +129,10 @@ public class Baseline {
                     morphemeTrieList.put(morpheme, tmp);
                 }
 */
-                if (morphemeFreq.containsKey(morpheme)) {
-                    morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + 1);
+                if (morphemeFreq.containsKey(oldMorph)) {
+                    morphemeFreq.put(oldMorph, morphemeFreq.get(oldMorph) + 1);
                 } else {
-                    morphemeFreq.put(morpheme, 1);
+                    morphemeFreq.put(oldMorph, 1);
                 }
             }
         }
@@ -142,14 +151,22 @@ public class Baseline {
         for (String node : nodeList.keySet()) {
             if (node.endsWith("$")) {
                 String current = "";
-                boolean found = false;
+                //boolean found = false;
+
+                String oldMorph = node.substring(current.length(), node.length() - 1);
+                String newMorph = "";
+
                 for (String boundary : boundaries) {
                     if (node.startsWith(boundary) && !node.equals(boundary + "$")) {
                         current = boundary;
-                        found = true;
+                        //found = true;
+
+                        newMorph = node.substring(current.length(), node.length() - 1);
+                        if (newMorph.length() < oldMorph.length()) {
+                            oldMorph = newMorph;
+                        }
                     }
                 }
-                String morpheme = node.substring(current.length(), node.length() - 1);
                 /*
                 if (morphemeTrieList.containsKey(morpheme) && !morphemeTrieList.get(morpheme).contains(st)) {
                     morphemeTrieList.get(morpheme).add(st);
@@ -159,10 +176,10 @@ public class Baseline {
                     morphemeTrieList.put(morpheme, tmp);
                 }
                 */
-                if (morphmeFrequencies.containsKey(morpheme)) {
-                    morphmeFrequencies.put(morpheme, morphmeFrequencies.get(morpheme) + 1);
+                if (morphmeFrequencies.containsKey(oldMorph)) {
+                    morphmeFrequencies.put(oldMorph, morphmeFrequencies.get(oldMorph) + 1);
                 } else {
-                    morphmeFrequencies.put(morpheme, 1);
+                    morphmeFrequencies.put(oldMorph, 1);
                 }
             }
         }
@@ -306,8 +323,8 @@ public class Baseline {
             Set<String> similiar = getSimilartyBoundaryForOneNode(st, boundaries, str);
             for (String sim : similiar) {
                 double smlrty = vectors.similarity(str, sim);
-                if( smlrty < 0 || smlrty > 1)
-                    smlrty =  0.000000000001;
+                if (smlrty < 0 || smlrty > 1)
+                    smlrty = 0.000000000001;
                 score = score + Math.log10(smlrty);
             }
         }

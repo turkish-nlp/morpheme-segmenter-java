@@ -59,9 +59,9 @@ public class Segmenter {
         }*/
 
         Segmenter s = new Segmenter(args[0], args[1]);
-    //    for (String str : s.morphemeFreq.keySet())
-   //         if (!(s.morphemeFreq.get(str) > 0))
-    //            System.out.println(str + "-->" + s.morphemeFreq.get(str));
+        //    for (String str : s.morphemeFreq.keySet())
+        //         if (!(s.morphemeFreq.get(str) > 0))
+        //            System.out.println(str + "-->" + s.morphemeFreq.get(str));
     }
 
     public void parallelSplit() {
@@ -118,7 +118,8 @@ public class Segmenter {
             if (morphemeFreqCopy.get(str) > 0)
                 this.morphemeFreq.put(str, morphemeFreqCopy.get(str));
 
-
+        //for (String m : this.morphemeFreq.keySet())
+        //    System.out.println(m + ": " + this.morphemeFreq.get(m));
     }
 
     public void readWords(String inputFile) throws IOException {
