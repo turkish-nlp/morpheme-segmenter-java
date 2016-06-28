@@ -103,23 +103,12 @@ public class Baseline {
         for (String node : nodeList.keySet()) {
             if (node.endsWith("$")) {
                 String current = "";
-                //boolean found = false;
-
-                String oldMorph = node.substring(current.length(), node.length() - 1);
-                String newMorph = "";
-
                 for (String boundary : boundaries) {
                     if (node.startsWith(boundary) && !node.equals(boundary + "$")) {
                         current = boundary;
-                        //found = true;
-
-                        newMorph = node.substring(current.length(), node.length() - 1);
-                        if (newMorph.length() < oldMorph.length()) {
-                            oldMorph = newMorph;
-                        }
                     }
                 }
-                //String morpheme = node.substring(current.length(), node.length() - 1);
+                String morpheme = node.substring(current.length(), node.length() - 1);
 
 /*                if (morphemeTrieList.containsKey(morpheme) && !morphemeTrieList.get(morpheme).contains(st)) {
                     morphemeTrieList.get(morpheme).add(st);
@@ -129,10 +118,10 @@ public class Baseline {
                     morphemeTrieList.put(morpheme, tmp);
                 }
 */
-                if (morphemeFreq.containsKey(oldMorph)) {
-                    morphemeFreq.put(oldMorph, morphemeFreq.get(oldMorph) + 1);
+                if (morphemeFreq.containsKey(morpheme)) {
+                    morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + 1);
                 } else {
-                    morphemeFreq.put(oldMorph, 1);
+                    morphemeFreq.put(morpheme, 1);
                 }
             }
         }
@@ -151,22 +140,12 @@ public class Baseline {
         for (String node : nodeList.keySet()) {
             if (node.endsWith("$")) {
                 String current = "";
-                //boolean found = false;
-
-                String oldMorph = node.substring(current.length(), node.length() - 1);
-                String newMorph = "";
-
                 for (String boundary : boundaries) {
                     if (node.startsWith(boundary) && !node.equals(boundary + "$")) {
                         current = boundary;
-                        //found = true;
-
-                        newMorph = node.substring(current.length(), node.length() - 1);
-                        if (newMorph.length() < oldMorph.length()) {
-                            oldMorph = newMorph;
-                        }
                     }
                 }
+                String morpheme = node.substring(current.length(), node.length() - 1);
                 /*
                 if (morphemeTrieList.containsKey(morpheme) && !morphemeTrieList.get(morpheme).contains(st)) {
                     morphemeTrieList.get(morpheme).add(st);
@@ -176,10 +155,10 @@ public class Baseline {
                     morphemeTrieList.put(morpheme, tmp);
                 }
                 */
-                if (morphmeFrequencies.containsKey(oldMorph)) {
-                    morphmeFrequencies.put(oldMorph, morphmeFrequencies.get(oldMorph) + 1);
+                if (morphmeFrequencies.containsKey(morpheme)) {
+                    morphmeFrequencies.put(morpheme, morphmeFrequencies.get(morpheme) + 1);
                 } else {
-                    morphmeFrequencies.put(oldMorph, 1);
+                    morphmeFrequencies.put(morpheme, 1);
                 }
             }
         }
