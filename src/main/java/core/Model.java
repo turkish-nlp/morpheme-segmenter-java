@@ -162,7 +162,7 @@ public class Model {
         CopyOnWriteArrayList<Double> values = new CopyOnWriteArrayList<>();
 
         int i = 0;
-        int paralelCount = 2;
+        int paralelCount = 2000;
         Map<TrieST, ArrayList<String>> tempList = new ConcurrentHashMap<>();
         for (TrieST st : candidateSegmentationList.keySet()) {
             tempList.put(st, candidateSegmentationList.get(st));

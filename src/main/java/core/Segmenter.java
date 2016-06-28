@@ -1,5 +1,7 @@
 package core;
 
+import com.hazelcast.util.StringUtil;
+import org.apache.commons.lang.StringUtils;
 import tries.TrieST;
 
 import java.io.*;
@@ -32,8 +34,11 @@ public class Segmenter {
         for (String str : morphemeFreq.keySet())
             totalMorp = totalMorp + morphemeFreq.get(str);
 
-        for (String str : morphemeFreq.keySet())
+        for (String str : morphemeFreq.keySet()) {
+            // System.out.println(str + "-->" + (double) morphemeFreq.get(str) / totalMorp);
+
             morphemeProb.put(str, (double) morphemeFreq.get(str) / totalMorp);
+        }
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
@@ -59,9 +64,10 @@ public class Segmenter {
         }*/
 
         Segmenter s = new Segmenter(args[0], args[1]);
-        //    for (String str : s.morphemeFreq.keySet())
-        //         if (!(s.morphemeFreq.get(str) > 0))
-        //            System.out.println(str + "-->" + s.morphemeFreq.get(str));
+        System.out.println(s.morphemeFreq.size());
+        for (String str : s.morphemeFreq.keySet()) {
+                System.out.println(str + "-->" + s.morphemeFreq.get(str));
+        }
     }
 
     public void parallelSplit() {
@@ -92,6 +98,8 @@ public class Segmenter {
                 while (st.hasMoreTokens()) {
                     tmp = tmp + Math.log10(morphemeProb.get(st.nextToken()));
                 }
+
+                //    tmp = tmp * ( 4 - StringUtils.countMatches(str, " ") )*-1;
                 //   System.out.println(str + "-->" + tmp);
                 if (tmp > maxScore) {
                     maxScore = tmp;

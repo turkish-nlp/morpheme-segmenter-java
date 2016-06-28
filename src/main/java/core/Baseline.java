@@ -44,6 +44,7 @@ public class Baseline {
 
         overallPoisson = calculatePoissonOverall();
         overallSimilarityScore = calculateBaselineSimilarityScore();
+        System.out.println("baseline is completed");
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
@@ -196,10 +197,6 @@ public class Baseline {
         Set<String> boundaries = baselineBoundaries.get(st);
         Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
 
-        for (String boundary : boundaries) {
-            nodeList.put(boundary + "$", 1);
-        }
-
         ArrayList<String> tokens = new ArrayList<String>(); // unique elements?? set??
         for (String node : nodeList.keySet()) {
             if (node.endsWith("$")) {
@@ -244,11 +241,6 @@ public class Baseline {
     public ArrayList<String> determineSegmentsForOneTrie(TrieST st, Set<String> boundaries, boolean print) {
 
         Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
-
-        // for (String boundary : boundaries) {
-        //     nodeList.put(boundary + "$", 1);
-        //}
-
         ArrayList<String> tokenSegments = new ArrayList<String>(); // unique elements?? set??
 
         for (String node : nodeList.keySet()) {
