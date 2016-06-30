@@ -1,8 +1,6 @@
 package core;
 
 import org.apache.commons.io.FileUtils;
-import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
-import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tries.TrieST;
 
 import java.io.*;
@@ -49,22 +47,21 @@ public class Model {
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-
         Model m = new Model(args[0], args[1], args[2], args[3]);
-        m.random();
+      m.random();
+
     }
 
     public void random() throws IOException, ClassNotFoundException {
 
-        Random rand = new Random();
         while (noOfIteration > 0) {
-
+            Random rand = new Random();
             double candidatePoissonOverall = overallPoisson;
             // original objects //
             int trieRandom = (int) rand.nextInt(this.trieList.size());  // rand number for the trie
             // System.out.println("randomly chosen trie:" + fp.getSearchedWordList().get(trieRandom).toString());
             TrieST chosenTrie = this.trieList.get(trieRandom); // chosen trie ( to be less verbose )
-
+            System.out.println("The trie " + searchedWordList.get(trieList.indexOf(chosenTrie)) + " is selected");
             if (chosenTrie.size() != 0) {
                 Set<String> originalBoundaryList = this.wordBoundary.get(chosenTrie); // original boundaryList of the chosen trie ( to be less verbose )
                 // original objects //
@@ -75,41 +72,53 @@ public class Model {
                 String candidateMorpheme = "$";
 
                 while (candidateMorpheme.contains("$")) {
-                    int nodeRandom = (int) rand.nextInt(chosenTrie.size()); // rand number for the node in the random trie
+                    int nodeRandom = rand.nextInt(chosenTrie.size()); // rand number for the node in the random trie
                     Object[] values = chosenTrie.getWordList().keySet().toArray(); // convert the wordList of the chosen trie into array to be able to select a random node
                     candidateMorpheme = (String) values[nodeRandom];  // new boundary candidate
                 }
 
                 if (originalBoundaryList.contains(candidateMorpheme)) {
+                    System.out.println("the morpheme " + candidateMorpheme + " is unmarked");
                     candidateBoundaryList.remove(candidateMorpheme);
                     candidatePoissonOverall = overallPoisson - Math.log10(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
+                    System.out.println("old poisson: " + overallPoisson + " candidate poisson: " + candidatePoissonOverall);
                 } else {
                     candidateBoundaryList.add(candidateMorpheme);
                     candidatePoissonOverall = overallPoisson + Math.log10(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
+                    System.out.println("when the morpheme " + candidateMorpheme + " is marked. It has " + chosenTrie.getWordList().get(candidateMorpheme) + " branches");
+                    System.out.println("old poisson: " + overallPoisson + " candidate poisson: " + candidatePoissonOverall);
                 }
                 Map<String, Integer> candidateFrequencies = fp.changeFrequencyOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.morphemeFreq);
                 Map<TrieST, ArrayList<String>> candidateSegmentationList = fp.changeSegmentSequenceForOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.trieSegmentations);
 
                 double candidateTrieSim = fp.generateSimiliarWordsForOneTrie(chosenTrie, candidateBoundaryList);
                 double candidateSS = overallSS - boundarySimiliar.get(chosenTrie) + candidateTrieSim;
+                System.out.println("old (overall) similiarity score: " + overallSS + " candidate (overall) similiarity score: " + candidateSS);
 
                 double newScore = calculateOverallProbability(candidatePoissonOverall, candidateFrequencies, candidateSegmentationList, candidateSS);
-
+                System.out.println("old score: " + oldScore + " candidate score: " + newScore);
                 if (newScore > oldScore) {
                     //      System.out.println("accepted mor: " + candidateMorpheme);
+                    System.out.println("candidate score > oldscore accepted");
+
                     update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS, candidateTrieSim);
                     oldScore = newScore;
                 } else // accept the boundary with randProb probability
                 {
-                    double acceptProb = newScore - oldScore; // Is accepted value dynamic ????
+                    double acceptProb = newScore - oldScore;
                     acceptProb = Math.pow(10, acceptProb);
                     double randProb = rand.nextDouble();
+                    System.out.println("acceptProb: " + acceptProb);
+                    System.out.println("randProb: " + randProb);
+
                     if ((double) randProb < acceptProb) {
+                        System.out.println("candidate score < oldscore, yet it is accepted accepted");
                         update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS, candidateTrieSim);
                         oldScore = newScore;
                     }
                 }
                 noOfIteration--;
+                System.out.println("-----------------------------------------------------");
             }
         }
 
