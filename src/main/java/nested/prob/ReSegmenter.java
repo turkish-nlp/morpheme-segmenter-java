@@ -63,7 +63,7 @@ public class ReSegmenter {
     }
 
     public ReSegmenter(String fileSegmentationInput, Map<String, Double> stems, Map<String, Double> affixes, ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> morphemeBiagramProbabilities,
-                       Map<String, Double> stemProbabilities, Map<String, Double> results, Map<String, Double> notFounds, WordVectors vectors) {
+                       Map<String, Double> stemProbabilities, Map<String, Double> results, Map<String, Double> notFounds) {
         this.fileSegmentationInput = fileSegmentationInput;
         this.stems = stems;
         this.affixes = affixes;

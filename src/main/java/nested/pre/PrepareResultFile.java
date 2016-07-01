@@ -2,6 +2,7 @@ package nested.pre;
 
 import java.io.*;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.TreeMap;
 
 /**
@@ -49,15 +50,19 @@ public class PrepareResultFile {
     }
 
     public static void prepareFile() throws IOException {
+        String input = "C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\datas_for_morheme_segmenter\\nested_results\\results.0.15";
         BufferedReader reader = null;
-        reader = new BufferedReader(new FileReader("outputs/results"));
+        reader = new BufferedReader(new FileReader(input));
 
-        PrintWriter writer = new PrintWriter("outputs/eng_ready_5", "UTF-8");
+        PrintWriter writer = new PrintWriter(input + "_ready", "UTF-8");
 
         String line;
         while ((line = reader.readLine()) != null) {
 
-            String word = line;
+            StringTokenizer st = new StringTokenizer(line, " ");
+
+            st.nextToken();
+            String word = st.nextToken();
             String base_line = word.replaceAll("\\+", "") + "\t" + word.replaceAll("\\+", " ");
 
             writer.println(base_line);

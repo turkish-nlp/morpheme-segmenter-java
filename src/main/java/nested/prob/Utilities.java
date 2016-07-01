@@ -266,21 +266,21 @@ public class Utilities {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(args[0]));
+        //WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(args[0]));
 
         Map<String, Double> stems = new HashMap();
         stems.put("korunm", 5d);
-        //stems.put("sep", 1d);
+        stems.put("korunmalıdırlar", 1d);
 
         Map<String, Double> affixes = new HashMap();
         affixes.put("ıdırlar", 2d);
         affixes.put("al", 1d);
         //affixes.put("i", 1d);
         affixes.put("in", 1d);
-        affixes.put("r", 1d);
+        affixes.put("alıdırlar", 1d);
         //affixes.put("n", 1d);
-        affixes.put("et", 1d);
-        affixes.put("isss", 1d);
+        affixes.put("ıdırla", 1d);
+        affixes.put("r", 1d);
 
         Set<String> s = stems.keySet();
         Set<String> a = affixes.keySet();
