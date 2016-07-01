@@ -23,7 +23,7 @@ public class NestedSegmenter {
 
     private WordVectors vectors;
 
-    private double treshold = 0.15;
+    private double treshold;
 
     public void setVectors(WordVectors vectors) {
         this.vectors = vectors;
@@ -45,9 +45,10 @@ public class NestedSegmenter {
         return notFound;
     }
 
-    public NestedSegmenter(String fileVectorInput, String fileSegmentationInput) throws FileNotFoundException {
+    public NestedSegmenter(String fileVectorInput, String fileSegmentationInput, String treshold) throws FileNotFoundException {
         vectors = WordVectorSerializer.loadTxtVectors(new File(fileVectorInput));
         this.fileSegmentationInput = fileSegmentationInput;
+        this.treshold = Double.parseDouble(treshold);
     }
 
     private void doNested(String word, double frequency) {
@@ -134,7 +135,7 @@ public class NestedSegmenter {
     }
 
     public static void main(String[] args) throws IOException {
-        NestedSegmenter ns = new NestedSegmenter(args[0], args[1]+"\\trainset.tur");
+        NestedSegmenter ns = new NestedSegmenter(args[0], args[1], args[2]);
         ns.findSegmentsAndAffixes();
 
         Map<String, Double> s = ns.getStems();
@@ -144,7 +145,7 @@ public class NestedSegmenter {
 
         //PrintWriter writer_seg = new PrintWriter("outputs/stems", "UTF-8");
         //PrintWriter writer_af = new PrintWriter("outputs/affixes", "UTF-8");
-        PrintWriter writer_res = new PrintWriter(args[1] + "\\results." + ns.treshold, "UTF-8");
+        PrintWriter writer_res = new PrintWriter(args[1] + "_results" + ns.treshold, "UTF-8");
         //PrintWriter writer_noF = new PrintWriter(args[1] + "_absents_" + ns.treshold, "UTF-8");
 
         /*for (Map.Entry<String, Double> entry : s.entrySet()) {
