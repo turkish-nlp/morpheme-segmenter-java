@@ -23,6 +23,8 @@ public class NestedSegmenter {
 
     private WordVectors vectors;
 
+    private double treshold = 0.70;
+
     public void setVectors(WordVectors vectors) {
         this.vectors = vectors;
     }
@@ -48,7 +50,7 @@ public class NestedSegmenter {
         this.fileSegmentationInput = fileSegmentationInput;
     }
 
-    private void doNested(String word, double frequency, double treshold) {
+    private void doNested(String word, double frequency) {
 
         Stack<String> localSuffixes = new Stack<String>();
         String stem = word;
@@ -71,7 +73,7 @@ public class NestedSegmenter {
                 for (int i = 0; i < word.length() - 2; i++) {
                     String candidate = stem.substring(0, stem.length() - count);
                     double cosine = vectors.similarity(stem, candidate);
-                    if (cosine > treshold && cosine < 0.9) {
+                    if (cosine > treshold && cosine < 0.99) {
                         String affix = stem.substring(stem.length() - count, stem.length());
 
                         localSuffixes.push(affix);
@@ -127,12 +129,12 @@ public class NestedSegmenter {
             double freq = Double.parseDouble(st.nextToken());
             String word = st.nextToken();
 
-            doNested(word, freq, 0.25);
+            doNested(word, freq);
         }
     }
 
     public static void main(String[] args) throws IOException {
-        NestedSegmenter ns = new NestedSegmenter(args[0], args[1]);
+        NestedSegmenter ns = new NestedSegmenter(args[0], args[1]+"\\develset.tur");
         ns.findSegmentsAndAffixes();
 
         Map<String, Double> s = ns.getStems();
@@ -140,20 +142,20 @@ public class NestedSegmenter {
         Map<String, Double> r = ns.getResults();
         Map<String, Double> n = ns.getNotFound();
 
-        PrintWriter writer_seg = new PrintWriter("outputs/stems", "UTF-8");
-        PrintWriter writer_af = new PrintWriter("outputs/affixes", "UTF-8");
-        PrintWriter writer_res = new PrintWriter("outputs/results", "UTF-8");
-        PrintWriter writer_noF = new PrintWriter("outputs/absent", "UTF-8");
+        //PrintWriter writer_seg = new PrintWriter("outputs/stems", "UTF-8");
+        //PrintWriter writer_af = new PrintWriter("outputs/affixes", "UTF-8");
+        PrintWriter writer_res = new PrintWriter(args[1] + "\\_results." + ns.treshold, "UTF-8");
+        //PrintWriter writer_noF = new PrintWriter(args[1] + "_absents_" + ns.treshold, "UTF-8");
 
-        for (Map.Entry<String, Double> entry : s.entrySet()) {
+        /*for (Map.Entry<String, Double> entry : s.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
             writer_seg.println(line);
-        }
+        }*/
 
-        for (Map.Entry<String, Double> entry : a.entrySet()) {
+        /*for (Map.Entry<String, Double> entry : a.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
             writer_af.println(line);
-        }
+        }*/
 
         for (Map.Entry<String, Double> entry : r.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
@@ -162,12 +164,12 @@ public class NestedSegmenter {
 
         for (Map.Entry<String, Double> entry : n.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
-            writer_noF.println(line);
+            writer_res.println(line);
         }
 
-        writer_seg.close();
-        writer_af.close();
+        //writer_seg.close();
+        //writer_af.close();
         writer_res.close();
-        writer_noF.close();
+        //writer_noF.close();
     }
 }

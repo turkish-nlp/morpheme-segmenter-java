@@ -49,7 +49,7 @@ public class Baseline {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         Baseline b = new Baseline(args[0], args[1], Integer.parseInt(args[2]));
-    //    b.saveModel();
+        //    b.saveModel();
     }
 
 
@@ -75,7 +75,7 @@ public class Baseline {
         for (TrieST st : trieList) {
             double poisson = calculatePoisson(st, baselineBoundaries.get(st));
             triePoisson.put(st, poisson);
-            poissonOverall = poissonOverall +poisson;
+            poissonOverall = poissonOverall + poisson;
         }
         return poissonOverall;
     }
@@ -90,7 +90,7 @@ public class Baseline {
     }
 
     public double poissonDistribution(int branchingFactor) {
-        return (Math.pow(lambda, branchingFactor) * Math.exp(-1*lambda)) / MathUtils.factorial(lambda);
+        return (Math.pow(lambda, branchingFactor) * Math.exp(-1 * lambda)) / MathUtils.factorial(branchingFactor);
     }
 
     private void calculateFrequency(TrieST st) {
