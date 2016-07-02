@@ -104,8 +104,8 @@ public class MorphemeTransition {
             double freq = Double.parseDouble(st.nextToken());
             //String word = st.nextToken();
 
-            countMorhemeForWordWithAllomorphs(st, freq);
-
+            //countMorhemeForWordWithAllomorphs(st, freq);
+            countMorhemeForWord(st, freq);
         }
     }
 
@@ -251,13 +251,13 @@ public class MorphemeTransition {
         morphemeBiagramCount.put(curr, transitions);
     }
 
-    private void calculateTotalMorphemeCount() {
+    public void calculateTotalMorphemeCount() {
         for (String s : morphemeCount.keySet()) {
             totalMorphemeCount = totalMorphemeCount + morphemeCount.get(s);
         }
     }
 
-    private void calculateTotalStemCount() {
+    public void calculateTotalStemCount() {
         for (String s : stemCount.keySet()) {
             totalStemCount = totalStemCount + stemCount.get(s);
         }

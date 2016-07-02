@@ -130,9 +130,7 @@ public class Test {
                                       Map<String, Double> affixes,
                                       ConcurrentHashMap<String, ConcurrentHashMap<String, Double>> morphemeProb,
                                       double totalStemCount,
-                                      String vectorFile, String priorType) throws InterruptedException, IOException {
-
-        WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(vectorFile));
+                                      String vectorFile, String priorType, String outputFileName) throws InterruptedException, IOException {
 
         Map<String, Double> stemProbabilities = new ConcurrentHashMap();
         Map<String, Double> results = new ConcurrentHashMap();
@@ -151,7 +149,7 @@ public class Test {
         System.out.println("");
 
         ReSegmenter rs = new ReSegmenter(inputFileName, stems, affixes, morphemeProb,
-                stemProbabilities, results, notfounds, vectors);
+                stemProbabilities, results, notfounds);
 
         final BufferedReader reader = new BufferedReader(new FileReader(inputFileName), 1024 * 1024);
 
@@ -206,8 +204,7 @@ public class Test {
         Map<String, Double> newResults = rs.getResults();
         Map<String, Double> newNotFound = rs.getNotFounds();
 
-        PrintWriter writer_res_new = new PrintWriter("outputs/results_" + priorType, "UTF-8");
-        PrintWriter writer_noF_new = new PrintWriter("outputs/absents_" + priorType, "UTF-8");
+        PrintWriter writer_res_new = new PrintWriter(outputFileName + "_" + priorType, "UTF-8");
 
         for (Map.Entry<String, Double> entry : newResults.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
@@ -216,11 +213,10 @@ public class Test {
 
         for (Map.Entry<String, Double> entry : newNotFound.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
-            writer_noF_new.println(line);
+            writer_res_new.println(line);
         }
 
         writer_res_new.close();
-        writer_noF_new.close();
     }
 
     public void singleThreadTest(String inputFileName, String vectorFile) throws IOException {
@@ -317,8 +313,10 @@ public class Test {
 
         System.out.println("---------------------------------------------------------------");
         System.out.println("------------Transition probabilities are calculating-----------");
-        MorphemeTransition mt = new MorphemeTransition("outputs/results");
+        MorphemeTransition mt = new MorphemeTransition(args[0]);
         mt.doItForFile();
+        mt.calculateTotalMorphemeCount();
+        mt.calculateTotalStemCount();
         mt.calculateTransitionProbabilities(MorphemeTransition.Smoothing.LAPLACE);
 
         mt.setMorphemeBiagramCount(null);
@@ -333,7 +331,6 @@ public class Test {
         double totalStems = mt.getTotalStemCount();
 
         Test test = new Test();
-        test.multiThreadTestViaMap(args[1], 16, stems, morphemes, bigramsProb, totalStems, null, "non_prior");
-        //nested.pre.pre.test.multiThreadTest(args[1], 16, args[0], "binomial_np");
+        test.multiThreadTestViaMap(args[1], 16, stems, morphemes, bigramsProb, totalStems, null, "non_prior", args[2]);
     }
 }

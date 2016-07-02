@@ -11,7 +11,7 @@ import java.util.TreeMap;
 public class PrepareInput {
 
     public static void main(String[] args) throws IOException {
-        BufferedReader r1 = new BufferedReader(new FileReader("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\datas_for_morheme_segmenter\\goldstd_develset.labels.tur"));
+        BufferedReader r1 = new BufferedReader(new FileReader("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\datas_for_morheme_segmenter\\goldstd_combined.segmentation.tur"));
 
         PrintWriter writer = new PrintWriter("C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\datas_for_morheme_segmenter\\goldstd_develset.labels_prepared.tur", "UTF-8");
 
