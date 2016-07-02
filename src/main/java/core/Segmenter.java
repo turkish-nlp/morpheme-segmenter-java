@@ -61,13 +61,14 @@ public class Segmenter {
 
         for (String s : results) {
             System.out.println(s);
-        }*/
+        }
 
-        Segmenter s = new Segmenter(args[0], args[1]);
         System.out.println(s.morphemeFreq.size());
         for (String str : s.morphemeFreq.keySet()) {
                 System.out.println(str + "-->" + s.morphemeFreq.get(str));
-        }
+        }*/
+        Segmenter s = new Segmenter(args[0], args[1]);
+
     }
 
     public void parallelSplit() {

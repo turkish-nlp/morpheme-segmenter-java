@@ -63,7 +63,10 @@ public class SubstringMatcher {
         if (!neighboors.isEmpty()) {
             st.put(word + "$");
             for (String w : neighboors)
+            {
                 st.put(w + "$");
+                System.out.println(w);
+            }
         }
         serializeToFile(st, word);
 

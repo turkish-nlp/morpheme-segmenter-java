@@ -69,11 +69,14 @@ public class Model {
                 // copied objects //
                 Set<String> candidateBoundaryList = new TreeSet<>(originalBoundaryList); // deep copy of the randomly chosen trie's boundaryList
                 // copied objects //
-                String candidateMorpheme = "$";
+                int nodeRandom = rand.nextInt(chosenTrie.size());
+                nodeRandom = rand.nextInt(chosenTrie.size()); // rand number for the node in the random trie
+                Object[] values = chosenTrie.getWordList().keySet().toArray(); // convert the wordList of the chosen trie into array to be able to select a random node
+                String candidateMorpheme = (String) values[nodeRandom];  // new boundary candidate
 
                 while (candidateMorpheme.contains("$")) {
-                    int nodeRandom = rand.nextInt(chosenTrie.size()); // rand number for the node in the random trie
-                    Object[] values = chosenTrie.getWordList().keySet().toArray(); // convert the wordList of the chosen trie into array to be able to select a random node
+                    nodeRandom = rand.nextInt(chosenTrie.size()); // rand number for the node in the random trie
+                    values = chosenTrie.getWordList().keySet().toArray(); // convert the wordList of the chosen trie into array to be able to select a random node
                     candidateMorpheme = (String) values[nodeRandom];  // new boundary candidate
                 }
 
