@@ -293,12 +293,15 @@ public class Baseline {
         for (String str : boundaries) {
 
             Set<String> similiar = getSimilartyBoundaryForOneNode(st, boundaries, str);
+            double localScore = 0;
             for (String sim : similiar) {
                 double smlrty = vectors.similarity(str, sim);
                 if (smlrty < 0 || smlrty > 1)
                     smlrty = 0.000000000001;
-                score = score + Math.log10(smlrty);
+                localScore = localScore + smlrty;
             }
+            localScore = localScore / similiar.size();
+            score = score + Math.log10(localScore);
         }
         return score;
     }
