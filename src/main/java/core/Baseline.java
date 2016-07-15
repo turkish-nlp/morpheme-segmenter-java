@@ -172,6 +172,10 @@ public class Baseline {
         Set<String> boundaries = baselineBoundaries.get(st);
         Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
 
+        for (String boundary : boundaries) {
+            nodeList.put(boundary + "$", 1);
+        }
+
         ArrayList<String> tokens = new ArrayList<String>(); // unique elements?? set??
         for (String node : nodeList.keySet()) {
             if (node.endsWith("$")) {
@@ -217,6 +221,10 @@ public class Baseline {
 
         Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
         ArrayList<String> tokenSegments = new ArrayList<String>(); // unique elements?? set??
+
+        for (String boundary : boundaries) {
+            nodeList.put(boundary + "$", 1);
+        }
 
         for (String node : nodeList.keySet()) {
             if (node.endsWith("$")) {
