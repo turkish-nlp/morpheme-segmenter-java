@@ -35,7 +35,7 @@ public class Baseline {
         vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
 
         this.trieList.parallelStream().forEach((n) -> {
-            this.calculateFrequency(n);
+            this.calculateFrequencyForMorp(n);
         });
 
         this.trieList.parallelStream().forEach((n) -> {
@@ -93,7 +93,7 @@ public class Baseline {
         return (Math.pow(lambda, branchingFactor) * Math.exp(-1 * lambda)) / MathUtils.factorial(branchingFactor);
     }
 
-    private void calculateFrequency(TrieST st) {
+    private void calculateFrequencyForPath(TrieST st) {
 
         Set<String> boundaries = baselineBoundaries.get(st);
         Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
@@ -129,7 +129,7 @@ public class Baseline {
         }
     }
 
-    private Map<String, Integer> calculateFrequencyWithMap(TrieST st, Set<String> boundaries) {
+    private Map<String, Integer> calculateFrequencyWithMapForPath(TrieST st, Set<String> boundaries) {
 
         Map<String, Integer> morphmeFrequencies = new HashMap<>();
 
@@ -167,12 +167,103 @@ public class Baseline {
         return morphmeFrequencies;
     }
 
+    private void calculateFrequencyForMorp(TrieST st) {
+
+        Set<String> boundaries = baselineBoundaries.get(st);
+        Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
+
+        ArrayList<String> tokens = new ArrayList<String>(); // unique elements?? set??
+        for (String node : nodeList.keySet()) {
+            if (node.endsWith("$")) {
+
+                Stack<String> morphemeStack = new Stack<>();
+
+                String current = "";
+                boolean found = false;
+                for (String boundary : boundaries) {
+                    if (node.startsWith(boundary) && !node.equals(boundary + "$")) {
+                        current = boundary;
+                        found = true;
+                    }
+                }
+                String morpheme = node.substring(current.length(), node.length() - 1);
+                morphemeStack.add(morpheme);
+
+                String word = node.substring(0, current.length());
+                doSegmentation(word, boundaries, morphemeStack);
+
+                String segmentation = morphemeStack.pop();
+                int a = morphemeStack.size();
+                for (int i = 0; i < a; i++) {
+                    String popped = morphemeStack.pop();
+                    segmentation = segmentation + "+" + popped;
+                }
+                tokens.addAll(tokenSegmentation(segmentation));
+            }
+        }
+
+        for (String morpheme : tokens) {
+            if (morphemeFreq.containsKey(morpheme)) {
+                morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + 1);
+            } else {
+                morphemeFreq.put(morpheme, 1);
+            }
+        }
+    }
+
+    private Map<String, Integer> calculateFrequencyWithMapForMorp(TrieST st, Set<String> boundaries) {
+
+        Map<String, Integer> morphmeFrequencies = new HashMap<>();
+
+        Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
+        ArrayList<String> tokenSegments = new ArrayList<String>(); // unique elements?? set??
+
+        for (String node : nodeList.keySet()) {
+            if (node.endsWith("$")) {
+
+                Stack<String> morphmeStack = new Stack<>();
+
+                String current = "";
+                boolean found = false;
+                for (String boundary : boundaries) {
+                    if (node.startsWith(boundary) && !node.equals(boundary + "$")) {
+                        current = boundary;
+                        found = true;
+                    }
+                }
+                String morpheme = node.substring(current.length(), node.length() - 1); //   EXCEPTION
+                morphmeStack.add(morpheme);
+
+                String word = node.substring(0, current.length());
+                doSegmentation(word, boundaries, morphmeStack);
+
+                String segmentation = morphmeStack.pop();
+                int a = morphmeStack.size();
+                for (int i = 0; i < a; i++) {
+                    String popped = morphmeStack.pop();
+                    segmentation = segmentation + "+" + popped;
+                }
+                tokenSegments.addAll(tokenSegmentation(segmentation));
+            }
+        }
+
+        for (String morpheme : tokenSegments) {
+            if (morphmeFrequencies.containsKey(morpheme)) {
+                morphmeFrequencies.put(morpheme, morphmeFrequencies.get(morpheme) + 1);
+            } else {
+                morphmeFrequencies.put(morpheme, 1);
+            }
+        }
+
+        return morphmeFrequencies;
+    }
+
     public Map<String, Integer> changeFrequencyOneTrie(TrieST st, Set<String> oldBoundaries, Set<String> newBoundaries, Map<String, Integer> originalFrequencies) {
 
         Map<String, Integer> candidateFrequencies = new ConcurrentHashMap<>(originalFrequencies);
 
-        Map<String, Integer> oldMorphemeFreq = calculateFrequencyWithMap(st, oldBoundaries);
-        Map<String, Integer> newMorphemeFreq = calculateFrequencyWithMap(st, newBoundaries);
+        Map<String, Integer> oldMorphemeFreq = calculateFrequencyWithMapForMorp(st, oldBoundaries);
+        Map<String, Integer> newMorphemeFreq = calculateFrequencyWithMapForMorp(st, newBoundaries);
 
         for (String morph : oldMorphemeFreq.keySet()) {
             if (candidateFrequencies.containsKey(morph)) {
