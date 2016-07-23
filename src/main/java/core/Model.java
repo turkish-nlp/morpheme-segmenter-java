@@ -4,6 +4,7 @@ import org.apache.commons.io.FileUtils;
 import tries.TrieST;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -25,10 +26,12 @@ public class Model {
     public double overallPoisson;
     public Map<TrieST, Double> boundarySimiliar;
     Baseline fp;
-    public double oldScore;
+    //  public double oldScore;
     public double overallSS;
     public int noOfIteration;
     public List<String> shuffleList;
+    public double alpha = 0.1;
+    public double gamma = 0.1;
 
 
     public Model(String dir, String vectorDir, String noOfIterationP, String lambda) throws IOException, ClassNotFoundException {
@@ -44,7 +47,7 @@ public class Model {
         overallPoisson = fp.overallPoisson;
         boundarySimiliar = new ConcurrentHashMap<>(fp.boundarySimiliarScores);
         overallSS = fp.overallSimilarityScore;
-        oldScore = calculateOverallProbability(overallPoisson, morphemeFreq, trieSegmentations, overallSS);
+        //  oldScore = calculateInitialProbabilityForDP(overallPoisson, overallSS);
         this.noOfIteration = Integer.parseInt(noOfIterationP);
 
         shuffleList = new ArrayList<String>();
@@ -56,9 +59,7 @@ public class Model {
             }
         }
         Collections.shuffle(shuffleList);
-        System.out.println("done");
-
-
+        System.out.println("model is built");
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
@@ -67,16 +68,58 @@ public class Model {
 
     }
 
+    public HashMap<String, Integer> getDifferenceSegmentationForDP(ArrayList<String> newTrieSegmentation, ArrayList<String> oldTrieSegmentation) {
+
+        HashMap<String, Integer> diffMetricTMP = new HashMap<>();
+        HashMap<String, Integer> diffMetric = new HashMap<>();
+
+        HashSet<String> tokens = new HashSet<>();
+
+        HashMap<String, Integer> oldTokenMetric = new HashMap<>();
+        HashMap<String, Integer> newTokenMetric = new HashMap<>();
+
+        for (String morp : oldTrieSegmentation) {
+            tokens.add(morp);
+            if (oldTokenMetric.containsKey(morp)) {
+                oldTokenMetric.put(morp, oldTokenMetric.get(morp) + 1);
+            } else {
+                oldTokenMetric.put(morp, 1);
+            }
+        }
+        for (String morp : newTrieSegmentation) {
+            tokens.add(morp);
+            if (newTokenMetric.containsKey(morp)) {
+                newTokenMetric.put(morp, newTokenMetric.get(morp) + 1);
+            } else {
+                newTokenMetric.put(morp, 1);
+            }
+        }
+        for (String morp : tokens) {
+            if (oldTokenMetric.containsKey(morp) && newTokenMetric.containsKey(morp)) {
+                diffMetricTMP.put(morp, (newTokenMetric.get(morp) - oldTokenMetric.get(morp)));
+            } else if (oldTokenMetric.containsKey(morp) && !newTokenMetric.containsKey(morp)) {
+                diffMetricTMP.put(morp, (-1 * oldTokenMetric.get(morp)));
+            } else {
+                diffMetricTMP.put(morp, (newTokenMetric.get(morp)));
+            }
+        }
+        for (String str : diffMetricTMP.keySet())
+            if (diffMetricTMP.get(str) != 0)
+                diffMetric.put(str, diffMetricTMP.get(str));
+
+        return diffMetric;
+    }
+
+
     public void random() throws IOException, ClassNotFoundException {
 
         while (noOfIteration > 0) {
 
             for (String str : shuffleList) {
 
-
                 double candidatePoissonOverall = overallPoisson;
                 // original objects //
-                int trieRandom =  Integer.parseInt( str.substring(0 , str.indexOf("-")) ); // rand number for the trie
+                int trieRandom = Integer.parseInt(str.substring(0, str.indexOf("-"))); // rand number for the trie
                 // System.out.println("randomly chosen trie:" + fp.getSearchedWordList().get(trieRandom).toString());
                 TrieST chosenTrie = this.trieList.get(trieRandom); // chosen trie ( to be less verbose )
                 System.out.println("The trie " + searchedWordList.get(trieList.indexOf(chosenTrie)) + " is selected");
@@ -87,7 +130,7 @@ public class Model {
                     // copied objects //
                     Set<String> candidateBoundaryList = new TreeSet<>(originalBoundaryList); // deep copy of the randomly chosen trie's boundaryList
                     // copied objects //
-                    int nodeRandom = Integer.parseInt(str.substring(str.indexOf("-")+1)); // rand number for the node in the random trie
+                    int nodeRandom = Integer.parseInt(str.substring(str.indexOf("-") + 1)); // rand number for the node in the random trie
                     Object[] values = chosenTrie.getWordList().keySet().toArray(); // convert the wordList of the chosen trie into array to be able to select a random node
                     String candidateMorpheme = (String) values[nodeRandom];  // new boundary candidate
 
@@ -107,20 +150,33 @@ public class Model {
                         System.out.println("old poisson: " + overallPoisson + " candidate poisson: " + candidatePoissonOverall);
                     }
                     Map<String, Integer> candidateFrequencies = fp.changeFrequencyOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.morphemeFreq);
+
                     Map<TrieST, ArrayList<String>> candidateSegmentationList = fp.changeSegmentSequenceForOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.trieSegmentations);
 
+                    // for DP
+                    ArrayList<String> newTrieSegmentation = candidateSegmentationList.get(chosenTrie);
+                    ArrayList<String> oldTrieSegmentation = trieSegmentations.get(chosenTrie);
+                    HashMap<String, Integer> diffMap = getDifferenceSegmentationForDP(newTrieSegmentation, oldTrieSegmentation);
+
+                    HashMap<String, Integer> baseFreqMap = getBaseFreqForDP(diffMap);
+
+                    ArrayList<Double> dpScores = calculateProbForDP(diffMap, baseFreqMap);
+
+                    //
                     double candidateTrieSim = fp.generateSimiliarWordsForOneTrie(chosenTrie, candidateBoundaryList);
                     double candidateSS = overallSS - boundarySimiliar.get(chosenTrie) + candidateTrieSim;
                     System.out.println("old (overall) similarity score: " + overallSS + " candidate (overall) similarity score: " + candidateSS);
 
-                    double newScore = calculateOverallProbability(candidatePoissonOverall, candidateFrequencies, candidateSegmentationList, candidateSS);
-                    System.out.println("old score: " + oldScore + " candidate score: " + newScore);
+                    // double newScore = calculateOverallProbability(candidatePoissonOverall, candidateFrequencies, candidateSegmentationList, candidateSS); // before DP
+                    double newScore = dpScores.get(1) + candidatePoissonOverall + candidateSS;
+                    double oldScore = dpScores.get(0) + candidatePoissonOverall + candidateSS;
+                    System.out.println("old score: " + oldScore + " new score: " + newScore);
                     if (newScore > oldScore) {
                         //      System.out.println("accepted mor: " + candidateMorpheme);
-                        System.out.println("candidate score > oldscore accepted");
+                        System.out.println("new score > oldscore accepted");
 
                         update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS, candidateTrieSim);
-                        oldScore = newScore;
+                        //oldScore = newScore; before DP
                     } else // accept the boundary with randProb probability
                     {
                         double acceptProb = newScore - oldScore;
@@ -136,6 +192,7 @@ public class Model {
                             oldScore = newScore;
                         }
                     }
+
                 }
                 noOfIteration--;
                 System.out.println("-----------------------------------------------------");
@@ -150,6 +207,73 @@ public class Model {
 
         }
         saveModel();
+    }
+
+    private ArrayList<Double> calculateProbForDP(HashMap<String, Integer> diffMap, HashMap<String, Integer> baseFreqMap) {
+
+        double oldScore = 0;
+        double newScore = 0;
+
+        ArrayList<Double> scores = new ArrayList<>();
+
+        ArrayList<String> toAddMap = new ArrayList<>();
+        ArrayList<String> toRemoveMap = new ArrayList<>();
+        for (String str : diffMap.keySet()) {
+            if (diffMap.get(str) > 0) {
+                toAddMap.add(str);
+            } else
+                toRemoveMap.add(str);
+        }
+
+        int originalSize = 0;
+        for (String str : baseFreqMap.keySet()) {
+
+            originalSize = originalSize + baseFreqMap.get(str);
+        }
+        int size = originalSize;
+        for (String str : toAddMap) {
+            if (baseFreqMap.containsKey(str)) {
+                if (baseFreqMap.get(str) > 0) {
+                    newScore = newScore + Math.log10(Math.pow((baseFreqMap.get(str) / (size + alpha)), diffMap.get(str)));
+                    size = size + diffMap.get(str);
+                } else {
+                    newScore = newScore + Math.log10(alpha * Math.pow(gamma, str.length() + 1) / (size + alpha));
+                    size = size + diffMap.get(str);
+                }
+            } else {
+                newScore = newScore + Math.log10(alpha * Math.pow(gamma, str.length() + 1) / (size + alpha));
+                size = size + diffMap.get(str);
+            }
+        }
+        size = originalSize;
+        for (String str : toRemoveMap) {
+            if (baseFreqMap.containsKey(str)) {
+                if (baseFreqMap.get(str) > 0) {
+                    oldScore = oldScore + Math.log10(Math.pow((baseFreqMap.get(str) / (size + alpha)),(-1* diffMap.get(str) ) ));
+                    size = size + (-1* diffMap.get(str) );
+                } else {
+                    oldScore = oldScore + Math.log10(alpha * Math.pow(gamma, str.length() + 1) / (size + alpha));
+                    size = size + (-1* diffMap.get(str) );
+                }
+            } else {
+                oldScore = oldScore + Math.log10(alpha * Math.pow(gamma, str.length() + 1) / (size + alpha));
+                size = size + (-1* diffMap.get(str) );
+            }
+        }
+        scores.add(oldScore);
+        scores.add(newScore);
+        return scores;
+
+    }
+
+    private HashMap<String, Integer> getBaseFreqForDP(HashMap<String, Integer> diffMap) {
+
+        HashMap<String, Integer> baseMap = new HashMap<String, Integer>(this.morphemeFreq);
+        for (String str : diffMap.keySet()) {
+            if (diffMap.get(str) < 0)
+                baseMap.put(str, this.morphemeFreq.get(str) + diffMap.get(str));
+        }
+        return baseMap;
     }
 
     public void saveModel() throws IOException {
@@ -178,13 +302,19 @@ public class Model {
         boundarySimiliar.put(st, candidateTrieSimiliarityScore);
     }
 
+    public double calculateInitialProbabilityForDP(double candidatePoissonOverall, double similiarityScore) {
 
+        return candidatePoissonOverall + similiarityScore;
+    }
+/*
     public double calculateOverallProbability(double candidatePoissonOverall, Map<String, Integer> candidateFrequencies, Map<TrieST, ArrayList<String>> candidateSegmentationList, double similiarityScore) {
         double likelihoodScore = calculateMaxLikelihoodForCorpus(candidateFrequencies, candidateSegmentationList);
         System.out.println("likelihood: " + likelihoodScore);
         return candidatePoissonOverall + likelihoodScore + similiarityScore;
-    }
+    }*/
 
+
+/*
     public double calculateMaxLikelihoodForCorpus(Map<String, Integer> candidateFrequencies, Map<TrieST, ArrayList<String>> candidateSegmentationList) {
 
         ArrayList<Map<TrieST, ArrayList<String>>> listOftemplist = new ArrayList<>();
@@ -219,7 +349,7 @@ public class Model {
             result = result + d;
         }
         return result;
-    }
+    }*/
 
     public double calculateMLforOneTrie(ArrayList<String> segmentationList, Map<String, Double> morphemeProbabilities) {
         double prob = 0;

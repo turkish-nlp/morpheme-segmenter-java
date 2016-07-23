@@ -50,7 +50,7 @@ public class PrepareResultFile {
     }
 
     public static void prepareFile() throws IOException {
-        String input = "C:\\Users\\ahmetu\\Desktop\\Morphology Projects\\datas_for_morheme_segmenter\\nested_results\\results.0.15";
+        String input = "C:\\Users\\Murathan\\Desktop\\totalresults_35_non_prior";
         BufferedReader reader = null;
         reader = new BufferedReader(new FileReader(input));
 
