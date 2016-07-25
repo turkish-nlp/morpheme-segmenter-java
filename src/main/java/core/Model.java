@@ -137,6 +137,10 @@ public class Model {
                     if (candidateMorpheme.contains("$")) {
                         continue;
                     }
+                    if(candidateMorpheme.length() == 1)
+                    {
+                        continue;
+                    }
 
                     if (originalBoundaryList.contains(candidateMorpheme)) {
                         System.out.println("the morpheme " + candidateMorpheme + " is unmarked");
