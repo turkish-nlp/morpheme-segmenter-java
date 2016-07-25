@@ -33,7 +33,6 @@ public class Model {
     public double alpha = 0.1;
     public double gamma = 0.1;
 
-
     public Model(String dir, String vectorDir, String noOfIterationP, String lambda) throws IOException, ClassNotFoundException {
 
         fp = new Baseline(dir, vectorDir, Integer.parseInt(lambda));
@@ -43,6 +42,7 @@ public class Model {
         trieSegmentations = new ConcurrentHashMap<>(fp.trieSegmentations); // unique elements?? set??
         morphemeFreq = new ConcurrentHashMap<>(fp.morphemeFreq);
         wordBoundary = new ConcurrentHashMap<>(fp.baselineBoundaries);
+
         triePoisson = new ConcurrentHashMap<>(fp.triePoisson);
         overallPoisson = fp.overallPoisson;
         boundarySimiliar = new ConcurrentHashMap<>(fp.boundarySimiliarScores);

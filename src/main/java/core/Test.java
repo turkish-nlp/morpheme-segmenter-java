@@ -11,9 +11,11 @@ import java.util.*;
  */
 public class Test {
 
-    /*
+
     public static void main(String[] args) throws IOException {
         TrieST st = new TrieST();
+        st.put("orta$");
+        st.put("otobüs$");
         st.put("okul$");
         st.put("okuldan$");
         st.put("okulun$");
@@ -29,10 +31,10 @@ public class Test {
         st.put("öğretmene$");
         st.put("okulunki$");
 
-        serializeToFile(st, "test", args[0]);
+        serializeToFile(st, "test_2", args[0]);
 
     }
-    */
+
 
     private static void serializeToFile(TrieST st, String word, String dir) throws IOException {
         // toByteArray
@@ -48,7 +50,7 @@ public class Test {
 
         FileUtils.writeByteArrayToFile(new File(dir + "/" + word), yourBytes);
     }
-
+/*
     public static void main(String[] args) {
         String[] oldToken = {"okula", "okulda", "n", "okulda", "ymış", "okulda", "lar", "okulu", "ilk", "okul", "lise", "ler"};
         String[] newToken = {"okul" , "a", "okul" ,"da", "n", "okul" , "da", "ymış", "okul" , "da", "lar", "okul" ,"u", "ilk", "okul", "lise", "ler"};
@@ -57,7 +59,7 @@ public class Test {
         ArrayList<String> newTokenList = new ArrayList<String>(Arrays.asList(newToken));
 
         getDifferenceSegmentationForDP(newTokenList ,oldTokenList);
-    }
+    }*/
 
     public static HashMap<String, Integer> getDifferenceSegmentationForDP(ArrayList<String> newTrieSegmentation, ArrayList<String> oldTrieSegmentation) {
 

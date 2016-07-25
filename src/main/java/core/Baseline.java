@@ -27,10 +27,25 @@ public class Baseline {
     public Map<TrieST, Double> triePoisson = new ConcurrentHashMap<>();
     public double overallPoisson = 0;
     public double overallSimilarityScore = 0;
+    public boolean oneLetter = false;
 
     public Baseline(String dir, String vectorDir, int lambda) throws IOException, ClassNotFoundException {
 
         generateTrieList(dir);
+        if(!oneLetter)
+        {
+            Set<String> boundaryListTMP = new TreeSet<>();
+            for(TrieST st : baselineBoundaries.keySet())
+            {
+                boundaryListTMP = new TreeSet<>();
+                for(String str : baselineBoundaries.get(st))
+                {
+                    if(str.length() > 1)
+                        boundaryListTMP.add(str);
+                }
+                baselineBoundaries.put(st, boundaryListTMP);
+            }
+        }
         this.lambda = lambda;
         vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
 
