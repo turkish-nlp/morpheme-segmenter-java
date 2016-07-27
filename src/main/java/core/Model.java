@@ -31,7 +31,7 @@ public class Model {
     public int noOfIteration;
     public List<String> shuffleList;
     public double alpha = 0.1;
-    public double gamma = 0.1;
+    public double gamma = 0.037;
 
     public Model(String dir, String vectorDir, String noOfIterationP, String lambda) throws IOException, ClassNotFoundException {
 
@@ -134,7 +134,7 @@ public class Model {
                     Object[] values = chosenTrie.getWordList().keySet().toArray(); // convert the wordList of the chosen trie into array to be able to select a random node
                     String candidateMorpheme = (String) values[nodeRandom];  // new boundary candidate
 
-                    if (candidateMorpheme.contains("$")) {
+                   if (candidateMorpheme.contains("$")) {
                         continue;
                     }
                     if(candidateMorpheme.length() == 1)
@@ -146,12 +146,12 @@ public class Model {
                         System.out.println("the morpheme " + candidateMorpheme + " is unmarked");
                         candidateBoundaryList.remove(candidateMorpheme);
                         candidatePoissonOverall = overallPoisson - Math.log10(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
-                        System.out.println("old poisson: " + overallPoisson + " candidate poisson: " + candidatePoissonOverall);
+                        System.out.println("old poisson: " + overallPoisson + " new poisson: " + candidatePoissonOverall);
                     } else {
                         candidateBoundaryList.add(candidateMorpheme);
                         candidatePoissonOverall = overallPoisson + Math.log10(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
                         System.out.println("when the morpheme " + candidateMorpheme + " is marked. It has " + chosenTrie.getWordList().get(candidateMorpheme) + " branches");
-                        System.out.println("old poisson: " + overallPoisson + " candidate poisson: " + candidatePoissonOverall);
+                        System.out.println("old poisson: " + overallPoisson + " new poisson: " + candidatePoissonOverall);
                     }
                     Map<String, Integer> candidateFrequencies = fp.changeFrequencyOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.morphemeFreq);
 
@@ -174,12 +174,10 @@ public class Model {
                     // double newScore = calculateOverallProbability(candidatePoissonOverall, candidateFrequencies, candidateSegmentationList, candidateSS); // before DP
                     double newScore = dpScores.get(1) + candidatePoissonOverall + candidateSS;
                     double oldScore = dpScores.get(0) + candidatePoissonOverall + candidateSS;
-                    System.out.println("old score: " + oldScore + " new score: " + newScore);
                     if (newScore > oldScore) {
-                        //      System.out.println("accepted mor: " + candidateMorpheme);
                         System.out.println("new score > oldscore accepted");
-
                         update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS, candidateTrieSim);
+                        System.out.println("overall posterior prob: " + newScore);
                         //oldScore = newScore; before DP
                     } else // accept the boundary with randProb probability
                     {
@@ -191,12 +189,12 @@ public class Model {
                         System.out.println("randProb: " + randProb);
 
                         if ((double) randProb < acceptProb) {
-                            System.out.println("candidate score < oldscore, yet it is accepted accepted");
+                            System.out.println("candidate score < oldscore, yet it is accepted");
                             update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS, candidateTrieSim);
                             oldScore = newScore;
+                            System.out.println("overall posterior prob: " + newScore );
                         }
                     }
-
                 }
                 noOfIteration--;
                 System.out.println("-----------------------------------------------------");
@@ -205,8 +203,8 @@ public class Model {
 
         for (TrieST st : this.wordBoundary.keySet()) {
             System.out.println("-------------------------------------------------------------------------------------");
-            System.out.println(searchedWordList.get(trieList.indexOf(st)) + "--old-->" + fp.baselineBoundaries.get(st));
-            System.out.println(searchedWordList.get(trieList.indexOf(st)) + "--new-->" + this.wordBoundary.get(st));
+            System.out.println(searchedWordList.get(trieList.indexOf(st)) + "-- old boundary list -->" + fp.baselineBoundaries.get(st));
+            System.out.println(searchedWordList.get(trieList.indexOf(st)) + "-- new boundary list -->" + this.wordBoundary.get(st));
             System.out.println("-------------------------------------------------------------------------------------");
 
         }
