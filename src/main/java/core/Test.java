@@ -31,7 +31,7 @@ public class Test {
         st.put("öğretmene$");
         st.put("okulunki$");
 
-        serializeToFile(st, "test_2", args[0]);
+        serializeToFile(st, "test_trie", args[0]);
 
     }
 
