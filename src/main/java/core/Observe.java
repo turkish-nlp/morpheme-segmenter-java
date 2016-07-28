@@ -41,8 +41,8 @@ public class Observe {
     public void printWordsofTries() {
 
         concurrentTrieMap.keySet().parallelStream().forEach((n) -> {
-            System.out.println("CONTROL WORD: " + n);
             System.out.println("************************************");
+            System.out.println("CONTROL WORD: " + n);
             printWords(concurrentTrieMap.get(n));
             System.out.println("************************************");
         });
