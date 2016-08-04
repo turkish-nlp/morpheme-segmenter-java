@@ -3,12 +3,15 @@ package core;
 import org.apache.commons.io.FileUtils;
 import tries.TrieST;
 
+import java.io.Serializable;
+
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by Murathan on 20-Jun-16.
@@ -34,9 +37,9 @@ public class Model {
     public double alpha = 0.01;
     public double gamma = 0.037;
     ConcurrentHashMap<String, Double> newCorpus = new ConcurrentHashMap<>();
-    static Charset charset = Charset.forName("UTF-8");
     double newCorpusSize = 0;
     double laplaceCoefficient = 0.1;
+    double iterationNo;
 
     public Model(String dir, String vectorDir, String noOfIterationP, String lambda) throws IOException, ClassNotFoundException {
 
@@ -54,6 +57,7 @@ public class Model {
         overallSS = fp.overallSimilarityScore;
         //  oldScore = calculateInitialProbabilityForDP(overallPoisson, overallSS);
         this.noOfIteration = Integer.parseInt(noOfIterationP);
+        iterationNo = noOfIteration;
 /*
         List<String> freqWords = Files.readAllLines(new File(wordListDir).toPath(), charset);
         Map<String, Double> corpus = new HashMap<>();
@@ -196,7 +200,7 @@ public class Model {
                                 diffMapForPresence.put(dfWord, diffMap.get(dfWord));
                         }
                     }*/
-                  //  ArrayList<Double> presenceScores = presenceInWordlistWithLaplaceSmoothing(candidateMorpheme, candidateMorphemeCount, diffMapForPresence);
+                    //  ArrayList<Double> presenceScores = presenceInWordlistWithLaplaceSmoothing(candidateMorpheme, candidateMorphemeCount, diffMapForPresence);
 
                     double candidateTrieSim = fp.generateSimiliarWordsForOneTrie(chosenTrie, candidateBoundaryList);
                     double candidateSS = overallSS - boundarySimiliar.get(chosenTrie) + candidateTrieSim;
@@ -347,21 +351,23 @@ public class Model {
     }
 
     public void saveModel() throws IOException {
-        HashMap<String, Integer> morphemeFreqCopy = new HashMap<>();
-        morphemeFreqCopy.putAll(this.morphemeFreq);
+
+        ModelCopy mc = new ModelCopy(morphemeFreq, trieSegmentations);
+
         // toByteArray
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutput out = null;
         byte[] yourBytes = null;
         out = new ObjectOutputStream(bos);
-        out.writeObject(morphemeFreqCopy);
+        out.writeObject(mc);
         yourBytes = bos.toByteArray();
 
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("model"), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("model_" + iterationNo + "_" + alpha), yourBytes);
     }
+
 
     public void update(TrieST st, Set<String> candidateBoundaryList, Map<String, Integer> candidateFrequencies, Map<TrieST, ArrayList<String>> candidateSegmentationList, double candidatePoissonOverall, double candidateOverallSimiliarityScore, double candidateTrieSimiliarityScore) {
         this.wordBoundary.put(st, candidateBoundaryList);

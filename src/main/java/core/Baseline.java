@@ -19,6 +19,7 @@ public class Baseline {
     public List<String> searchedWordList = new ArrayList<String>();
     public List<TrieST> trieList = new ArrayList<TrieST>();
     public Map<TrieST, ArrayList<String>> trieSegmentations = new ConcurrentHashMap<>(); // unique elements?? set??
+
     public Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
     public Map<TrieST, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
     public Map<TrieST, Double> boundarySimiliarScores = new ConcurrentHashMap<>();
@@ -344,13 +345,12 @@ public class Baseline {
             }
         }
         trieSegmentations.put(st, tokens);
-
     }
 
     public Map<TrieST, ArrayList<String>> changeSegmentSequenceForOneTrie(TrieST st, Set<String> oldBoundaries, Set<String> newBoundaries, Map<TrieST, ArrayList<String>> originalTrieSegments) {
 
         Map<TrieST, ArrayList<String>> candidateTrieSegments = new ConcurrentHashMap<>(originalTrieSegments);
-        ArrayList<String> newSegmentsSeq = determineSegmentsForOneTrie(st, newBoundaries, false);
+        ArrayList<String> newSegmentsSeq = determineSegmentsForOneTrie(st, newBoundaries, true);
         candidateTrieSegments.put(st, newSegmentsSeq);
         return candidateTrieSegments;
     }
