@@ -4,10 +4,11 @@ import org.apache.commons.io.FileUtils;
 import tries.TrieST;
 
 import java.io.*;
-import java.lang.reflect.Array;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created by Murathan on 20-Jun-16.
@@ -30,8 +31,12 @@ public class Model {
     public double overallSS;
     public int noOfIteration;
     public List<String> shuffleList;
-    public double alpha = 0.1;
+    public double alpha = 0.01;
     public double gamma = 0.037;
+    ConcurrentHashMap<String, Double> newCorpus = new ConcurrentHashMap<>();
+    static Charset charset = Charset.forName("UTF-8");
+    double newCorpusSize = 0;
+    double laplaceCoefficient = 0.1;
 
     public Model(String dir, String vectorDir, String noOfIterationP, String lambda) throws IOException, ClassNotFoundException {
 
@@ -49,6 +54,17 @@ public class Model {
         overallSS = fp.overallSimilarityScore;
         //  oldScore = calculateInitialProbabilityForDP(overallPoisson, overallSS);
         this.noOfIteration = Integer.parseInt(noOfIterationP);
+/*
+        List<String> freqWords = Files.readAllLines(new File(wordListDir).toPath(), charset);
+        Map<String, Double> corpus = new HashMap<>();
+        for (String str : freqWords) {
+            StringTokenizer tokens = new StringTokenizer(str, " ");
+            String f = tokens.nextToken();
+            String w = tokens.nextToken();
+            corpus.put(w, Double.parseDouble(f));
+        }
+*/
+        //preSmoothingProcess(corpus);
 
         shuffleList = new ArrayList<String>();
 
@@ -61,6 +77,7 @@ public class Model {
         Collections.shuffle(shuffleList);
         System.out.println("model is built");
     }
+
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         Model m = new Model(args[0], args[1], args[2], args[3]);
@@ -134,11 +151,10 @@ public class Model {
                     Object[] values = chosenTrie.getWordList().keySet().toArray(); // convert the wordList of the chosen trie into array to be able to select a random node
                     String candidateMorpheme = (String) values[nodeRandom];  // new boundary candidate
 
-                   if (candidateMorpheme.contains("$")) {
+                    if (candidateMorpheme.contains("$")) {
                         continue;
                     }
-                    if(candidateMorpheme.length() == 1)
-                    {
+                    if (candidateMorpheme.length() == 1) {
                         continue;
                     }
 
@@ -161,19 +177,34 @@ public class Model {
                     ArrayList<String> newTrieSegmentation = candidateSegmentationList.get(chosenTrie);
                     ArrayList<String> oldTrieSegmentation = trieSegmentations.get(chosenTrie);
                     HashMap<String, Integer> diffMap = getDifferenceSegmentationForDP(newTrieSegmentation, oldTrieSegmentation);
-
                     HashMap<String, Integer> baseFreqMap = getBaseFreqForDP(diffMap);
-
                     ArrayList<Double> dpScores = calculateProbForDP(diffMap, baseFreqMap);
 
-                    //
+                    int candidateMorphemeCount = 0;
+                    for (String s : newTrieSegmentation) {
+                        if (s.equals(candidateMorpheme))
+                            candidateMorphemeCount++;
+                    }
+
+                    HashMap<String, Integer> diffMapForPresence = new HashMap<>();
+                   /* for (String dfWord : diffMap.keySet()) {
+                        if(diffMap.get(dfWord) < 0)
+                        {
+                            if (!dfWord.startsWith(candidateMorpheme) )
+                                diffMapForPresence.put(candidateMorpheme + dfWord, diffMap.get(dfWord));
+                            else
+                                diffMapForPresence.put(dfWord, diffMap.get(dfWord));
+                        }
+                    }*/
+                  //  ArrayList<Double> presenceScores = presenceInWordlistWithLaplaceSmoothing(candidateMorpheme, candidateMorphemeCount, diffMapForPresence);
+
                     double candidateTrieSim = fp.generateSimiliarWordsForOneTrie(chosenTrie, candidateBoundaryList);
                     double candidateSS = overallSS - boundarySimiliar.get(chosenTrie) + candidateTrieSim;
                     System.out.println("old (overall) similarity score: " + overallSS + " candidate (overall) similarity score: " + candidateSS);
 
                     // double newScore = calculateOverallProbability(candidatePoissonOverall, candidateFrequencies, candidateSegmentationList, candidateSS); // before DP
-                    double newScore = dpScores.get(1) + candidatePoissonOverall + candidateSS;
-                    double oldScore = dpScores.get(0) + candidatePoissonOverall + candidateSS;
+                    double newScore = dpScores.get(1) + candidatePoissonOverall + candidateSS;// + presenceScores.get(1);
+                    double oldScore = dpScores.get(0) + candidatePoissonOverall + candidateSS;// + presenceScores.get(0);
                     if (newScore > oldScore) {
                         System.out.println("new score > oldscore accepted");
                         update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS, candidateTrieSim);
@@ -192,7 +223,7 @@ public class Model {
                             System.out.println("candidate score < oldscore, yet it is accepted");
                             update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS, candidateTrieSim);
                             oldScore = newScore;
-                            System.out.println("overall posterior prob: " + newScore );
+                            System.out.println("overall posterior prob: " + newScore);
                         }
                     }
                 }
@@ -209,6 +240,43 @@ public class Model {
 
         }
         saveModel();
+    }
+
+
+    public ArrayList<Double> presenceInWordlistWithLaplaceSmoothing(String candidateMorpheme, int candidateMorphemeCount, HashMap<String, Integer> diffMapForPresence) {
+        ArrayList<Double> scores = new ArrayList<>();
+
+        double newScore = Math.pow(Math.log10(newCorpus.get(candidateMorpheme) / newCorpusSize), candidateMorphemeCount);
+        double oldScore = 0;
+
+        for (String word : diffMapForPresence.keySet()) {
+            oldScore = oldScore + Math.pow(Math.log10(newCorpus.get(word) / newCorpusSize), (-1 * diffMapForPresence.get(word)));
+        }
+        scores.add(oldScore);
+        scores.add(newScore);
+
+        return scores;
+    }
+
+    public void r(Map<String, Double> corpus) {
+
+        trieList.parallelStream().forEach((n) -> {
+            for (String str : n.getWordList().keySet()) {
+                if (!str.endsWith("$"))
+                    newCorpus.put(str, laplaceCoefficient);
+            }
+        });
+
+        for (String str : corpus.keySet()) {
+            double value = corpus.get(str);
+            newCorpus.put(str, (value + laplaceCoefficient));
+        }
+
+        for (String str : newCorpus.keySet()) {
+            newCorpusSize = newCorpusSize + newCorpus.get(str);
+        }
+
+        corpus.clear();
     }
 
     private ArrayList<Double> calculateProbForDP(HashMap<String, Integer> diffMap, HashMap<String, Integer> baseFreqMap) {
@@ -251,15 +319,15 @@ public class Model {
         for (String str : toRemoveMap) {
             if (baseFreqMap.containsKey(str)) {
                 if (baseFreqMap.get(str) > 0) {
-                    oldScore = oldScore + Math.log10(Math.pow((baseFreqMap.get(str) / (size + alpha)),(-1* diffMap.get(str) ) ));
-                    size = size + (-1* diffMap.get(str) );
+                    oldScore = oldScore + Math.log10(Math.pow((baseFreqMap.get(str) / (size + alpha)), (-1 * diffMap.get(str))));
+                    size = size + (-1 * diffMap.get(str));
                 } else {
                     oldScore = oldScore + Math.log10(alpha * Math.pow(gamma, str.length() + 1) / (size + alpha));
-                    size = size + (-1* diffMap.get(str) );
+                    size = size + (-1 * diffMap.get(str));
                 }
             } else {
                 oldScore = oldScore + Math.log10(alpha * Math.pow(gamma, str.length() + 1) / (size + alpha));
-                size = size + (-1* diffMap.get(str) );
+                size = size + (-1 * diffMap.get(str));
             }
         }
         scores.add(oldScore);
