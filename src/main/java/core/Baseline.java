@@ -347,7 +347,7 @@ public class Baseline {
     public Map<TrieST, ArrayList<String>> changeSegmentSequenceForOneTrie(TrieST st, Set<String> oldBoundaries, Set<String> newBoundaries, Map<TrieST, ArrayList<String>> originalTrieSegments) {
 
         Map<TrieST, ArrayList<String>> candidateTrieSegments = new ConcurrentHashMap<>(originalTrieSegments);
-        ArrayList<String> newSegmentsSeq = determineSegmentsForOneTrie(st, newBoundaries, true);
+        ArrayList<String> newSegmentsSeq = determineSegmentsForOneTrie(st, newBoundaries, false);
         candidateTrieSegments.put(st, newSegmentsSeq);
         return candidateTrieSegments;
     }

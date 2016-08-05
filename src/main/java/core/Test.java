@@ -30,9 +30,21 @@ public class Test {
         st.put("öğretmeninki$");
         st.put("öğretmene$");
         st.put("okulunki$");
+        st.put("gelince$");
 
-        serializeToFile(st, "test_trie", args[0]);
 
+        TrieST st2 = new TrieST();
+        st2.put("öğretmenden$");
+        st2.put("öğretmenin$");
+        st2.put("öğretmeninki$");
+        st2.put("öğretmene$");
+        st2.put("öğretmen$");
+        st2.put("öğretmendekiler$");
+        st2.put("öğretmende$");
+
+
+        serializeToFile(st, "test_trie_okul", args[0]);
+        serializeToFile(st2, "test_trie_diger", args[0]);
     }
 
 
