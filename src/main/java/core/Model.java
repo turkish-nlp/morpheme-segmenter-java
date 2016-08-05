@@ -22,6 +22,7 @@ public class Model {
     public List<String> searchedWordList;
     public List<TrieST> trieList;
     public Map<TrieST, ArrayList<String>> trieSegmentations;
+    public Map<TrieST, ArrayList<String>> trieSegmentationsForSegmenter;
     public Map<String, Integer> morphemeFreq;
     public Map<TrieST, Double> trieSimiliarityScores;
 
@@ -58,6 +59,8 @@ public class Model {
         //  oldScore = calculateInitialProbabilityForDP(overallPoisson, overallSS);
         this.noOfIteration = Integer.parseInt(noOfIterationP);
         iterationNo = noOfIteration;
+
+        trieSegmentationsForSegmenter = new ConcurrentHashMap<>();
 /*
         List<String> freqWords = Files.readAllLines(new File(wordListDir).toPath(), charset);
         Map<String, Double> corpus = new HashMap<>();
@@ -236,13 +239,20 @@ public class Model {
             }
         }
 
+        this.wordBoundary.keySet().parallelStream().forEach((st) -> {
+            ArrayList<String> determinedSegmentations = fp.determineSegmentsOfOneTrieForTrieSegmenter(st, this.wordBoundary.get(st));
+            trieSegmentationsForSegmenter.put(st, determinedSegmentations);
+        });
+/*
         for (TrieST st : this.wordBoundary.keySet()) {
+
             System.out.println("-------------------------------------------------------------------------------------");
             System.out.println(searchedWordList.get(trieList.indexOf(st)) + "-- old boundary list -->" + fp.baselineBoundaries.get(st));
             System.out.println(searchedWordList.get(trieList.indexOf(st)) + "-- new boundary list -->" + this.wordBoundary.get(st));
             System.out.println("-------------------------------------------------------------------------------------");
 
         }
+*/
         saveModel();
     }
 
@@ -352,7 +362,7 @@ public class Model {
 
     public void saveModel() throws IOException {
 
-        ModelCopy mc = new ModelCopy(morphemeFreq, trieSegmentations);
+        ModelCopy mc = new ModelCopy(morphemeFreq, trieSegmentationsForSegmenter);
 
         // toByteArray
         ByteArrayOutputStream bos = new ByteArrayOutputStream();

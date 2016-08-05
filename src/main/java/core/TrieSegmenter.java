@@ -64,28 +64,43 @@ public class TrieSegmenter {
         for (String searchWord : goldData) {
             CopyOnWriteArrayList<String> triesWithSearchWord = new CopyOnWriteArrayList<>();
 
-            trieSegmentations.keySet().parallelStream().forEach((n) -> {
-                for (String str : n.getWordList().keySet()) {
+            trieSegmentations.keySet().parallelStream().forEach((st) -> {
+
+                ArrayList<String> segmentations = trieSegmentations.get(st);
+                for (String correct : segmentations) {
+                    String word = correct.replace("+", "");
+                    if (word.equals(searchWord)) {
+                        triesWithSearchWord.add(correct);
+                        break;
+                    }
+                }
+                /*
+                for (String str : st.getWordList().keySet()) {
                     if (str.equals(searchWord + "$")) {
-                        String possibleSegment = findCorrectSegmentation(searchWord, n);
+                        String possibleSegment = findCorrectSegmentation(searchWord, st);
                         triesWithSearchWord.add(possibleSegment);
                         break;
                     }
                 }
+                */
             });
 
             possibleSegmentation.put(searchWord, triesWithSearchWord);
         }
     }
 
+    /*
     public String findCorrectSegmentation(String searchWord, TrieST st) {
 
-        ArrayList<String> orderedToken = trieSegmentations.get(st);
+        ArrayList<String> segmentations = trieSegmentations.get(st);
 
-        String current = "";
-        for (int i = 0; i < orderedToken.size(); ) {
-            current = orderedToken.get(i);
-            if (searchWord.startsWith())
+        for (String correct : segmentations) {
+            String word = correct.replace("+", "");
+            if (word.equals(searchWord)) {
+                return correct;
+            }
         }
+
     }
+    */
 }

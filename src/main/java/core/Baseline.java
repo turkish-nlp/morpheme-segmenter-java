@@ -33,15 +33,12 @@ public class Baseline {
     public Baseline(String dir, String vectorDir, int lambda) throws IOException, ClassNotFoundException {
 
         generateTrieList(dir);
-        if(!oneLetter)
-        {
+        if (!oneLetter) {
             Set<String> boundaryListTMP = new TreeSet<>();
-            for(TrieST st : baselineBoundaries.keySet())
-            {
+            for (TrieST st : baselineBoundaries.keySet()) {
                 boundaryListTMP = new TreeSet<>();
-                for(String str : baselineBoundaries.get(st))
-                {
-                    if(str.length() > 1)
+                for (String str : baselineBoundaries.get(st)) {
+                    if (str.length() > 1)
                         boundaryListTMP.add(str);
                 }
                 baselineBoundaries.put(st, boundaryListTMP);
@@ -239,7 +236,7 @@ public class Baseline {
         Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
         ArrayList<String> tokenSegments = new ArrayList<String>(); // unique elements?? set??
 
-  //      for (String boundary : boundaries) {
+        //      for (String boundary : boundaries) {
         //          if (nodeList.containsKey(boundary))
         //      nodeList.put(boundary + "$", 1);
         //}
@@ -391,6 +388,42 @@ public class Baseline {
             }
         }
         return tokenSegments;
+    }
+
+    public ArrayList<String> determineSegmentsOfOneTrieForTrieSegmenter(TrieST st, Set<String> boundaries) {
+
+        Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
+        ArrayList<String> segmentations = new ArrayList<String>(); // unique elements?? set??
+
+        for (String node : nodeList.keySet()) {
+            if (node.endsWith("$")) {
+
+                Stack<String> morphmeStack = new Stack<>();
+
+                String current = "";
+                boolean found = false;
+                for (String boundary : boundaries) {
+                    if (node.startsWith(boundary) && !node.equals(boundary + "$")) {
+                        current = boundary;
+                        found = true;
+                    }
+                }
+                String morpheme = node.substring(current.length(), node.length() - 1); //   EXCEPTION
+                morphmeStack.add(morpheme);
+
+                String word = node.substring(0, current.length());
+                doSegmentation(word, boundaries, morphmeStack);
+
+                String segmentation = morphmeStack.pop();
+                int a = morphmeStack.size();
+                for (int i = 0; i < a; i++) {
+                    String popped = morphmeStack.pop();
+                    segmentation = segmentation + "+" + popped;
+                }
+                segmentations.add(segmentation);
+            }
+        }
+        return segmentations;
     }
 
     public double calculateBaselineSimilarityScore() {
