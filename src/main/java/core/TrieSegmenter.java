@@ -20,7 +20,7 @@ public class TrieSegmenter {
     Map<String, String> finalSegmentation = new ConcurrentHashMap<>();
 
     static String modeldir = "";
-    static String datadir= "";
+    static String datadir = "";
     static Charset charset = Charset.forName("UTF-8");
 
 
@@ -36,7 +36,6 @@ public class TrieSegmenter {
         }
     }
 
-
     public void deSerialize(String file) throws IOException, ClassNotFoundException {
 
         FileInputStream fis = new FileInputStream(new File(file));
@@ -51,9 +50,9 @@ public class TrieSegmenter {
 
         morphemeFreq = model.morphemeFreqCopy;
         trieSegmentations = model.trieSegmentationsCopy;
-        for (TrieST st : trieSegmentations.keySet())
+      /*  for (TrieST st : trieSegmentations.keySet())
             System.out.println(trieSegmentations.get(st));
-        System.out.println("------");
+        System.out.println("------");*/
 
     }
 
@@ -66,11 +65,21 @@ public class TrieSegmenter {
         trs.findGoldDataInTries(args[1]);
         trs.calculateProb();
         trs.findCorrectSegmentation(args[1]);
-
     }
 
     public void findGoldDataInTries(String dir) throws IOException {
-        List<String> goldData = Files.readAllLines(new File(dir).toPath(), charset);
+        List<String> goldDataTmp = Files.readAllLines(new File(dir).toPath(), charset);
+        List<String> goldData = new ArrayList<>();
+
+        for (String str : goldDataTmp) {
+            if(str.equals(""))
+                break;
+            StringTokenizer token2 = new StringTokenizer(str, "\t");
+            String w1 = token2.nextToken();
+            String w2 = token2.nextToken();
+            goldData.add(w2);
+        }
+
         for (String searchWord : goldData) {
             CopyOnWriteArrayList<String> triesWithSearchWord = new CopyOnWriteArrayList<>();
 
@@ -78,7 +87,7 @@ public class TrieSegmenter {
 
                 ArrayList<String> segmentations = trieSegmentations.get(st);
                 for (String correct : segmentations) {
-                    String word = correct.replace("+", "");
+                    String word = correct.replaceAll("\\+", "");
                     if (word.equals(searchWord)) {
                         triesWithSearchWord.add(correct);
                         break;
@@ -94,15 +103,25 @@ public class TrieSegmenter {
     }
 
     public void findCorrectSegmentation(String dir) throws IOException, ClassNotFoundException {
-        List<String> goldData = Files.readAllLines(new File(dir).toPath(), charset);
+        List<String> goldDataTmp = Files.readAllLines(new File(dir).toPath(), charset);
+        List<String> goldData = new ArrayList<>();
+
+        for (String str : goldDataTmp) {
+            if(str.equals(""))
+                break;
+            StringTokenizer token2 = new StringTokenizer(str, "\t");
+            String w1 = token2.nextToken();
+            String w2 = token2.nextToken();
+            goldData.add(w2);
+        }
+
         for (String searchWord : goldData) {
             double maxScore = Double.NEGATIVE_INFINITY;
             String segMax = "";
-            if (possibleSegmentations.get(searchWord).size() > 0) {
-
+            if (possibleSegmentations.get(searchWord).size() > 0) { // if the search word exists in the tries
                 CopyOnWriteArrayList<String> possibleSegmentList = possibleSegmentations.get(searchWord);
+                double score = 0;
                 for (String str : possibleSegmentList) {
-                    double score = 0;
                     StringTokenizer token = new StringTokenizer(str, "+");
                     while (token.hasMoreTokens()) {
                         score = score + Math.log10(morphemeProb.get(token.nextToken()));
@@ -112,18 +131,21 @@ public class TrieSegmenter {
                         segMax = str;
                     }
                 }
-            }
-            else
+            } else// if the search word DOES NOT exists in the tries
             {
                 segMax = this.doSplit(searchWord, morphemeFreq.keySet()).replaceAll(" ", "+");
-                if(segMax.equals(""))
+                if (segMax.equals("")) // if the searchWord cannot be segmented
                     segMax = searchWord;
             }
+            if (segMax.equals("")) // if the searchWord cannot be segmented
+                segMax = searchWord;
             finalSegmentation.put(searchWord, segMax);
 
         }
         for (String str : finalSegmentation.keySet())
-            System.out.println(finalSegmentation.get(str));
+            System.out.println(str.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
+                    + "\t" + finalSegmentation.get(str).replaceAll("\\+", " ").replaceAll("ö", "O").
+                    replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S"));
     }
 
 
@@ -139,7 +161,6 @@ public class TrieSegmenter {
                 while (st.hasMoreTokens()) {
                     tmp = tmp + Math.log10(morphemeProb.get(st.nextToken()));
                 }
-
                 //    tmp = tmp * ( 4 - StringUtils.countMatches(str, " ") )*-1;
                 //   System.out.println(str + "-->" + tmp);
                 if (tmp > maxScore) {
