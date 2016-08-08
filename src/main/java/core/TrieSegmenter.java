@@ -19,6 +19,8 @@ public class TrieSegmenter {
     Map<String, Double> morphemeProb = new ConcurrentHashMap<>();
     Map<String, String> finalSegmentation = new ConcurrentHashMap<>();
 
+    static String modeldir = "";
+    static String datadir= "";
     static Charset charset = Charset.forName("UTF-8");
 
 
@@ -58,6 +60,8 @@ public class TrieSegmenter {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         TrieSegmenter trs = new TrieSegmenter();
+        modeldir = args[0];
+        datadir = args[1];
         trs.deSerialize(args[0]);
         trs.findGoldDataInTries(args[1]);
         trs.calculateProb();
@@ -84,17 +88,17 @@ public class TrieSegmenter {
 
             possibleSegmentations.put(searchWord, triesWithSearchWord);
         }
-        for (String str : possibleSegmentations.keySet())
+      /*  for (String str : possibleSegmentations.keySet())
             System.out.println(possibleSegmentations.get(str));
-        System.out.println("!!!!!!!!!!!!!!");
+        System.out.println("!!!!!!!!!!!!!!");*/
     }
 
-    public void findCorrectSegmentation(String dir) throws IOException {
+    public void findCorrectSegmentation(String dir) throws IOException, ClassNotFoundException {
         List<String> goldData = Files.readAllLines(new File(dir).toPath(), charset);
         for (String searchWord : goldData) {
             double maxScore = Double.NEGATIVE_INFINITY;
             String segMax = "";
-            if (possibleSegmentations.keySet().contains(searchWord)) {
+            if (possibleSegmentations.get(searchWord).size() > 0) {
 
                 CopyOnWriteArrayList<String> possibleSegmentList = possibleSegmentations.get(searchWord);
                 for (String str : possibleSegmentList) {
@@ -109,11 +113,42 @@ public class TrieSegmenter {
                     }
                 }
             }
+            else
+            {
+                segMax = this.doSplit(searchWord, morphemeFreq.keySet()).replaceAll(" ", "+");
+                if(segMax.equals(""))
+                    segMax = searchWord;
+            }
             finalSegmentation.put(searchWord, segMax);
 
         }
         for (String str : finalSegmentation.keySet())
             System.out.println(finalSegmentation.get(str));
+    }
 
+
+    public String doSplit(String word, Set<String> affixes) throws FileNotFoundException {
+        ArrayList<String> results = Segmenter.getPossibleSplits(word, affixes);
+        String segMax = "";
+        if (!results.isEmpty()) {
+            segMax = "";
+            double maxScore = Double.NEGATIVE_INFINITY;
+            for (String str : results) {
+                double tmp = 0;
+                StringTokenizer st = new StringTokenizer(str, " ");
+                while (st.hasMoreTokens()) {
+                    tmp = tmp + Math.log10(morphemeProb.get(st.nextToken()));
+                }
+
+                //    tmp = tmp * ( 4 - StringUtils.countMatches(str, " ") )*-1;
+                //   System.out.println(str + "-->" + tmp);
+                if (tmp > maxScore) {
+                    maxScore = tmp;
+                    segMax = str;
+                }
+            }
+            //  finalSegmentation.put(word, segMax);
+        }
+        return segMax;
     }
 }

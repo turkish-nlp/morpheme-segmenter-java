@@ -86,12 +86,11 @@ public class Segmenter {
         }
     }
 
-
     public void doSplit(String word, Set<String> affixes) throws FileNotFoundException {
         ArrayList<String> results = getPossibleSplits(word, affixes);
-
+        String segMax = "";
         if (!results.isEmpty()) {
-            String segMax = "";
+            segMax = "";
             double maxScore = Double.NEGATIVE_INFINITY;
             for (String str : results) {
                 double tmp = 0;

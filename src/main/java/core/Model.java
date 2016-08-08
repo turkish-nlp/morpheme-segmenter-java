@@ -35,7 +35,7 @@ public class Model {
     public double overallSS;
     public int noOfIteration;
     public List<String> shuffleList;
-    public double alpha = 0.01;
+    public double alpha = 0.1;
     public double gamma = 0.037;
     ConcurrentHashMap<String, Double> newCorpus = new ConcurrentHashMap<>();
     double newCorpusSize = 0;
