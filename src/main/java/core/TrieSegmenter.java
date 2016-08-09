@@ -72,7 +72,7 @@ public class TrieSegmenter {
         List<String> goldData = new ArrayList<>();
 
         for (String str : goldDataTmp) {
-            if(str.equals(""))
+            if (str.equals(""))
                 break;
             StringTokenizer token2 = new StringTokenizer(str, "\t");
             String w1 = token2.nextToken();
@@ -107,7 +107,7 @@ public class TrieSegmenter {
         List<String> goldData = new ArrayList<>();
 
         for (String str : goldDataTmp) {
-            if(str.equals(""))
+            if (str.equals(""))
                 break;
             StringTokenizer token2 = new StringTokenizer(str, "\t");
             String w1 = token2.nextToken();
@@ -126,6 +126,7 @@ public class TrieSegmenter {
                     while (token.hasMoreTokens()) {
                         score = score + Math.log10(morphemeProb.get(token.nextToken()));
                     }
+                    System.out.println(str + ": " + score);
                     if (score > maxScore) {
                         maxScore = score;
                         segMax = str;
@@ -139,6 +140,7 @@ public class TrieSegmenter {
             }
             if (segMax.equals("")) // if the searchWord cannot be segmented
                 segMax = searchWord;
+            System.out.println("result: " + segMax);
             finalSegmentation.put(searchWord, segMax);
 
         }
@@ -163,6 +165,7 @@ public class TrieSegmenter {
                 }
                 //    tmp = tmp * ( 4 - StringUtils.countMatches(str, " ") )*-1;
                 //   System.out.println(str + "-->" + tmp);
+                System.out.println("no-path -- " + str + ": " + tmp);
                 if (tmp > maxScore) {
                     maxScore = tmp;
                     segMax = str;
