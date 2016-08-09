@@ -120,8 +120,8 @@ public class TrieSegmenter {
             String segMax = "";
             if (possibleSegmentations.get(searchWord).size() > 0) { // if the search word exists in the tries
                 CopyOnWriteArrayList<String> possibleSegmentList = possibleSegmentations.get(searchWord);
-                double score = 0;
                 for (String str : possibleSegmentList) {
+                    double score = 0;
                     StringTokenizer token = new StringTokenizer(str, "+");
                     while (token.hasMoreTokens()) {
                         score = score + Math.log10(morphemeProb.get(token.nextToken()));
