@@ -147,16 +147,17 @@ public class NestedSegmenter {
         //PrintWriter writer_af = new PrintWriter("outputs/affixes", "UTF-8");
         PrintWriter writer_res = new PrintWriter(args[1] + "_results_" + ns.treshold, "UTF-8");
         PrintWriter writer_noF = new PrintWriter(args[1] + "_absents_" + ns.treshold, "UTF-8");
+        PrintWriter writer_stem = new PrintWriter(args[1] + "_stems_" + ns.treshold, "UTF-8");
 
         /*for (Map.Entry<String, Double> entry : s.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
             writer_seg.println(line);
         }*/
 
-        /*for (Map.Entry<String, Double> entry : a.entrySet()) {
+        for (Map.Entry<String, Double> entry : s.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
-            writer_af.println(line);
-        }*/
+            writer_stem.println(line);
+        }
 
         for (Map.Entry<String, Double> entry : r.entrySet()) {
             String line = entry.getValue() + " " + entry.getKey();
@@ -169,7 +170,7 @@ public class NestedSegmenter {
         }
 
         //writer_seg.close();
-        //writer_af.close();
+        writer_stem.close();
         writer_res.close();
         writer_noF.close();
     }
