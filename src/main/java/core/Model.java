@@ -3,15 +3,9 @@ package core;
 import org.apache.commons.io.FileUtils;
 import tries.TrieST;
 
-import java.io.Serializable;
-
 import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by Murathan on 20-Jun-16.
@@ -253,7 +247,7 @@ public class Model {
 
         }
 */
-        saveModel();
+        saveModelForCorrectPath();
     }
 
 
@@ -360,7 +354,7 @@ public class Model {
         return baseMap;
     }
 
-    public void saveModel() throws IOException {
+    public void saveModelForCorrectPath() throws IOException {
 
         ModelCopy mc = new ModelCopy(morphemeFreq, trieSegmentationsForSegmenter);
 
@@ -376,6 +370,23 @@ public class Model {
         out.close();
 
         FileUtils.writeByteArrayToFile(new File("model_" + iterationNo + "_" + alpha), yourBytes);
+    }
+
+    public void saveModelForCorrectSplit() throws IOException {
+        HashMap<String, Integer> morphemeFreqCopy = new HashMap<>();
+        morphemeFreqCopy.putAll(this.morphemeFreq);
+        // toByteArray
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutput out = null;
+        byte[] yourBytes = null;
+        out = new ObjectOutputStream(bos);
+        out.writeObject(morphemeFreqCopy);
+        yourBytes = bos.toByteArray();
+
+        bos.close();
+        out.close();
+
+        FileUtils.writeByteArrayToFile(new File("model"), yourBytes);
     }
 
 
