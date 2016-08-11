@@ -7,7 +7,6 @@ import tries.TrieST;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
@@ -16,14 +15,10 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class RecursiveTrieBuilder {
 
     private Map<String, TrieST> trieList = new HashMap<>();
-    private Map<String, Integer> morphemeFreq = new TreeMap<>();
-    private Map<String, Set<String>> wordBoundary = new ConcurrentHashMap<>();
     Set<String> set = new CopyOnWriteArraySet<>();//
 
     private String fileSegmentationInput;
     private WordVectors vectors;
-
-    int childLimit = 3;
 
     double treshold = 0.25;
 
@@ -54,7 +49,7 @@ public class RecursiveTrieBuilder {
         FileUtils.writeByteArrayToFile(new File(dir + "/" + word), yourBytes);
     }
 
-    private void findSegmentsAndAffixes() throws IOException {
+    private void readInputFile() throws IOException {
         BufferedReader reader = null;
         reader = new BufferedReader(new FileReader(fileSegmentationInput));
 
@@ -67,12 +62,9 @@ public class RecursiveTrieBuilder {
             String word = st.nextToken();
             boolean found = false;
 
-            for (Map.Entry<String, TrieST> entry : trieList.entrySet()) {
-                if (entry.getValue() != null) {
-                    if (entry.getValue().contains(word))
-                        found = true;
-                }
-            }
+            if (trieList.containsKey(word))
+                found = true;
+
             if (!found) {
                 buildTries(word, freq, 50);
             } else {
@@ -92,7 +84,7 @@ public class RecursiveTrieBuilder {
             String stem = findStem(word);
             neighboors.parallelStream().forEach((n) -> {
                 if (n.startsWith(stem)) {
-                    buildRecursively(stem, n, freq, numberOfneighboors);
+                    buildParalelly(stem, n, freq, numberOfneighboors);
                 }
             });
         }
@@ -104,6 +96,19 @@ public class RecursiveTrieBuilder {
         }
         set.clear();
         serializeToFile(st, word);
+
+        trieList.put(word, st);
+    }
+
+    private void buildParalelly(String stem, String word, double freq, int numberOfneighboors) {
+        if (set.add(word + "$")) {
+            Collection<String> neighboors = vectors.wordsNearest(word, numberOfneighboors);
+            neighboors.parallelStream().forEach((n) -> {
+                if (n.startsWith(stem)) {
+                    buildRecursively(stem, n, freq, numberOfneighboors);
+                }
+            });
+        }
     }
 
     private void buildRecursively(String stem, String word, double freq, int numberOfneighboors) {
@@ -116,31 +121,21 @@ public class RecursiveTrieBuilder {
         }
     }
 
-    private void calcuateFrequency(TrieST st, Set<String> boundaries) {
-        Map<String, Integer> nodeList = st.getWordList();
-        Set<String> wordList = new TreeSet<>();
+    public void deSerializeTriesToDebug(String dir) throws IOException, ClassNotFoundException {
 
-        for (String boundary : boundaries) {
-            nodeList.put(boundary + "$", 1);
-        }
+        File[] files = new File(dir + "/").listFiles();
 
-        for (String node : nodeList.keySet()) {
-            if (node.endsWith("$")) {
-                String current = "";
-                boolean found = false;
-                for (String boundary : boundaries) {
-                    if (node.startsWith(boundary) && !node.equals(boundary + "$")) {
-                        current = boundary;
-                        found = true;
-                    }
-                }
-                String morpheme = node.substring(current.length(), node.length() - 1);
-                if (morphemeFreq.containsKey(morpheme)) {
-                    morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + 1);
-                } else {
-                    morphemeFreq.put(morpheme, 1);
-                }
-            }
+        for (File f : files) {
+            FileInputStream fis = new FileInputStream(f);
+            ObjectInput in = null;
+            Object o = null;
+            in = new ObjectInputStream(fis);
+            o = in.readObject();
+            fis.close();
+            in.close();
+
+            TrieST trie = (TrieST) o;
+            trieList.put(f.getName(), trie);
         }
     }
 
@@ -185,7 +180,7 @@ public class RecursiveTrieBuilder {
         *
          */
         RecursiveTrieBuilder rtb = new RecursiveTrieBuilder(args[0], args[1], args[2]);
-        rtb.findSegmentsAndAffixes();
+        rtb.readInputFile();
     }
 
 }
