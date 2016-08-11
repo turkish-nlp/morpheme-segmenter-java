@@ -5,9 +5,9 @@ import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import org.jboss.netty.util.internal.ConcurrentHashMap;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.util.*;
 
 /**
  * Created by ahmetu on 11.08.2016.
@@ -51,16 +51,29 @@ public class DataConstructer {
     private void readFile() throws IOException {
         BufferedReader reader = null;
         reader = new BufferedReader(new FileReader(inputFile));
+        Charset charset = Charset.forName("UTF-8");
+        List<String> words = Files.readAllLines(new File(inputFile).toPath(), charset);
 
         String line;
-        while ((line = reader.readLine()) != null) {
+        for(String str : words) {
             String space = " ";
-            StringTokenizer st = new StringTokenizer(line, space);
+            StringTokenizer st = new StringTokenizer(str, space);
 
-            double freq = Double.parseDouble(st.nextToken());
+            String freq = st.nextToken();
             String word = st.nextToken();
-
-            closestNN.put(word, null);
+            System.out.println(word);
+            closestNN.put(word, new ArrayList<>());
         }
+    }
+
+    public static void main(String[] args) throws IOException {
+
+        /*
+        * Vector dosyasını main methoda argüman olarak verilecek şekilde değiştiriyorum.
+         */
+        DataConstructer dc = new DataConstructer(args[0],args[1],args[2],Integer.parseInt(args[3]));
+        dc.readFile();
+        dc.gatherData();
+        dc.printData();
     }
 }
