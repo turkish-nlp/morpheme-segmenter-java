@@ -20,24 +20,47 @@ public class trieFromCluster {
     String dir;
     Charset charset = Charset.forName("UTF-8");
 
-    public trieFromCluster(String file, String path) throws IOException {
-        List<String> words = Files.readAllLines(new File(file).toPath(), charset);
+    public trieFromCluster(String file, String path, String singleTrie) throws IOException {
         dir = path;
-        for(String str: words) {
-            System.out.println(str);
-            buildTries(str);
-        }
+        if (!singleTrie.equalsIgnoreCase("true")) {
+            List<String> words = Files.readAllLines(new File(file).toPath(), charset);
 
+            for (String str : words) {
+                System.out.println(str);
+                buildTries(str);
+            }
+        }
+        else {
+            System.out.println("single_trie");
+            List<String> wordsSingle = Files.readAllLines(new File(file).toPath(), charset);
+            buildSingleTrie(wordsSingle);
+        }
 
     }
 
     public static void main(String[] args) throws IOException {
-        trieFromCluster tfc = new trieFromCluster(args[0], args[1]);
+        trieFromCluster tfc = new trieFromCluster(args[0], args[1], args[2]);
+    }
+
+    public void buildSingleTrie(List<String> all_words) throws IOException {
+        TrieST st = new TrieST();
+
+        String word = all_words.get(0);
+
+        if (!all_words.isEmpty()) {
+            st.put(word + "$");
+            for (String w : all_words) {
+                st.put(w + "$");
+               // System.out.println(w);
+            }
+        }
+        serializeToFile(st, word);
+
     }
 
     public void buildTries(String line) throws IOException {
         TrieST st = new TrieST();
-        String[] clusterTmp = line.split( " ");
+        String[] clusterTmp = line.split(" ");
         ArrayList<String> cluster = new ArrayList<>(Arrays.asList(clusterTmp));
 
         String word = cluster.get(0);

@@ -109,7 +109,7 @@ public class Segmenter {
             finalSegmentation.put(word, segMax);
         }
     }
-
+/* old method
     public void deSerialize(String file) throws IOException, ClassNotFoundException {
 
         FileInputStream fis = new FileInputStream(new File(file));
@@ -128,6 +128,26 @@ public class Segmenter {
 
         //for (String m : this.morphemeFreq.keySet())
         //    System.out.println(m + ": " + this.morphemeFreq.get(m));
+    }*/
+
+    public void deSerialize(String file) throws IOException, ClassNotFoundException {
+
+        FileInputStream fis = new FileInputStream(new File(file));
+        ObjectInput in = null;
+        Object o = null;
+        in = new ObjectInputStream(fis);
+        o = in.readObject();
+        fis.close();
+        in.close();
+
+        ModelCopy model = (ModelCopy) o;
+
+        morphemeFreq = model.morphemeFreqCopy;
+      //  trieSegmentations = model.trieSegmentationsCopy;
+      /*  for (TrieST st : trieSegmentations.keySet())
+            System.out.println(trieSegmentations.get(st));
+        System.out.println("------");*/
+
     }
 
     public void readWords(String inputFile) throws IOException {

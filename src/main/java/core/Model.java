@@ -237,7 +237,7 @@ public class Model {
             ArrayList<String> determinedSegmentations = fp.determineSegmentsOfOneTrieForTrieSegmenter(st, this.wordBoundary.get(st));
             trieSegmentationsForSegmenter.put(st, determinedSegmentations);
         });
-/*
+
         for (TrieST st : this.wordBoundary.keySet()) {
 
             System.out.println("-------------------------------------------------------------------------------------");
@@ -246,7 +246,7 @@ public class Model {
             System.out.println("-------------------------------------------------------------------------------------");
 
         }
-*/
+/**/
         saveModelForCorrectPath();
     }
 
