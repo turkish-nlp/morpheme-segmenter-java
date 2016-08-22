@@ -183,12 +183,13 @@ public class Model {
                     HashMap<String, Integer> baseFreqMap = getBaseFreqForDP(diffMap);
                     ArrayList<Double> dpScores = calculateProbForDP(diffMap, baseFreqMap);
 
+                    /*
                     int candidateMorphemeCount = 0;
                     for (String s : newTrieSegmentation) {
                         if (s.equals(candidateMorpheme))
                             candidateMorphemeCount++;
                     }
-
+                    */
                     // HashMap<String, Integer> diffMapForPresence = new HashMap<>();
                    /* for (String dfWord : diffMap.keySet()) {
                         if(diffMap.get(dfWord) < 0)
@@ -200,15 +201,15 @@ public class Model {
                         }
                     }*/
 
-                    ArrayList<Double> presenceScores = presenceInWordlistWithLaplaceSmoothing(candidateMorpheme, candidateMorphemeCount, diffMap);
+                    ArrayList<Double> presenceScores = presenceInWordlistWithLaplaceSmoothing(candidateMorpheme, diffMap);
 
                     double candidateTrieSim = fp.generateSimiliarWordsForOneTrie(chosenTrie, candidateBoundaryList);
                     double candidateSS = overallSS - boundarySimiliar.get(chosenTrie) + candidateTrieSim;
                     System.out.println("old (overall) similarity score: " + overallSS + " candidate (overall) similarity score: " + candidateSS);
 
                     // double newScore = calculateOverallProbability(candidatePoissonOverall, candidateFrequencies, candidateSegmentationList, candidateSS); // before DP
-                    double newScore = dpScores.get(1) + candidatePoissonOverall + candidateSS;// + presenceScores.get(1);
-                    double oldScore = dpScores.get(0) + candidatePoissonOverall + candidateSS;// + presenceScores.get(0);
+                    double newScore = dpScores.get(1) + candidatePoissonOverall + candidateSS + presenceScores.get(1);
+                    double oldScore = dpScores.get(0) + candidatePoissonOverall + candidateSS + presenceScores.get(0);
                     if (newScore > oldScore) {
                         System.out.println("new score > oldscore accepted");
                         update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS, candidateTrieSim);
@@ -254,7 +255,7 @@ public class Model {
     }
 
 
-    public ArrayList<Double> presenceInWordlistWithLaplaceSmoothing(String candidateMorpheme, int candidateMorphemeCount, HashMap<String, Integer> diffMap) {
+    public ArrayList<Double> presenceInWordlistWithLaplaceSmoothing(String candidateMorpheme, HashMap<String, Integer> diffMap) {
         ArrayList<Double> scores = new ArrayList<>();
         ArrayList<String> tails = getTail(diffMap);
         ArrayList<String> olds = new ArrayList<>();
