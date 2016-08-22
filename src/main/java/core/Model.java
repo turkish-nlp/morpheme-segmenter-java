@@ -1,5 +1,7 @@
 package core;
 
+import org.apache.commons.collections.ArrayStack;
+import org.apache.commons.collections.iterators.ArrayListIterator;
 import org.apache.commons.io.FileUtils;
 import tries.TrieST;
 
@@ -187,7 +189,7 @@ public class Model {
                             candidateMorphemeCount++;
                     }
 
-                    HashMap<String, Integer> diffMapForPresence = new HashMap<>();
+                    // HashMap<String, Integer> diffMapForPresence = new HashMap<>();
                    /* for (String dfWord : diffMap.keySet()) {
                         if(diffMap.get(dfWord) < 0)
                         {
@@ -197,7 +199,8 @@ public class Model {
                                 diffMapForPresence.put(dfWord, diffMap.get(dfWord));
                         }
                     }*/
-                    //  ArrayList<Double> presenceScores = presenceInWordlistWithLaplaceSmoothing(candidateMorpheme, candidateMorphemeCount, diffMapForPresence);
+
+                    ArrayList<Double> presenceScores = presenceInWordlistWithLaplaceSmoothing(candidateMorpheme, candidateMorphemeCount, diffMap);
 
                     double candidateTrieSim = fp.generateSimiliarWordsForOneTrie(chosenTrie, candidateBoundaryList);
                     double candidateSS = overallSS - boundarySimiliar.get(chosenTrie) + candidateTrieSim;
@@ -251,19 +254,65 @@ public class Model {
     }
 
 
-    public ArrayList<Double> presenceInWordlistWithLaplaceSmoothing(String candidateMorpheme, int candidateMorphemeCount, HashMap<String, Integer> diffMapForPresence) {
+    public ArrayList<Double> presenceInWordlistWithLaplaceSmoothing(String candidateMorpheme, int candidateMorphemeCount, HashMap<String, Integer> diffMap) {
         ArrayList<Double> scores = new ArrayList<>();
+        ArrayList<String> tails = getTail(diffMap);
+        ArrayList<String> olds = new ArrayList<>();
 
-        double newScore = Math.pow(Math.log10(newCorpus.get(candidateMorpheme) / newCorpusSize), candidateMorphemeCount);
+        for (String tail : tails) {
+            olds.add(candidateMorpheme + tail);
+        }
+
+        double newScore = Math.pow(Math.log10(newCorpus.get(candidateMorpheme) / newCorpusSize), tails.size());
         double oldScore = 0;
 
-        for (String word : diffMapForPresence.keySet()) {
-            oldScore = oldScore + Math.pow(Math.log10(newCorpus.get(word) / newCorpusSize), (-1 * diffMapForPresence.get(word)));
+        for (String word : olds) {
+            oldScore = oldScore + Math.pow(Math.log10(newCorpus.get(word) / newCorpusSize), 1);
         }
         scores.add(oldScore);
         scores.add(newScore);
 
         return scores;
+    }
+
+    public ArrayList<String> getTail(HashMap<String, Integer> diffMap) {
+        ArrayList<String> tails = new ArrayList<>();
+
+        ArrayList<String> toAddMap = new ArrayList<>();
+        ArrayList<String> toRemoveMap = new ArrayList<>();
+        for (String str : diffMap.keySet()) {
+            if (diffMap.get(str) > 0) {
+                toAddMap.add(str);
+            } else
+                toRemoveMap.add(str);
+        }
+
+        boolean found = true;
+        int count = 0;
+
+        for (String head : toAddMap) {
+            toAddMap.remove(head);
+            for (String tail : toAddMap) {
+                String isMatch = head + tail;
+                if (toRemoveMap.contains(isMatch)) {
+                    count++;
+                } else {
+                    found = false;
+                    break;
+                }
+            }
+            if (found && count == toRemoveMap.size()) {
+                tails = toAddMap;
+                break;
+            } else if (found) {
+                if (toRemoveMap.contains(head + head)) {
+                    toAddMap.add(head);
+                    tails = toAddMap;
+                    break;
+                }
+            }
+        }
+        return tails;
     }
 
     public void r(Map<String, Double> corpus) {
