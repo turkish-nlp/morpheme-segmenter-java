@@ -163,9 +163,6 @@ public class TrieSegmenter {
                 while (st.hasMoreTokens()) {
                     tmp = tmp + Math.log10(morphemeProb.get(st.nextToken()));
                 }
-                //    tmp = tmp * ( 4 - StringUtils.countMatches(str, " ") )*-1;
-                //   System.out.println(str + "-->" + tmp);
-          //      System.out.println("no-path -- " + str + ": " + tmp);
                 if (tmp > maxScore) {
                     maxScore = tmp;
                     segMax = str;
