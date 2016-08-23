@@ -328,15 +328,12 @@ public class Model {
                 String isMatch = head + tail;
                 if (toRemoveMap.contains(isMatch)) {
                     count++;
-                } else if (toRemoveMap.contains(tail + head)) {
-                    toAddMapCopy.add(head);
-                    toAddMapCopy.remove(tail);
-                    count++;
                 } else {
+                    found = false;
+                    toAddMapCopy.add(head);
                     break;
                 }
             }
-
             if (found && count == toRemoveMap.size()) {
                 tails = toAddMapCopy;
                 break;
@@ -347,7 +344,9 @@ public class Model {
                     break;
                 }
             }
+            found = true;
         }
+
         return tails;
     }
 
