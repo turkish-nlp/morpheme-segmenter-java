@@ -330,7 +330,6 @@ public class Model {
 
         boolean found = true;
         int count = 0;
-
         for (String head : toAddMap) {
             toAddMapCopy.remove(head);
             for (String tail : toAddMapCopy) {
@@ -339,10 +338,11 @@ public class Model {
                     count++;
                 } else {
                     found = false;
-                    toAddMapCopy.add(head);
                     break;
                 }
             }
+            if(!found)                                              /// !!!!!!!!!!!!!!!!!!!!!!!!!
+               toAddMapCopy.add(head);                              /// !!!!!!!!!!!!!!!!!!!!!!!!!  eskiden for un içinde, found = false satırının altındaydı
             if (found && count == toRemoveMap.size()) {
                 tails = toAddMapCopy;
                 break;
