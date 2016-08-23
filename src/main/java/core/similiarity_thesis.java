@@ -21,7 +21,10 @@ public class similiarity_thesis {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File(args[0]));
+
         List<String> file = Files.readAllLines(new File(args[1]).toPath(), charset);
+
+
         TreeMap<String, Double> pairScore = new TreeMap<>();
         for (String str : file) {
             StringTokenizer token = new StringTokenizer(str, "--");

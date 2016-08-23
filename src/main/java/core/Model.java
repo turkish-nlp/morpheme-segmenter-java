@@ -6,6 +6,8 @@ import org.apache.commons.io.FileUtils;
 import tries.TrieST;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -37,8 +39,10 @@ public class Model {
     double newCorpusSize = 0;
     double laplaceCoefficient = 0.1;
     double iterationNo;
+    static Charset charset = Charset.forName("UTF-8");
+    boolean unmarked = false;
 
-    public Model(String dir, String vectorDir, String noOfIterationP, String lambda) throws IOException, ClassNotFoundException {
+    public Model(String dir, String vectorDir, String noOfIterationP, String lambda, String wordListDir) throws IOException, ClassNotFoundException {
 
         fp = new Baseline(dir, vectorDir, Integer.parseInt(lambda));
         trieSimiliarityScores = new ConcurrentHashMap<>();
@@ -57,7 +61,7 @@ public class Model {
         iterationNo = noOfIteration;
 
         trieSegmentationsForSegmenter = new ConcurrentHashMap<>();
-/*
+
         List<String> freqWords = Files.readAllLines(new File(wordListDir).toPath(), charset);
         Map<String, Double> corpus = new HashMap<>();
         for (String str : freqWords) {
@@ -66,8 +70,8 @@ public class Model {
             String w = tokens.nextToken();
             corpus.put(w, Double.parseDouble(f));
         }
-*/
-        //preSmoothingProcess(corpus);
+
+        r(corpus);
 
         shuffleList = new ArrayList<String>();
 
@@ -83,7 +87,7 @@ public class Model {
 
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        Model m = new Model(args[0], args[1], args[2], args[3]);
+        Model m = new Model(args[0], args[1], args[2], args[3], args[4]);
         m.random();
 
     }
@@ -162,11 +166,13 @@ public class Model {
                     }
 
                     if (originalBoundaryList.contains(candidateMorpheme)) {
+                        unmarked = true;
                         System.out.println("the morpheme " + candidateMorpheme + " is unmarked");
                         candidateBoundaryList.remove(candidateMorpheme);
                         candidatePoissonOverall = overallPoisson - Math.log10(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
                         System.out.println("old poisson: " + overallPoisson + " new poisson: " + candidatePoissonOverall);
                     } else {
+                        unmarked = false;
                         candidateBoundaryList.add(candidateMorpheme);
                         candidatePoissonOverall = overallPoisson + Math.log10(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
                         System.out.println("when the morpheme " + candidateMorpheme + " is marked. It has " + chosenTrie.getWordList().get(candidateMorpheme) + " branches");
@@ -201,7 +207,16 @@ public class Model {
                         }
                     }*/
 
-                    ArrayList<Double> presenceScores = presenceInWordlistWithLaplaceSmoothing(candidateMorpheme, diffMap);
+                    ArrayList<Double> presenceScores = new ArrayList<>();
+                    if (diffMap.size() != 0) {
+                        presenceScores = presenceInWordlistWithLaplaceSmoothing(candidateMorpheme, diffMap, unmarked);
+                        //   presenceScores.add((double) 0);
+                        //  presenceScores.add((double) 0);
+                    } else {
+                        presenceScores.add((double) 0);
+                        presenceScores.add((double) 0);
+                    }
+                    System.out.println("old (overall) presence score: " + presenceScores.get(0) + " candidate (overall) presence score: " + presenceScores.get(1));
 
                     double candidateTrieSim = fp.generateSimiliarWordsForOneTrie(chosenTrie, candidateBoundaryList);
                     double candidateSS = overallSS - boundarySimiliar.get(chosenTrie) + candidateTrieSim;
@@ -255,9 +270,9 @@ public class Model {
     }
 
 
-    public ArrayList<Double> presenceInWordlistWithLaplaceSmoothing(String candidateMorpheme, HashMap<String, Integer> diffMap) {
+    public ArrayList<Double> presenceInWordlistWithLaplaceSmoothing(String candidateMorpheme, HashMap<String, Integer> diffMap, boolean umarked) {
         ArrayList<Double> scores = new ArrayList<>();
-        ArrayList<String> tails = getTail(diffMap);
+        ArrayList<String> tails = getTail(diffMap, unmarked);
         ArrayList<String> olds = new ArrayList<>();
 
         for (String tail : tails) {
@@ -268,6 +283,7 @@ public class Model {
         double oldScore = 0;
 
         for (String word : olds) {
+            System.out.println("can: " + candidateMorpheme + "  - " + word);
             oldScore = oldScore + Math.pow(Math.log10(newCorpus.get(word) / newCorpusSize), 1);
         }
         scores.add(oldScore);
@@ -276,39 +292,58 @@ public class Model {
         return scores;
     }
 
-    public ArrayList<String> getTail(HashMap<String, Integer> diffMap) {
+    public ArrayList<String> getTail(HashMap<String, Integer> diffMap, boolean unmarked) {
         ArrayList<String> tails = new ArrayList<>();
 
         ArrayList<String> toAddMap = new ArrayList<>();
+        ArrayList<String> toAddMapCopy = new ArrayList<>();
+
         ArrayList<String> toRemoveMap = new ArrayList<>();
-        for (String str : diffMap.keySet()) {
-            if (diffMap.get(str) > 0) {
-                toAddMap.add(str);
-            } else
-                toRemoveMap.add(str);
+
+        if (!unmarked) {
+            for (String str : diffMap.keySet()) {
+                if (diffMap.get(str) > 0) {
+                    toAddMap.add(str);
+                    toAddMapCopy.add(str);
+                } else
+                    toRemoveMap.add(str);
+            }
+        } else {
+            for (String str : diffMap.keySet()) {
+                if (diffMap.get(str) < 0) {
+                    toAddMap.add(str);
+                    toAddMapCopy.add(str);
+                } else
+                    toRemoveMap.add(str);
+            }
         }
+
 
         boolean found = true;
         int count = 0;
 
         for (String head : toAddMap) {
-            toAddMap.remove(head);
-            for (String tail : toAddMap) {
+            toAddMapCopy.remove(head);
+            for (String tail : toAddMapCopy) {
                 String isMatch = head + tail;
                 if (toRemoveMap.contains(isMatch)) {
                     count++;
+                } else if (toRemoveMap.contains(tail + head)) {
+                    toAddMapCopy.add(head);
+                    toAddMapCopy.remove(tail);
+                    count++;
                 } else {
-                    found = false;
                     break;
                 }
             }
+
             if (found && count == toRemoveMap.size()) {
-                tails = toAddMap;
+                tails = toAddMapCopy;
                 break;
             } else if (found) {
                 if (toRemoveMap.contains(head + head)) {
-                    toAddMap.add(head);
-                    tails = toAddMap;
+                    toAddMapCopy.add(head);
+                    tails = toAddMapCopy;
                     break;
                 }
             }
