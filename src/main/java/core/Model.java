@@ -216,7 +216,7 @@ public class Model {
                         presenceScores.add((double) 0);
                         presenceScores.add((double) 0);
                     }
-                    System.out.println("old (overall) presence score: " + presenceScores.get(0) + " candidate (overall) presence score: " + presenceScores.get(1));
+                    System.out.println("old presence score: " + presenceScores.get(0) + " candidate presence score: " + presenceScores.get(1));
 
                     double candidateTrieSim = fp.generateSimiliarWordsForOneTrie(chosenTrie, candidateBoundaryList);
                     double candidateSS = overallSS - boundarySimiliar.get(chosenTrie) + candidateTrieSim;
@@ -225,6 +225,8 @@ public class Model {
                     // double newScore = calculateOverallProbability(candidatePoissonOverall, candidateFrequencies, candidateSegmentationList, candidateSS); // before DP
                     double newScore = dpScores.get(1) + candidatePoissonOverall + candidateSS + presenceScores.get(1);
                     double oldScore = dpScores.get(0) + candidatePoissonOverall + candidateSS + presenceScores.get(0);
+                    System.out.println("oldScore score: " + oldScore + " newScore score: " + newScore);
+
                     if (newScore > oldScore) {
                         System.out.println("new score > oldscore accepted");
                         update(chosenTrie, candidateBoundaryList, candidateFrequencies, candidateSegmentationList, candidatePoissonOverall, candidateSS, candidateTrieSim);
@@ -286,9 +288,16 @@ public class Model {
             System.out.println("can: " + candidateMorpheme + "  - " + word);
             oldScore = oldScore + Math.pow(Math.log10(newCorpus.get(word) / newCorpusSize), 1);
         }
-        scores.add(oldScore);
-        scores.add(newScore);
 
+        if(!unmarked) {
+            scores.add(oldScore);
+            scores.add(newScore);
+        }
+        else
+        {
+            scores.add(newScore);
+            scores.add(oldScore);
+        }
         return scores;
     }
 
