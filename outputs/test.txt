@@ -1,11 +1,1 @@
-1 okul
-1 ilkokul
-1 okullar
-1 öğrencide
-1 sepet
-1 haber
-1 sepetler
-1 ler
-1 liseler
-1 okuldaki
-1 sssasasassd
+1 abone

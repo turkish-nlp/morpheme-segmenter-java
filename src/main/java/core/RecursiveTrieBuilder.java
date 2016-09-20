@@ -28,8 +28,9 @@ public class RecursiveTrieBuilder {
         return trieList;
     }
 
-    public RecursiveTrieBuilder(String fileVectorInput, String fileSegmentationInput, String path) throws FileNotFoundException {
-        vectors = WordVectorSerializer.loadTxtVectors(new File(fileVectorInput));
+    public RecursiveTrieBuilder(String fileVectorInput, String fileSegmentationInput, String path, boolean load) throws FileNotFoundException {
+        if (load)
+            vectors = WordVectorSerializer.loadTxtVectors(new File(fileVectorInput));
         this.fileSegmentationInput = fileSegmentationInput;
         dir = path;
     }
@@ -121,7 +122,7 @@ public class RecursiveTrieBuilder {
         }
     }
 
-    public void deSerializeTriesToDebug(String dir) throws IOException, ClassNotFoundException {
+    public void deSerializeTriesToDebug() throws IOException, ClassNotFoundException {
 
         File[] files = new File(dir + "/").listFiles();
 
@@ -173,14 +174,23 @@ public class RecursiveTrieBuilder {
         return stemFound;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
 
         /*
         * Vector dosyasını main methoda argüman olarak verilecek şekilde değiştiriyorum.
         *
          */
-        RecursiveTrieBuilder rtb = new RecursiveTrieBuilder(args[0], args[1], args[2]);
-        rtb.readInputFile();
+        RecursiveTrieBuilder rtb = new RecursiveTrieBuilder(args[0], args[1], args[2], false);
+        rtb.deSerializeTriesToDebug();
+        for (String s : rtb.trieList.keySet()) {
+            TrieST st = rtb.trieList.get(s);
+            System.out.println("");
+            System.out.println("--------------------------------->" + s + "<---------------------------------");
+            for (String k : st.getWordList().keySet()) {
+                if (k.endsWith("$"))
+                    System.out.println(k);
+            }
+        }
     }
 
 }

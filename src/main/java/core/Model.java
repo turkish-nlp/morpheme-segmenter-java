@@ -134,6 +134,7 @@ public class Model {
         return diffMetric;
     }
 
+    StringBuilder builder = new StringBuilder();
 
     public void random() throws IOException, ClassNotFoundException {
 
@@ -148,6 +149,10 @@ public class Model {
                 TrieST chosenTrie = this.trieList.get(trieRandom); // chosen trie ( to be less verbose )
                 System.out.println("The trie " + searchedWordList.get(trieList.indexOf(chosenTrie)) + " is selected");
                 if (chosenTrie.size() != 0) {
+
+                    builder.append("\n-----------------------------------------" + "\n");
+                    builder.append("ITERATION: " + (iterationNo-noOfIteration+1) + "\n");
+
                     Set<String> originalBoundaryList = this.wordBoundary.get(chosenTrie); // original boundaryList of the chosen trie ( to be less verbose )
                     // original objects //
 
@@ -158,6 +163,8 @@ public class Model {
                     Object[] values = chosenTrie.getWordList().keySet().toArray(); // convert the wordList of the chosen trie into array to be able to select a random node
                     String candidateMorpheme = (String) values[nodeRandom];  // new boundary candidate
 
+                    builder.append("candidate morphme: " + candidateMorpheme + "\n");
+
                     if (candidateMorpheme.contains("$")) {
                         continue;
                     }
@@ -167,16 +174,24 @@ public class Model {
 
                     if (originalBoundaryList.contains(candidateMorpheme)) {
                         unmarked = true;
-                        System.out.println("the morpheme " + candidateMorpheme + " is unmarked");
+                        //System.out.println("the morpheme " + candidateMorpheme + " is unmarked");
                         candidateBoundaryList.remove(candidateMorpheme);
-                        candidatePoissonOverall = overallPoisson - Math.log10(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
-                        System.out.println("old poisson: " + overallPoisson + " new poisson: " + candidatePoissonOverall);
+                        double obtainedPoisson = Math.log10(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
+                        candidatePoissonOverall = overallPoisson - obtainedPoisson;
+                        //System.out.println("old poisson: " + overallPoisson + " new poisson: " + candidatePoissonOverall);
+
+                        builder.append("mark/unmark status: unmark\n");
+                        builder.append("candidate boundary list: " + candidateBoundaryList + "\n");
                     } else {
                         unmarked = false;
                         candidateBoundaryList.add(candidateMorpheme);
-                        candidatePoissonOverall = overallPoisson + Math.log10(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
-                        System.out.println("when the morpheme " + candidateMorpheme + " is marked. It has " + chosenTrie.getWordList().get(candidateMorpheme) + " branches");
-                        System.out.println("old poisson: " + overallPoisson + " new poisson: " + candidatePoissonOverall);
+                        double obtainedPoisson = Math.log10(fp.poissonDistribution(chosenTrie.getWordList().get(candidateMorpheme)));
+                        candidatePoissonOverall = overallPoisson + obtainedPoisson;
+                        //System.out.println("when the morpheme " + candidateMorpheme + " is marked. It has " + chosenTrie.getWordList().get(candidateMorpheme) + " branches");
+                        //System.out.println("old poisson: " + overallPoisson + " new poisson: " + candidatePoissonOverall);
+
+                        builder.append("mark/unmark status: mark\n");
+                        builder.append("candidate boundary list: " + candidateBoundaryList + "\n");
                     }
                     Map<String, Integer> candidateFrequencies = fp.changeFrequencyOneTrie(chosenTrie, originalBoundaryList, candidateBoundaryList, this.morphemeFreq);
 
@@ -216,16 +231,35 @@ public class Model {
                         presenceScores.add((double) 0);
                         presenceScores.add((double) 0);
                     }
-                    System.out.println("old presence score: " + presenceScores.get(0) + " candidate presence score: " + presenceScores.get(1));
+                    //System.out.println("old presence score: " + presenceScores.get(0) + " candidate presence score: " + presenceScores.get(1));
 
                     double candidateTrieSim = fp.generateSimiliarWordsForOneTrie(chosenTrie, candidateBoundaryList);
                     double candidateSS = overallSS - boundarySimiliar.get(chosenTrie) + candidateTrieSim;
-                    System.out.println("old (overall) similarity score: " + overallSS + " candidate (overall) similarity score: " + candidateSS);
+
+                    //System.out.println("old (overall) similarity score: " + overallSS + " candidate (overall) similarity score: " + candidateSS);
 
                     // double newScore = calculateOverallProbability(candidatePoissonOverall, candidateFrequencies, candidateSegmentationList, candidateSS); // before DP
                     double newScore = dpScores.get(1) + candidatePoissonOverall + candidateSS + presenceScores.get(1);
-                    double oldScore = dpScores.get(0) + candidatePoissonOverall + candidateSS + presenceScores.get(0);
-                    System.out.println("oldScore score: " + oldScore + " newScore score: " + newScore);
+                    double oldScore = dpScores.get(0) + overallPoisson + overallSS + presenceScores.get(0);
+
+                    builder.append(">> old poisson score: " + overallPoisson + "\n");
+                    builder.append(">> new poisson score: " + candidatePoissonOverall + "\n");
+
+                    builder.append(">> old similarity: " + overallSS + "\n");
+                    builder.append(">> candidate similarity: " + candidateSS + "\n");
+
+                    builder.append(">> old presence score: " + presenceScores.get(0) + "\n");
+                    builder.append(">> new presence score: " + presenceScores.get(1) + "\n");
+
+                    builder.append(">> old dp score: " + dpScores.get(0) + "\n");
+                    builder.append(">> new dp score: " + dpScores.get(1) + "\n");
+
+                    builder.append(">> old score: " + oldScore + "\n");
+                    builder.append(">> new score: " + newScore + "\n");
+
+                    builder.append("\n-----------------------------------------" + "\n");
+
+                    //System.out.println("oldScore score: " + oldScore + " newScore score: " + newScore);
 
                     if (newScore > oldScore) {
                         System.out.println("new score > oldscore accepted");
@@ -253,6 +287,9 @@ public class Model {
                 System.out.println("-----------------------------------------------------");
             }
         }
+
+        String write = new String(builder);
+        System.out.println(write);
 
         this.wordBoundary.keySet().parallelStream().forEach((st) -> {
             ArrayList<String> determinedSegmentations = fp.determineSegmentsOfOneTrieForTrieSegmenter(st, this.wordBoundary.get(st));
@@ -289,12 +326,10 @@ public class Model {
             oldScore = oldScore + Math.pow(Math.log10(newCorpus.get(word) / newCorpusSize), 1);
         }
 
-        if(!unmarked) {
+        if (!unmarked) {
             scores.add(oldScore);
             scores.add(newScore);
-        }
-        else
-        {
+        } else {
             scores.add(newScore);
             scores.add(oldScore);
         }
@@ -340,8 +375,8 @@ public class Model {
                     break;
                 }
             }
-            if(!found)                                              /// !!!!!!!!!!!!!!!!!!!!!!!!!
-               toAddMapCopy.add(head);                              /// !!!!!!!!!!!!!!!!!!!!!!!!!  eskiden for un içinde, found = false satırının altındaydı
+            if (!found)                                              /// !!!!!!!!!!!!!!!!!!!!!!!!!
+                toAddMapCopy.add(head);                              /// !!!!!!!!!!!!!!!!!!!!!!!!!  eskiden for un içinde, found = false satırının altındaydı
             if (found && count == toRemoveMap.size()) {
                 tails = toAddMapCopy;
                 break;
