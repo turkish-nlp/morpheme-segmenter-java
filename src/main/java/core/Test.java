@@ -14,8 +14,8 @@ public class Test {
 
     public static void main(String[] args) throws IOException {
         TrieST st = new TrieST();
-        st.put("orta$");
-        st.put("otobüs$");
+        //st.put("orta$");
+        //st.put("otobüs$");
         st.put("okul$");
         st.put("okuldan$");
         st.put("okulun$");

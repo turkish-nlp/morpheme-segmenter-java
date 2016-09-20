@@ -151,7 +151,7 @@ public class Model {
                 if (chosenTrie.size() != 0) {
 
                     builder.append("\n-----------------------------------------" + "\n");
-                    builder.append("ITERATION: " + (iterationNo-noOfIteration+1) + "\n");
+                    builder.append("ITERATION: " + (iterationNo - noOfIteration + 1) + "\n");
 
                     Set<String> originalBoundaryList = this.wordBoundary.get(chosenTrie); // original boundaryList of the chosen trie ( to be less verbose )
                     // original objects //
@@ -318,12 +318,12 @@ public class Model {
             olds.add(candidateMorpheme + tail);
         }
 
-        double newScore = Math.pow(Math.log10(newCorpus.get(candidateMorpheme) / newCorpusSize), tails.size());
+        double newScore = Math.log10(Math.pow(newCorpus.get(candidateMorpheme) / newCorpusSize, tails.size()));
         double oldScore = 0;
 
         for (String word : olds) {
             System.out.println("can: " + candidateMorpheme + "  - " + word);
-            oldScore = oldScore + Math.pow(Math.log10(newCorpus.get(word) / newCorpusSize), 1);
+            oldScore = oldScore + Math.log10(newCorpus.get(word) / newCorpusSize);
         }
 
         if (!unmarked) {
