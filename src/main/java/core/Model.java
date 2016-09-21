@@ -323,7 +323,11 @@ public class Model {
 
         for (String word : olds) {
             System.out.println("can: " + candidateMorpheme + "  - " + word);
-            oldScore = oldScore + Math.log10(newCorpus.get(word) / newCorpusSize);
+            if(newCorpus.contains(word))
+                oldScore = oldScore + Math.log10(newCorpus.get(word) / newCorpusSize);
+            else
+                oldScore = oldScore + 0.000000000000001;
+
         }
 
         if (!unmarked) {
