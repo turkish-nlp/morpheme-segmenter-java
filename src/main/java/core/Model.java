@@ -326,8 +326,7 @@ public class Model {
             if(newCorpus.contains(word))
                 oldScore = oldScore + Math.log10(newCorpus.get(word) / newCorpusSize);
             else
-                oldScore = oldScore + 0.000000000000001;
-
+                oldScore = oldScore + -5.23357304130864;
         }
 
         if (!unmarked) {
