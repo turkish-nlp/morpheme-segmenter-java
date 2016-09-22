@@ -20,6 +20,7 @@ public class BaselineTest {
     public List<String> searchedWordList = new ArrayList<String>();
     public List<TrieST> trieList = new ArrayList<TrieST>();
     public Map<TrieST, ArrayList<String>> trieSegmentations = new ConcurrentHashMap<>(); // unique elements?? set??
+    public Map<TrieST, ArrayList<String>> trieSegmentationsEachWord = new ConcurrentHashMap<>();
 
     public Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
     public Map<TrieST, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
@@ -64,10 +65,36 @@ public class BaselineTest {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
         ConcurrentHashSet<String> boundaries = new ConcurrentHashSet();
-        //boundaries.put()
+        boundaries.add("lise");
+        boundaries.add("okul");
 
         BaselineTest b = new BaselineTest(args[0], args[1], Integer.parseInt(args[2]), boundaries);
         //    b.saveModel();
+    }
+
+    public double calculateDPforTest() {
+        /*int originalSize = 0;
+        for (String str : baseFreqMap.keySet()) {
+
+            originalSize = originalSize + baseFreqMap.get(str);
+        }
+        int size = originalSize;
+        for (String str : toAddMap) {
+            if (baseFreqMap.containsKey(str)) {
+                if (baseFreqMap.get(str) > 0) {
+                    newScore = newScore + Math.log10(Math.pow((baseFreqMap.get(str) / (size + alpha)), diffMap.get(str)));
+                    size = size + diffMap.get(str);
+                } else {
+                    newScore = newScore + Math.log10(alpha * Math.pow(gamma, str.length() + 1) / (size + alpha));
+                    size = size + diffMap.get(str);
+                }
+            } else {
+                newScore = newScore + Math.log10(alpha * Math.pow(gamma, str.length() + 1) / (size + alpha));
+                size = size + diffMap.get(str);
+            }
+        }
+        */
+        return 0.0;
     }
 
 
@@ -318,6 +345,7 @@ public class BaselineTest {
         Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
 
         ArrayList<String> tokens = new ArrayList<String>(); // unique elements?? set??
+        ArrayList<String> segmentationsList = new ArrayList<>();
         for (String node : nodeList.keySet()) {
             if (node.endsWith("$")) {
 
@@ -343,9 +371,11 @@ public class BaselineTest {
                     String popped = morphemeStack.pop();
                     segmentation = segmentation + "+" + popped;
                 }
+                segmentationsList.add(segmentation);
                 tokens.addAll(tokenSegmentation(segmentation));
             }
         }
+        trieSegmentationsEachWord.put(st, tokens);
         trieSegmentations.put(st, tokens);
     }
 

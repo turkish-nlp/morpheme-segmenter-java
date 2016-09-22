@@ -16,6 +16,8 @@ public class Test {
         TrieST st = new TrieST();
         //st.put("orta$");
         //st.put("otobüs$");
+
+        /*
         st.put("okul$");
         st.put("okuldan$");
         st.put("okulun$");
@@ -30,8 +32,16 @@ public class Test {
         st.put("öğretmeninki$");
         st.put("öğretmene$");
         st.put("okulunki$");
+        */
+
         //st.put("gelince$");
 
+        st.put("lise$");
+        st.put("lisede$");
+        st.put("lisenin$");
+        st.put("okul$");
+        st.put("okullar$");
+        st.put("okulda$");
 
         //TrieST st2 = new TrieST();
         //st.put("öğretmenden$");
