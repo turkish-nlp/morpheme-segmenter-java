@@ -442,7 +442,7 @@ public class Model {
         for (String str : toAddMap) {
             if (baseFreqMap.containsKey(str)) {
                 if (baseFreqMap.get(str) > 0) {
-                    newScore = newScore + Math.log10(Math.pow((baseFreqMap.get(str) / (size + alpha)), diffMap.get(str)));
+                    newScore = newScore + Math.log10(Math.pow( (baseFreqMap.get(str) / (size + alpha) ), diffMap.get(str)));
                     size = size + diffMap.get(str);
                 } else {
                     newScore = newScore + Math.log10(alpha * Math.pow(gamma, str.length() + 1) / (size + alpha));

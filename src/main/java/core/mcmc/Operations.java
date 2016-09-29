@@ -38,7 +38,7 @@ public class Operations {
         return (Math.pow(lambda, branchingFactor) * Math.exp(-1 * lambda)) / MathUtils.factorial(branchingFactor);
     }
 
-    public static String randomSplit(String word) {
+    public static String randomSplitB(String word) {
         String segmentation = "";
         Random rand = new Random();
 
@@ -55,7 +55,7 @@ public class Operations {
         return (subString.length() == 0) ? segmentation.substring(1) : (segmentation.substring(1) + "+" + subString);
     }
 
-    public static String randomSplitA(String word) {
+    public static String randomSplit(String word) {
         String segmentation = "";
         Random rand = new Random();
 
@@ -84,6 +84,6 @@ public class Operations {
     }
 
     public static void main(String[] args) {
-        System.out.println(randomSplitA("ahmetustun"));
+        System.out.println(randomSplit("ahmetustun"));
     }
 }

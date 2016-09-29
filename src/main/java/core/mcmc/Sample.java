@@ -85,6 +85,7 @@ public class Sample {
         this.word = word;
         this.segmentation = segmentation;
         this.inTrie = inTrie;
+        this.isCalculated = false;
 
         /*
         ArrayList<String> segments = Operations.getSegments(segmentation);
