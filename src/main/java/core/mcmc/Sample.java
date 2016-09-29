@@ -16,6 +16,15 @@ public class Sample {
     private String word;
     private String segmentation;
     private double presenceScore;
+    private boolean isCalculated;
+
+    public boolean isCalculated() {
+        return isCalculated;
+    }
+
+    public void setCalculated(boolean calculated) {
+        isCalculated = calculated;
+    }
 
     public double getPresenceScore() {
         return presenceScore;
@@ -77,11 +86,12 @@ public class Sample {
         this.segmentation = segmentation;
         this.inTrie = inTrie;
 
+        /*
         ArrayList<String> segments = Operations.getSegments(segmentation);
-
         this.poissonScore = calculatePoisson(segments);
         this.similarityScore = calculateSimilarity(segments);
         this.presenceScore = calculatePresenceScore(segments);
+        */
     }
 
     public ArrayList<Double> calculateScores(String segmentation) {
