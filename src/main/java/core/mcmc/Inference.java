@@ -20,6 +20,54 @@ public class Inference {
     private int sizeOfTable = 0;
     private double alpha;
     private double gamma;
+    private Map<String, ArrayList<String>> wordSegmentation = new ConcurrentHashMap<>();
+
+    // to be used in the final segmentation step. The segmentation of the given word can be chosen among the possible segmentations determined in sampling.
+    public void wordBasedSegmentations() {
+        for (Sample s : samples) {
+            String word = s.getWord();
+            if (!wordSegmentation.containsKey(word)) {
+                ArrayList<String> segmentations = new ArrayList<>();
+                segmentations.add(s.getSegmentation());
+                wordSegmentation.put(word, segmentations);
+            } else {
+                ArrayList<String> segmentations = wordSegmentation.get(word);
+                segmentations.add(s.getSegmentation());
+                wordSegmentation.put(word, segmentations);
+            }
+        }
+    }
+
+
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
+        System.out.println("Enter the parameters in the following order: triesDir, vectorDir, wordListDir, lambda, noOfIteration, alpha, gamma");
+        Inference i = new Inference(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]), Double.parseDouble(args[6]));
+
+        System.out.println("-----BASELINE SEGMENTATIONS-------");
+        for (Sample s : i.samples) {
+            System.out.println(s.getWord() + "--> " + s.getSegmentation());
+        }
+        System.out.println("-----END OF BASELINE SEGMENTATIONS-------");
+
+        System.out.println("-----SAMPLING-------");
+        i.doSampling();
+        System.out.println("-----END OF SAMPLING-------");
+
+        System.out.println("-----SEGMENTATIONS: AFTER SAMPLING-------");
+        for (Sample s : i.samples) {
+            System.out.println(s.getWord() + "--> " + s.getSegmentation());
+        }
+
+        // to print word based segmentations
+       /* i.wordBasedSegmentations();
+        for (String str : i.wordSegmentation.keySet()) {
+            System.out.println("word: " + str);
+            for (String seg : i.wordSegmentation.get(str)) {
+                System.out.println(seg);
+            }
+            System.out.println();
+        }*/
+    }
 
     public Inference(String triesDir, String vectorDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma) throws IOException, ClassNotFoundException {
         Constant baseline = new Constant(triesDir, vectorDir, wordListDir, lambda);
@@ -55,6 +103,10 @@ public class Inference {
                 sizeOfTable = sizeOfTable - deleteNo;
 
                 String newSegmentation = Operations.randomSplitB(sample.getWord());
+                // if the random segmentation is equal to the current segmentation
+                if (newSegmentation.equalsIgnoreCase(sample.getSegmentation())) {
+                    continue;
+                }
                 ArrayList<Double> newPriors = sample.calculateScores(newSegmentation);
 
                 ArrayList<Double> likelihoods = calculateLikelihoodsWithDP(sample.getSegmentation(), newSegmentation);
@@ -65,6 +117,8 @@ public class Inference {
                 boolean accept = isAccepted(newJointProbability, oldJointProbability);
 
                 if (accept) {
+                    System.out.println("New segmentation is accepted: " + newSegmentation + " . old segmentation was " + sample.getSegmentation());
+                    System.out.println();
                     sample.update(newSegmentation, newPriors.get(0), newPriors.get(1), newPriors.get(2));
                     int insertedNo = insertToTable(newSegmentation);
                     sizeOfTable = sizeOfTable + insertedNo;
@@ -137,6 +191,7 @@ public class Inference {
     private boolean isAccepted(double newJointProbability, double oldJointProbability) {
         boolean accept = false;
         if (newJointProbability > oldJointProbability) {
+            System.out.println("new: " + newJointProbability + ". old: " + oldJointProbability);
             accept = true;
         } else {
             double acceptProb = newJointProbability - oldJointProbability;
@@ -145,6 +200,8 @@ public class Inference {
             double randProb = rand.nextDouble();
 
             if (randProb < acceptProb) {
+                System.out.println("random accept. new: " + newJointProbability + ". old: " + oldJointProbability);
+
                 accept = true;
             }
         }
@@ -200,7 +257,7 @@ public class Inference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("model_" + noOfIteration + "_" + alpha), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("newInferenceModel_" + noOfIteration + "_" + alpha), yourBytes);
     }
 
 }

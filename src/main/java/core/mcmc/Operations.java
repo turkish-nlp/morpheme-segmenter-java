@@ -84,6 +84,11 @@ public class Operations {
     }
 
     public static void main(String[] args) {
-        System.out.println(randomSplit("ahmetustun"));
+        int a = 10000;
+        while(a > 0)
+        {
+            System.out.println(randomSplit("liselerde"));
+            a--;
+        }
     }
 }
