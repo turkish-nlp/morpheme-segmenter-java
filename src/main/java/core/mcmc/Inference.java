@@ -3,6 +3,7 @@ package core.mcmc;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.io.FileUtils;
 
+import java.awt.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -20,27 +21,16 @@ public class Inference {
     private int sizeOfTable = 0;
     private double alpha;
     private double gamma;
-    private Map<String, ArrayList<String>> wordSegmentation = new ConcurrentHashMap<>();
-
-    // to be used in the final segmentation step. The segmentation of the given word can be chosen among the possible segmentations determined in sampling.
-    public void wordBasedSegmentations() {
-        for (Sample s : samples) {
-            String word = s.getWord();
-            if (!wordSegmentation.containsKey(word)) {
-                ArrayList<String> segmentations = new ArrayList<>();
-                segmentations.add(s.getSegmentation());
-                wordSegmentation.put(word, segmentations);
-            } else {
-                ArrayList<String> segmentations = wordSegmentation.get(word);
-                segmentations.add(s.getSegmentation());
-                wordSegmentation.put(word, segmentations);
-            }
-        }
-    }
-
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
+
+        /*
         System.out.println("Enter the parameters in the following order: triesDir, vectorDir, wordListDir, lambda, noOfIteration, alpha, gamma");
+        Scanner scan = new Scanner(System.in);
+        String parameters = scan.nextLine();
+        String[] parameterList = parameters.split(" ");
+        Inference i = new Inference(parameterList[0], parameterList[1], parameterList[2], Double.parseDouble(parameterList[3]), Integer.parseInt(parameterList[4]), Double.parseDouble(parameterList[5]), Double.parseDouble(parameterList[6]));
+        */
         Inference i = new Inference(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]), Double.parseDouble(args[6]));
 
         System.out.println("-----BASELINE SEGMENTATIONS-------");
@@ -57,16 +47,6 @@ public class Inference {
         for (Sample s : i.samples) {
             System.out.println(s.getWord() + "--> " + s.getSegmentation());
         }
-
-        // to print word based segmentations
-       /* i.wordBasedSegmentations();
-        for (String str : i.wordSegmentation.keySet()) {
-            System.out.println("word: " + str);
-            for (String seg : i.wordSegmentation.get(str)) {
-                System.out.println(seg);
-            }
-            System.out.println();
-        }*/
     }
 
     public Inference(String triesDir, String vectorDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma) throws IOException, ClassNotFoundException {
