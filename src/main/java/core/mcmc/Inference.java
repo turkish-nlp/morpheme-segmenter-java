@@ -1,6 +1,9 @@
 package core.mcmc;
 
-import java.io.IOException;
+import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.io.FileUtils;
+
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,19 +18,23 @@ public class Inference {
     private CopyOnWriteArrayList<Sample> samples = new CopyOnWriteArrayList<>();
     private int noOfIteration;
     private int sizeOfTable = 0;
+    private double alpha;
+    private double gamma;
 
-    public Inference(String triesDir, String vectorDir, String wordListDir, double lambda, int noOfIteration) throws IOException, ClassNotFoundException {
+    public Inference(String triesDir, String vectorDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma) throws IOException, ClassNotFoundException {
         Constant baseline = new Constant(triesDir, vectorDir, wordListDir, lambda);
         this.noOfIteration = noOfIteration;
         this.frequencyTable = new ConcurrentHashMap<>(baseline.getMorphemeFreq());
         this.samples = new CopyOnWriteArrayList<>(baseline.getSampleList());
+        this.alpha = alpha;
+        this.gamma = gamma;
 
         for (String str : frequencyTable.keySet()) {
             sizeOfTable = sizeOfTable + frequencyTable.get(str);
         }
     }
 
-    public void doSampling() {
+    public void doSampling() throws IOException {
         while (noOfIteration > 0) {
             Collections.shuffle(samples);
             for (Sample sample : samples) {
@@ -47,10 +54,10 @@ public class Inference {
                 int deleteNo = deleteFromTable(sample.getSegmentation());
                 sizeOfTable = sizeOfTable - deleteNo;
 
-                ArrayList<Double> likelihoods = calculateLikelihoodsWithDP();
-
                 String newSegmentation = Operations.randomSplitB(sample.getWord());
                 ArrayList<Double> newPriors = sample.calculateScores(newSegmentation);
+
+                ArrayList<Double> likelihoods = calculateLikelihoodsWithDP(sample.getSegmentation(), newSegmentation);
 
                 double oldJointProbability = likelihoods.get(0) + oldPriors.get(0) + oldPriors.get(1) + oldPriors.get(2);
                 double newJointProbability = likelihoods.get(1) + newPriors.get(0) + newPriors.get(1) + newPriors.get(2);
@@ -68,13 +75,62 @@ public class Inference {
             }
             noOfIteration--;
         }
+
+        saveModel();
     }
 
-    private ArrayList<Double> calculateLikelihoodsWithDP() {
+    private ArrayList<Double> calculateLikelihoodsWithDP(String oldSegmentation, String newSegmentation) {
         ArrayList<Double> likelihoods = new ArrayList<>();
         //0:oldLikelihood, 1:newLikelihood
 
-        //Formül gelecek
+        int size = sizeOfTable;
+        double oldLikelihood = 0;
+        StringTokenizer oldSegments = new StringTokenizer(oldSegmentation, "+");
+        while (oldSegments.hasMoreTokens()) {
+            String morpheme = oldSegments.nextToken();
+            if (frequencyTable.containsKey(morpheme)) {
+                if (frequencyTable.get(morpheme) > 0) {
+                    oldLikelihood = oldLikelihood + Math.log10(frequencyTable.get(morpheme) / (size + alpha));
+                    frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
+                    size++;
+                } else {
+                    oldLikelihood = oldLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
+                    frequencyTable.put(morpheme, 1);
+                    size++;
+                }
+            } else {
+                oldLikelihood = oldLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
+                frequencyTable.put(morpheme, 1);
+                size++;
+            }
+        }
+        deleteFromTable(oldSegmentation);
+
+        size = sizeOfTable;
+        double newLikelihood = 0;
+        StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
+        while (newSegments.hasMoreTokens()) {
+            String morpheme = newSegments.nextToken();
+            if (frequencyTable.containsKey(morpheme)) {
+                if (frequencyTable.get(morpheme) > 0) {
+                    newLikelihood = newLikelihood + Math.log10(frequencyTable.get(morpheme) / (size + alpha));
+                    frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
+                    size++;
+                } else {
+                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
+                    frequencyTable.put(morpheme, 1);
+                    size++;
+                }
+            } else {
+                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
+                frequencyTable.put(morpheme, 1);
+                size++;
+            }
+        }
+        deleteFromTable(newSegmentation);
+
+        likelihoods.add(oldLikelihood);
+        likelihoods.add(newLikelihood);
         return likelihoods;
     }
 
@@ -115,6 +171,36 @@ public class Inference {
             insertedNo++;
         }
         return insertedNo;
+    }
+
+    public void saveModel() throws IOException {
+
+        Map<String, ArrayList<String>> segmentationsList = new HashMap<>();
+
+        for (Sample s : this.samples) {
+            if (segmentationsList.containsKey(s.getWord())) {
+                segmentationsList.get(s.getWord()).add(s.getSegmentation());
+            } else {
+                ArrayList<String> segmentationsOfsample = new ArrayList<String>();
+                segmentationsOfsample.add(s.getSegmentation());
+                segmentationsList.put(s.getWord(), segmentationsOfsample);
+            }
+        }
+
+        SerializableModel model = new SerializableModel(frequencyTable, segmentationsList);
+
+        // toByteArray
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutput out = null;
+        byte[] yourBytes = null;
+        out = new ObjectOutputStream(bos);
+        out.writeObject(model);
+        yourBytes = bos.toByteArray();
+
+        bos.close();
+        out.close();
+
+        FileUtils.writeByteArrayToFile(new File("model_" + noOfIteration + "_" + alpha), yourBytes);
     }
 
 }
