@@ -51,31 +51,7 @@ public class NewSegmenter {
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-      /*  Set<String> affixes = new HashSet<>();
-        affixes.add("ki");
-        affixes.add("tap");
-        affixes.add("k");
-        affixes.add("i");
-        affixes.add("in");
-        affixes.add("ap");
-        //affixes.put("n", 1d);
-        affixes.add("t");
-        affixes.add("itap");
-        affixes.add("da");
-        affixes.add("n");
-        affixes.add("dan");
 
-
-        ArrayList<String> results = getPossibleSplits("kitapdan", affixes);
-
-        for (String s : results) {
-            System.out.println(s);
-        }
-
-        System.out.println(s.morphemeFreq.size());
-        for (String str : s.morphemeFreq.keySet()) {
-                System.out.println(str + "-->" + s.morphemeFreq.get(str));
-        }*/
         NewSegmenter s = new NewSegmenter(args[0], args[1], args[2]);
 
     }
