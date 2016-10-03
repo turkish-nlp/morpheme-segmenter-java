@@ -1,4 +1,4 @@
-package core;
+package core.preModel;
 
 import org.apache.commons.io.FileUtils;
 import tries.TrieST;

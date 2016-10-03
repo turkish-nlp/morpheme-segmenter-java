@@ -1,10 +1,9 @@
-package core;
+package core.preModel;
 
 /**
  * Created by ahmetu on 25.04.2016.
  */
 
-import net.didion.jwnl.data.Word;
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;

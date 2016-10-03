@@ -1,4 +1,4 @@
-package core;
+package core.blockSampling;
 
 import org.apache.commons.io.FileUtils;
 import org.canova.api.util.MathUtils;

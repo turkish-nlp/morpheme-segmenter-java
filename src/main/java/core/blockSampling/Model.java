@@ -1,7 +1,5 @@
-package core;
+package core.blockSampling;
 
-import org.apache.commons.collections.ArrayStack;
-import org.apache.commons.collections.iterators.ArrayListIterator;
 import org.apache.commons.io.FileUtils;
 import tries.TrieST;
 
