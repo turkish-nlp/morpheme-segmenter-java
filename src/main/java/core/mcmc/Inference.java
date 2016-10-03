@@ -212,13 +212,13 @@ public class Inference {
 
     public void saveModel() throws IOException {
 
-        Map<String, ArrayList<String>> segmentationsList = new HashMap<>();
+        Map<String, CopyOnWriteArrayList<String>> segmentationsList = new HashMap<>();
 
         for (Sample s : this.samples) {
             if (segmentationsList.containsKey(s.getWord())) {
                 segmentationsList.get(s.getWord()).add(s.getSegmentation());
             } else {
-                ArrayList<String> segmentationsOfsample = new ArrayList<String>();
+                CopyOnWriteArrayList<String> segmentationsOfsample = new CopyOnWriteArrayList<String>();
                 segmentationsOfsample.add(s.getSegmentation());
                 segmentationsList.put(s.getWord(), segmentationsOfsample);
             }
