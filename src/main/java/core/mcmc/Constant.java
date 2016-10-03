@@ -64,10 +64,11 @@ public class Constant {
     }
 
     public Constant(String triesDir, String vectorDir, String wordListDir, double lambda) throws IOException, ClassNotFoundException {
+
         this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
         this.lambda = lambda;
-
         List<String> freqWords = Files.readAllLines(new File(wordListDir).toPath(), Charset.forName("UTF-8"));
+
         Map<String, Double> corpus = new HashMap<>();
 
         generateTrieList(triesDir);
