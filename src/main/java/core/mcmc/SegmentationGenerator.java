@@ -131,7 +131,9 @@ public class SegmentationGenerator {
         SerializableModel model = (SerializableModel) o;
 
         model.getSerializedFrequencyTable().keySet().parallelStream().forEach((s) -> {
-            morphemeFreq.put(s, model.getSerializedFrequencyTable().get(s));
+            int freq = model.getSerializedFrequencyTable().get(s);
+            if (freq != 0)
+                morphemeFreq.put(s, freq);
         });
 
         model.getSerializedSegmentations().keySet().parallelStream().forEach((n) -> {
@@ -204,7 +206,7 @@ public class SegmentationGenerator {
         for (String searchWord : finalSegmentation.keySet()) {
             double maxScore = Double.NEGATIVE_INFINITY;
             String segMax = "";
-            if (serializedSegmentations.get(searchWord).size() > 0) { // if the search word exists in the tries
+            if (serializedSegmentations.containsKey(searchWord)) { // if the search word exists in the tries
                 CopyOnWriteArrayList<String> possibleSegmentList = serializedSegmentations.get(searchWord);
                 for (String str : possibleSegmentList) {
                     double score = 0;

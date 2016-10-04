@@ -42,19 +42,19 @@ public class Test {
         st.put("okul$");
         st.put("okullar$");
         st.put("okulda$");
+        st.put("liseninki$");
 
-        //TrieST st2 = new TrieST();
-        //st.put("öğretmenden$");
-        //st.put("öğretmenin$");
-        //st.put("öğretmeninki$");
-        //st.put("öğretmene$");
-        //st.put("öğretmen$");
-        //st.put("öğretmendekiler$");
-        //st.put("öğretmende$");
+        TrieST st2 = new TrieST();
+        st2.put("liseninki$");
+        st2.put("okulların$");
+        st2.put("lisenin$");
+        st2.put("liseyi$");
+        st2.put("okuldu");
+        st2.put("okulun$");
 
 
         serializeToFile(st, "test_trie_okul", args[0]);
-        //serializeToFile(st2, "test_trie_diger", args[0]);
+        serializeToFile(st2, "test_trie_lise", args[0]);
     }
 
 
