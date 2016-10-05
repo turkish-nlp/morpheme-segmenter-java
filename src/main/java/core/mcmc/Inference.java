@@ -97,12 +97,14 @@ public class Inference {
                 boolean accept = isAccepted(newJointProbability, oldJointProbability);
 
                 if (accept) {
-                    System.out.println("New segmentation is accepted: " + newSegmentation + " . old segmentation was " + sample.getSegmentation());
+                    System.out.println("ACCEPT: " + newSegmentation + " . old segmentation was " + sample.getSegmentation());
                     System.out.println();
                     sample.update(newSegmentation, newPriors.get(0), newPriors.get(1), newPriors.get(2));
                     int insertedNo = insertToTable(newSegmentation);
                     sizeOfTable = sizeOfTable + insertedNo;
                 } else {
+                    System.out.println("REJECT: " + newSegmentation + " . old segmentation was " + sample.getSegmentation());
+                    System.out.println();
                     int insertedNo = insertToTable(sample.getSegmentation());
                     sizeOfTable = sizeOfTable + insertedNo;
                 }
@@ -118,6 +120,8 @@ public class Inference {
         //0:oldLikelihood, 1:newLikelihood
 
         int size = sizeOfTable;
+        if(size < 0)
+            System.out.println("SİZEEEEEEEEEE");
         double oldLikelihood = 0;
         StringTokenizer oldSegments = new StringTokenizer(oldSegmentation, "+");
         while (oldSegments.hasMoreTokens()) {
@@ -170,8 +174,11 @@ public class Inference {
 
     private boolean isAccepted(double newJointProbability, double oldJointProbability) {
         boolean accept = false;
+        System.out.println("new: " + newJointProbability + ". old: " + oldJointProbability);
+        if (Double.isNaN(newJointProbability)) {
+            System.out.println("here");
+        }
         if (newJointProbability > oldJointProbability) {
-            System.out.println("new: " + newJointProbability + ". old: " + oldJointProbability);
             accept = true;
         } else {
             double acceptProb = newJointProbability - oldJointProbability;
