@@ -1,9 +1,4 @@
-package core;
-
-import com.hazelcast.util.StringUtil;
-import core.mcmc.SerializableModel;
-import org.apache.commons.lang.StringUtils;
-import tries.TrieST;
+package core.blockSampling;
 
 import java.io.*;
 import java.util.*;
@@ -144,7 +139,7 @@ public class Segmenter {
         ModelCopy model = (ModelCopy) o;
 
         morphemeFreq = model.morphemeFreqCopy;
-      //  trieSegmentations = model.trieSegmentationsCopy;
+        //  trieSegmentations = model.trieSegmentationsCopy;
       /*  for (TrieST st : trieSegmentations.keySet())
             System.out.println(trieSegmentations.get(st));
         System.out.println("------");*/
@@ -192,7 +187,7 @@ public class Segmenter {
             segmentations.add(head);
         } else if (tail.length() == 1) {
             if (affixes.contains(tail)) {
-                segmentations.add(head + " " + tail);
+                segmentations.add(head + "+" + tail);
             }
         } else {
             for (int i = 1; i < tail.length() + 1; i++) {
@@ -200,12 +195,12 @@ public class Segmenter {
 
                 if (morpheme.length() == tail.length()) {
                     if (affixes.contains(morpheme)) {
-                        segmentations.add(head + " " + morpheme);
+                        segmentations.add(head + "+" + morpheme);
                     }
                 } else {
                     String tailMorph = tail.substring(i);
                     if (affixes.contains(morpheme)) {
-                        String headMorph = head + " " + morpheme;
+                        String headMorph = head + "+" + morpheme;
                         getPossibleAffixSequence(affixes, headMorph, tailMorph, segmentations);
                     }
                 }

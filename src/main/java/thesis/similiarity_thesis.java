@@ -1,4 +1,4 @@
-package core;
+package thesis;
 
 import org.apache.commons.io.FileUtils;
 import org.canova.api.util.MathUtils;

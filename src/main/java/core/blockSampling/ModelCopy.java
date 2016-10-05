@@ -1,4 +1,4 @@
-package core;
+package core.blockSampling;
 
 import tries.TrieST;
 

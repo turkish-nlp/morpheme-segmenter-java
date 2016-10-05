@@ -1,5 +1,7 @@
-package core;
+package core.preModel;
 
+import core.blockSampling.ModelCopy;
+import core.blockSampling.Segmenter;
 import tries.TrieST;
 
 import java.io.*;
