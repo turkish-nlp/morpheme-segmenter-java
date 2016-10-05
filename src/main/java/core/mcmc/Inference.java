@@ -66,6 +66,7 @@ public class Inference {
         while (noOfIteration > 0) {
             Collections.shuffle(samples);
             for (Sample sample : samples) {
+                System.out.println("Size of the table: " + sizeOfTable);
 
                 ArrayList<Double> oldPriors;
                 if (!sample.isCalculated()) {
@@ -79,16 +80,17 @@ public class Inference {
                     oldPriors.add(sample.getPresenceScore());
                 }
 
-                int deleteNo = deleteFromTable(sample.getSegmentation());
-                sizeOfTable = sizeOfTable - deleteNo;
-
                 String newSegmentation = Operations.randomSplitB(sample.getWord());
                 // if the random segmentation is equal to the current segmentation
                 if (newSegmentation.equalsIgnoreCase(sample.getSegmentation())) {
                     continue;
                 }
-                ArrayList<Double> newPriors = sample.calculateScores(newSegmentation);
 
+                int deleteNo = deleteFromTable(sample.getSegmentation());
+                sizeOfTable = sizeOfTable - deleteNo;
+
+
+                ArrayList<Double> newPriors = sample.calculateScores(newSegmentation);
                 ArrayList<Double> likelihoods = calculateLikelihoodsWithDP(sample.getSegmentation(), newSegmentation);
 
                 double oldJointProbability = likelihoods.get(0) + oldPriors.get(0) + oldPriors.get(1) + oldPriors.get(2);
