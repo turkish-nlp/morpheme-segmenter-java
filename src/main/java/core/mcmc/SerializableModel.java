@@ -12,6 +12,8 @@ public class SerializableModel implements Serializable {
     private Map<String, Integer> serializedFrequencyTable;
     private Map<String, ArrayList<String>> serializedSegmentations;
 
+    private static final long serialVersionUID = -2557088637718891877L;
+
     public Map<String, Integer> getSerializedFrequencyTable() {
         return serializedFrequencyTable;
     }

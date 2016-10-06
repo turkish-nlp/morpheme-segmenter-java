@@ -80,7 +80,7 @@ public class Inference {
                     oldPriors.add(sample.getPresenceScore());
                 }
 
-                String newSegmentation = Operations.randomSplitB(sample.getWord());
+                String newSegmentation = Operations.randomSplit(sample.getWord());
                 // if the random segmentation is equal to the current segmentation
                 if (newSegmentation.equalsIgnoreCase(sample.getSegmentation())) {
                     continue;
@@ -246,7 +246,7 @@ public class Inference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("newInferenceModel_" + noOfIteration + "_" + alpha), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("newInferenceModel_randomSplitAhmet_" + noOfIteration + "_" + alpha), yourBytes);
     }
 
 }
