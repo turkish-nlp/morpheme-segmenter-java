@@ -18,6 +18,10 @@ public class Sample {
     private double presenceScore;
     private boolean isCalculated;
 
+    public String toString()
+    {
+        return word + " " + segmentation;
+    }
     public boolean isCalculated() {
         return isCalculated;
     }
@@ -128,6 +132,7 @@ public class Sample {
         for (int i = 1; i < segments.size(); i++) {
             w2 = segments.get(i);
             double cosine = Operations.getCosineScore(w1, w2);
+            System.out.println("Cosine similarity between " + w1 + " " + w2 + " is " + cosine) ;
             similarityScore = similarityScore + Math.log10(cosine);
             w1 = w2;
         }
