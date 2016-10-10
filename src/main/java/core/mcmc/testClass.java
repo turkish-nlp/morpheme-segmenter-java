@@ -15,6 +15,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class testClass {
     private Map<String, Integer> frequencyTable = new ConcurrentHashMap<>();
     private ArrayList<Sample> segmentations = new ArrayList<>();
+    double gamma = 0.037;
+    double alpha = 0.1;
+    int sizeOfTable = 0;
 
     public testClass(String file) throws IOException {
         BufferedReader reader = null;
@@ -32,20 +35,57 @@ public class testClass {
                     frequencyTable.put(word, frequencyTable.get(word) + 1);
             }
         }
+        for (String str : frequencyTable.keySet()) {
+            sizeOfTable = sizeOfTable + frequencyTable.get(str);
+        }
+
     }
 
-
     public static void main(String[] args) throws IOException {
-        testClass t = new testClass("sample_correct.txt");
-        for (String s : t.frequencyTable.keySet())
-            System.out.println(s + " " + t.frequencyTable.get(s));
-        for (Sample s : t.segmentations) {
-            System.out.println(s);
-            ArrayList<Double> scores = s.calculateScores(s.getSegmentation());
-            for(double d: scores)
-            {
+
+        String files[] = {"sample_correct.txt", "sample_char_char.txt", "sample_unsegmented.txt"};
+        for (String file : files) {
+            System.out.println(file);
+            testClass t = new testClass(file);
+            for (String s : t.frequencyTable.keySet())
+                System.out.println(s + " " + t.frequencyTable.get(s));
+            for (Sample s : t.segmentations) {
+                System.out.println(s);
+       /*     ArrayList<Double> scores = s.calculateScores(s.getSegmentation());
+            for (double d : scores) {
                 System.out.println(d);
+            }*/
             }
+            System.out.println(t.calculateLikelihoodsWithDP());
         }
+    }
+
+    private double calculateLikelihoodsWithDP() {
+
+        double totalLikelihood = 0;
+        int size = 0;
+        for (Sample s : segmentations) {
+            StringTokenizer segments = new StringTokenizer(s.getSegmentation());
+            while (segments.hasMoreTokens()) {
+                String morpheme = segments.nextToken();
+                if (frequencyTable.containsKey(morpheme)) {
+                    if (frequencyTable.get(morpheme) > 0) {
+                        totalLikelihood = totalLikelihood + Math.log10(frequencyTable.get(morpheme) / (size + alpha));
+                        frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
+                        size++;
+                    } else {
+                        totalLikelihood = totalLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
+                        frequencyTable.put(morpheme, 1);
+                        size++;
+                    }
+                } else {
+                    totalLikelihood = totalLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
+                    frequencyTable.put(morpheme, 1);
+                    size++;
+                }
+            }
+
+        }
+        return totalLikelihood;
     }
 }

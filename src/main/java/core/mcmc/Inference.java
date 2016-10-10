@@ -79,9 +79,6 @@ public class Inference {
                     oldPriors.add(sample.getSimilarityScore());
                     oldPriors.add(sample.getPresenceScore());
                 }
-
-
-
                 String newSegmentation = Operations.randomSplitB(sample.getWord());
                 // if the random segmentation is equal to the current segmentation
                 if (newSegmentation.equalsIgnoreCase(sample.getSegmentation())) {
@@ -92,7 +89,6 @@ public class Inference {
 
                 int deleteNo = deleteFromTable(sample.getSegmentation());
                 sizeOfTable = sizeOfTable - deleteNo;
-
 
                 ArrayList<Double> newPriors = sample.calculateScores(newSegmentation);
                 ArrayList<Double> likelihoods = calculateLikelihoodsWithDP(sample.getSegmentation(), newSegmentation);
