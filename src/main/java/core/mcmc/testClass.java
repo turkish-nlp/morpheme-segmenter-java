@@ -64,7 +64,7 @@ public class testClass {
 
         double totalLikelihood = 0;
         int size = 0;
-        for (Sample s : segmentations) {
+        for (Sample s : segmentations) { // for all segmentations
             StringTokenizer segments = new StringTokenizer(s.getSegmentation());
             while (segments.hasMoreTokens()) {
                 String morpheme = segments.nextToken();
