@@ -71,7 +71,8 @@ public class testClass {
 
             testClass t = new testClass(file, "sample_unsegmented\\liseler");
             System.out.println("Morpheme - Freq Table");
-       /*     for (String s : t.frequencyTable.keySet()) {
+
+        /*     for (String s : t.frequencyTable.keySet()) {
 
                 System.out.println(s + " " + t.frequencyTable.get(s));
             }
