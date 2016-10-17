@@ -39,6 +39,7 @@ public class testClass {
                     frequencyTable.put(word, frequencyTable.get(word) + 1);
             }
         }
+
         for (String str : frequencyTable.keySet()) {
             sizeOfTable = sizeOfTable + frequencyTable.get(str);
         }
@@ -70,11 +71,11 @@ public class testClass {
 
             testClass t = new testClass(file, "sample_unsegmented\\liseler");
             System.out.println("Morpheme - Freq Table");
-            for (String s : t.frequencyTable.keySet()) {
+       /*     for (String s : t.frequencyTable.keySet()) {
 
                 System.out.println(s + " " + t.frequencyTable.get(s));
             }
-            System.out.println("----");
+            System.out.println("----");*/
 
             ArrayList<Double> scores = new ArrayList<Double>();
             double poisson = 0;

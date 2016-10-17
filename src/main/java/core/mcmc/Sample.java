@@ -145,6 +145,7 @@ public class Sample {
         double presenceScore = 0;
 
         for (String s : segments) {
+            System.out.println("presence segment: " + s);
             presenceScore = presenceScore + Math.log10(Constant.getNewCorpus().get(s) / Constant.getNewCorpusSize());
         }
 
