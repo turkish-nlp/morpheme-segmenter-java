@@ -45,7 +45,10 @@ public class ManuelTest {
         System.out.println("Calculating overall poisson score..");
         double totalPoisson = 0;
         for (String segment : segments) {
-            totalPoisson = totalPoisson + Math.log10(Operations.getPoissonScore(inTrie.getWordList().get(segment), Constant.getLambda()));
+            double poisson = Math.log10(Operations.getPoissonScore(inTrie.getWordList().get(segment), Constant.getLambda()));
+            totalPoisson = totalPoisson + poisson;
+
+            //System.out.println("possion --> " + segment + " --> " + inTrie.getWordList().get(segment) + " " + poisson);
         }
         System.out.println("Overal poisson score: " + totalPoisson);
 
@@ -57,8 +60,11 @@ public class ManuelTest {
             String w2 = "";
             for (int i = 1; i < segmentsForSimilarity.get(segmentation).size(); i++) {
                 w2 = segmentsForSimilarity.get(segmentation).get(i);
-                double cosine = Operations.getCosineScore(w1, w2);
-                similarityScore = similarityScore + Math.log10(cosine);
+                double cosine = Math.log10(Operations.getCosineScore(w1, w2));
+                similarityScore = similarityScore + cosine;
+
+                //System.out.println("similarity -->" + w1 + " vs " + w2 + " --> " + cosine);
+
                 w1 = w2;
             }
         }
@@ -68,21 +74,31 @@ public class ManuelTest {
         System.out.println("Calculating overall presence score..");
         double presenceScore = 0;
         for (String segment : segments) {
-            presenceScore = presenceScore + Math.log10(Constant.getNewCorpus().get(segment) / Constant.getNewCorpusSize());
+            double presence = Math.log10(Constant.getNewCorpus().get(segment) / Constant.getNewCorpusSize());
+            presenceScore = presenceScore + presence;
+            //    System.out.println("presence --> " + segment + " --> " + presence);
         }
         System.out.println("Overall presence score: " + presenceScore);
 
         System.out.println("--------------------------------------------------------");
         System.out.println("Calculating overall DP score..");
         double dpScore = 0;
-        for (String segment : segments) {
-            if (frequencyTable.containsKey(segment)) {
-                dpScore = dpScore + Math.log10(frequencyTable.get(segment) / (sizeOfTable + alpha));
-                frequencyTable.put(segment, frequencyTable.get(segment) + 1);
+        for (String morpheme : morphemes) {
+            if (frequencyTable.containsKey(morpheme)) {
+                double dp = Math.log10(frequencyTable.get(morpheme) / (sizeOfTable + alpha));
+                dpScore = dpScore + dp;
+
+                //System.out.println("dp --> " + morpheme + " --> " + frequencyTable.containsKey(morpheme) + " " + dp);
+
+                frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
                 sizeOfTable++;
             } else {
-                dpScore = dpScore + Math.log10(alpha * Math.pow(gamma, segment.length() + 1) / (sizeOfTable + alpha));
-                frequencyTable.put(segment, 1);
+                double dp = Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (sizeOfTable + alpha));
+                dpScore = dpScore + dp;
+
+                //System.out.println("dp --> " + morpheme + " --> " + frequencyTable.containsKey(morpheme) + " " + dp);
+
+                frequencyTable.put(morpheme, 1);
                 sizeOfTable++;
             }
         }
