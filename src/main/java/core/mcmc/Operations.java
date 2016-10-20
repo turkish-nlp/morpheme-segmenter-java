@@ -1,13 +1,8 @@
 package core.mcmc;
 
 import org.canova.api.util.MathUtils;
-import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
-import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
-import tries.TrieST;
 
-import java.io.File;
 import java.util.*;
-import java.util.stream.IntStream;
 
 /**
  * Created by ahmetu on 28.09.2016.
@@ -42,7 +37,7 @@ public class Operations {
         Random rand = new Random();
         int splitPoint = rand.nextInt(5);
 
-        if (splitPoint == 0 || splitPoint == 4)
+        if (splitPoint == 0 || splitPoint == word.length())
             return word;
         else
             return word.substring(0, word.length() - splitPoint) + "+" + word.substring(word.length() - splitPoint);
