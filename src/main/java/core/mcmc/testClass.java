@@ -67,7 +67,7 @@ public class testClass {
 
         for (String file : files) {
 
-            System.out.println("--------------" + file+"--------------");
+            System.out.println("--------------" + file + "--------------");
 
             testClass t = new testClass(file, "sample_unsegmented\\liseler");
             System.out.println("Morpheme - Freq Table");
@@ -88,7 +88,7 @@ public class testClass {
 
                 //0:poisson, 1:similarity, 2:presence
 
-                scores = s.calculateScores(s.getSegmentation());
+                scores = s.calculateScores(s.getSegmentation(), true);
 
                 System.out.println("Poisson: " + scores.get(0));
                 poisson = poisson + scores.get(0);
@@ -103,7 +103,7 @@ public class testClass {
 
                 System.out.println();
             }
-            double dp =  t.calculateLikelihoodsWithDP();
+            double dp = t.calculateLikelihoodsWithDP();
             System.out.println("Overall DP: " + dp);
             System.out.println("Overall Poisson: " + poisson);
             System.out.println("Overall Similarity: " + similarity);

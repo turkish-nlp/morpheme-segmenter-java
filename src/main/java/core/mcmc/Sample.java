@@ -18,10 +18,10 @@ public class Sample {
     private double presenceScore;
     private boolean isCalculated;
 
-    public String toString()
-    {
+    public String toString() {
         return word + " " + segmentation;
     }
+
     public boolean isCalculated() {
         return isCalculated;
     }
@@ -99,14 +99,16 @@ public class Sample {
         */
     }
 
-    public ArrayList<Double> calculateScores(String segmentation) {
+    public ArrayList<Double> calculateScores(String segmentation, boolean presence) {
         //0:poisson, 1:similarity, 2:presence
         ArrayList<Double> scores = new ArrayList<>();
 
         ArrayList<String> segments = Operations.getSegments(segmentation);
         double poissonScore = calculatePoisson(segments);
         double similarityScore = calculateSimilarity(segments);
-        double presenceScore = calculatePresenceScore(segments);
+        double presenceScore = 0;
+        if (presence)
+            presenceScore = calculatePresenceScore(segments);
 
         scores.add(poissonScore);
         scores.add(similarityScore);
@@ -132,7 +134,7 @@ public class Sample {
         for (int i = 1; i < segments.size(); i++) {
             w2 = segments.get(i);
             double cosine = Operations.getCosineScore(w1, w2);
-            System.out.println("Cosine similarity between " + w1 + " " + w2 + " is " + cosine) ;
+            //System.out.println("Cosine similarity between " + w1 + " " + w2 + " is " + cosine);
             similarityScore = similarityScore + Math.log10(cosine);
             w1 = w2;
         }

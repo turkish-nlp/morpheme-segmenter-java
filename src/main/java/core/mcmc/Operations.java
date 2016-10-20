@@ -42,7 +42,7 @@ public class Operations {
         Random rand = new Random();
         int splitPoint = rand.nextInt(5);
 
-        if (splitPoint == 0)
+        if (splitPoint == 0 || splitPoint == 4)
             return word;
         else
             return word.substring(0, word.length() - splitPoint) + "+" + word.substring(word.length() - splitPoint);
@@ -94,9 +94,9 @@ public class Operations {
     }
 
     public static void main(String[] args) {
-        int a = 5;
+        int a = 100;
         while (a > 0) {
-            System.out.println(biasedBinarySplit("ahmetiken"));
+            System.out.println(biasedBinarySplit("lise"));
             a--;
         }
     }
