@@ -38,6 +38,16 @@ public class Operations {
         return (Math.pow(lambda, branchingFactor) * Math.exp(-1 * lambda)) / MathUtils.factorial(branchingFactor);
     }
 
+    public static String biasedBinarySplit(String word) {
+        Random rand = new Random();
+        int splitPoint = rand.nextInt(5);
+
+        if (splitPoint == 0)
+            return word;
+        else
+            return word.substring(0, word.length() - splitPoint) + "+" + word.substring(word.length() - splitPoint);
+    }
+
     public static String randomSplitB(String word) {
         String segmentation = "";
         Random rand = new Random();
@@ -75,19 +85,18 @@ public class Operations {
             }
             int f = 0;
             for (int i : splitPoints) {
-                segmentation = segmentation + "+" + word.substring(f,i);
+                segmentation = segmentation + "+" + word.substring(f, i);
                 f = i;
             }
-            segmentation = segmentation.substring(1)+"+"+word.substring(f,word.length());
+            segmentation = segmentation.substring(1) + "+" + word.substring(f, word.length());
         }
         return segmentation;
     }
 
     public static void main(String[] args) {
-        int a = 10000;
-        while(a > 0)
-        {
-            System.out.println(randomSplit("liselerde"));
+        int a = 5;
+        while (a > 0) {
+            System.out.println(biasedBinarySplit("ahmetiken"));
             a--;
         }
     }
