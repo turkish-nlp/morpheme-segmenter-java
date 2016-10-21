@@ -35,8 +35,11 @@ public class Operations {
 
     public static String biasedBinarySplit(String word) {
         Random rand = new Random();
-        int splitPoint = rand.nextInt(5);
-
+        int splitPoint = 0;
+        if(word.length() > 4)
+            splitPoint = rand.nextInt(5);
+        else
+            splitPoint = rand.nextInt(word.length());
         if (splitPoint == 0 || splitPoint == word.length())
             return word;
         else
