@@ -9,6 +9,8 @@ import java.util.Map;
  * Created by ahmetu on 30.09.2016.
  */
 public class SerializableModel implements Serializable {
+
+
     private Map<String, Integer> serializedFrequencyTable;
     private Map<String, ArrayList<String>> serializedSegmentations;
 
