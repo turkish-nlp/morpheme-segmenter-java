@@ -115,7 +115,7 @@ public class RecursiveInference {
         System.out.println("---> new total: " + newJointProbability);
 
         System.out.println("-----> unsegmented poisson score: " + oldPriors.get(0));
-        System.out.println("-----> unsegmented similarity score: " + oldPriors.get(1));
+        System.out.println("-----> unsegmented similarity score: " + Math.log10(0.0001));
         System.out.println("-----> unsegented DP score: " + likelihoods.get(0));
         System.out.println("-----> unsegmented total: " + oldJointProbability);
 
