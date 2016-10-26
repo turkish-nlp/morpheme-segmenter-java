@@ -67,6 +67,9 @@ public class RecursiveInference {
                 int deleteNo = deleteFromTable(sample.getSegmentation());
                 sizeOfTable = sizeOfTable - deleteNo;
 
+                System.out.println("\nSelected item: " + sample.getSegmentation());
+                System.out.println("---> Recursive operation started..");
+
                 sample.setSegmentation("");
                 recursiveSplit(sample, sample.getWord());
             }
@@ -96,15 +99,29 @@ public class RecursiveInference {
             return word;
         }
 
+        System.out.println("---> proposed segmentetation: " + newSegmentation);
+
         ArrayList<Double> newPriors = sample.calculateScores(newSegmentation, false);
         ArrayList<Double> oldPriors = sample.calculateScores(word, false);
 
         ArrayList<Double> likelihoods = calculateLikelihoodsWithDP(word, newSegmentation);
 
-        double oldJointProbability = likelihoods.get(0) + oldPriors.get(0) + oldPriors.get(1);
+        double oldJointProbability = likelihoods.get(0) + oldPriors.get(0) + Math.log10(0.0001);
         double newJointProbability = likelihoods.get(1) + newPriors.get(0) + newPriors.get(1);
 
+        System.out.println("---> new poisson score: " + newPriors.get(0));
+        System.out.println("---> new similarity score: " + newPriors.get(1));
+        System.out.println("---> new DP score: " + likelihoods.get(1));
+        System.out.println("---> new total: " + newJointProbability);
+
+        System.out.println("-----> unsegmented poisson score: " + oldPriors.get(0));
+        System.out.println("-----> unsegmented similarity score: " + oldPriors.get(1));
+        System.out.println("-----> unsegented DP score: " + likelihoods.get(0));
+        System.out.println("-----> unsegmented total: " + oldJointProbability);
+
         boolean accept = isAccepted(newJointProbability, oldJointProbability);
+
+        System.out.println("ACCEPT status: " + accept);
 
         StringTokenizer tokenizer = new StringTokenizer(newSegmentation, "+");
         String leftMorpheme = tokenizer.nextToken();

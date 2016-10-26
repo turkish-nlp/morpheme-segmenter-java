@@ -104,7 +104,10 @@ public class Sample {
         ArrayList<Double> scores = new ArrayList<>();
 
         ArrayList<String> segments = Operations.getSegments(segmentation);
-        double poissonScore = calculatePoisson(segments);
+        ArrayList<String> segmentsForPoisson = new ArrayList<>(segments);
+        if (segmentsForPoisson.size() > 1)
+            segmentsForPoisson.remove(segmentsForPoisson.size() - 1);
+        double poissonScore = calculatePoisson(segmentsForPoisson);
         double similarityScore = calculateSimilarity(segments);
         double presenceScore = 0;
         if (presence)

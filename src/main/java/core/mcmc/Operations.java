@@ -12,7 +12,7 @@ public class Operations {
     public static double getCosineScore(String w1, String w2) {
         double smlrty = Constant.getVectors().similarity(w1, w2);
         if (smlrty < 0 || smlrty > 1)
-            smlrty = 0.000000000001;
+            smlrty = 0.0001;
         return smlrty;
     }
 
@@ -26,6 +26,7 @@ public class Operations {
             segments.add(segment);
         }
 
+        //poisson'da son segmenti kaldırmak için yaptım !!!!
         return segments;
     }
 
@@ -36,7 +37,7 @@ public class Operations {
     public static String biasedBinarySplit(String word) {
         Random rand = new Random();
         int splitPoint = 0;
-        if(word.length() > 4)
+        if (word.length() > 4)
             splitPoint = rand.nextInt(5);
         else
             splitPoint = rand.nextInt(word.length());
