@@ -72,6 +72,8 @@ public class RecursiveInference {
 
                 sample.setSegmentation("");
                 recursiveSplit(sample, sample.getWord());
+
+                System.out.println("---> Selected segmentation: " + sample.getSegmentation());
             }
             noOfIteration--;
         }
