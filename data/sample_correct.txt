@@ -10,3 +10,6 @@ kedi+den
 lise+de+ki
 ev+den
 kedi+de+ki
+lise+nin
+kedi+nin
+ev+in

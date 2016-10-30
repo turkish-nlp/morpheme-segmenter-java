@@ -22,6 +22,7 @@ public class Inference {
     private double alpha;
     private double gamma;
 
+
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
         /*
@@ -70,14 +71,15 @@ public class Inference {
 
                 ArrayList<Double> oldPriors;
                 if (!sample.isCalculated()) {
-                    oldPriors = sample.calculateScores(sample.getSegmentation(), true);
-                    sample.update(sample.getSegmentation(), oldPriors.get(0), oldPriors.get(1), oldPriors.get(2));
+                    oldPriors = sample.calculateScores(sample.getSegmentation(), false, true);
+                    sample.update(sample.getSegmentation(), oldPriors.get(0), oldPriors.get(1), oldPriors.get(2), oldPriors.get(3));
                     sample.setCalculated(true);
                 } else {
                     oldPriors = new ArrayList<>();
                     oldPriors.add(sample.getPoissonScore());
                     oldPriors.add(sample.getSimilarityScore());
                     oldPriors.add(sample.getPresenceScore());
+                    oldPriors.add(sample.getLenghtPrior());
                 }
                 String newSegmentation = Operations.randomSplitB(sample.getWord());
                 // if the random segmentation is equal to the current segmentation
@@ -90,32 +92,32 @@ public class Inference {
                 int deleteNo = deleteFromTable(sample.getSegmentation());
                 sizeOfTable = sizeOfTable - deleteNo;
 
-                ArrayList<Double> newPriors = sample.calculateScores(newSegmentation, true);
+                ArrayList<Double> newPriors = sample.calculateScores(newSegmentation, false, true);
                 ArrayList<Double> likelihoods = calculateLikelihoodsWithDP(sample.getSegmentation(), newSegmentation);
 
                 // print
-                //0:poisson, 1:similarity, 2:presence");
+                System.out.println("Old priors are:  //0:poisson, 1:similarity, 2:presence");
                 for (Double d : oldPriors)
-                    System.out.print(d + " \t");
+                    System.out.print("-->" + d + " \t");
                 System.out.println("Old likelihood is : " + likelihoods.get(0));
                 // print
 
                 // print
                 System.out.println("New priors are:  //0:poisson, 1:similarity, 2:presence");
                 for (Double d : newPriors)
-                    System.out.print(d + " \t");
+                    System.out.print("-->" + d + " \t");
                 System.out.println("New likelihood is : " + likelihoods.get(1));
                 // print
 
-                double oldJointProbability = likelihoods.get(0) + oldPriors.get(0) + oldPriors.get(1) + oldPriors.get(2);
-                double newJointProbability = likelihoods.get(1) + newPriors.get(0) + newPriors.get(1) + newPriors.get(2);
+                double oldJointProbability = likelihoods.get(0) + oldPriors.get(0) + oldPriors.get(1) + oldPriors.get(2) + oldPriors.get(3);
+                double newJointProbability = likelihoods.get(1) + newPriors.get(0) + newPriors.get(1) + newPriors.get(2) + newPriors.get(3);
 
                 boolean accept = isAccepted(newJointProbability, oldJointProbability);
 
                 if (accept) {
                     System.out.println("ACCEPT");
                     System.out.println();
-                    sample.update(newSegmentation, newPriors.get(0), newPriors.get(1), newPriors.get(2));
+                    sample.update(newSegmentation, newPriors.get(0), newPriors.get(1), newPriors.get(2), newPriors.get(3));
                     int insertedNo = insertToTable(newSegmentation);
                     sizeOfTable = sizeOfTable + insertedNo;
                 } else {
@@ -190,7 +192,7 @@ public class Inference {
 
     private boolean isAccepted(double newJointProbability, double oldJointProbability) {
         boolean accept = false;
-        System.out.println("new: " + newJointProbability + ". old: " + oldJointProbability);
+        //    System.out.println("new: " + newJointProbability + ". old: " + oldJointProbability);
         if (Double.isNaN(newJointProbability)) {
             System.out.println("here");
         }

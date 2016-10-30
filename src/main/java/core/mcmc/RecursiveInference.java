@@ -103,12 +103,12 @@ public class RecursiveInference {
 
         System.out.println("---> proposed segmentetation: " + newSegmentation);
 
-        ArrayList<Double> newPriors = sample.calculateScores(newSegmentation, false);
-        ArrayList<Double> oldPriors = sample.calculateScores(word, false);
+        ArrayList<Double> newPriors = sample.calculateScores(newSegmentation, false, false);
+        ArrayList<Double> oldPriors = sample.calculateScores(word, false, false);
 
         ArrayList<Double> likelihoods = calculateLikelihoodsWithDP(word, newSegmentation);
 
-        double oldJointProbability = likelihoods.get(0) + oldPriors.get(0) + Math.log10(0.0001);
+        double oldJointProbability = likelihoods.get(0) + oldPriors.get(0) + Math.log10(0.000001);
         double newJointProbability = likelihoods.get(1) + newPriors.get(0) + newPriors.get(1);
 
         System.out.println("---> new poisson score: " + newPriors.get(0));

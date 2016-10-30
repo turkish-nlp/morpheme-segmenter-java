@@ -4,6 +4,7 @@ import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tries.TrieST;
 
 import java.util.ArrayList;
+import java.util.StringTokenizer;
 
 /**
  * Created by ahmetu on 28.09.2016.
@@ -16,6 +17,7 @@ public class Sample {
     private String word;
     private String segmentation;
     private double presenceScore;
+    private double lenghtPrior;
     private boolean isCalculated;
 
     public String toString() {
@@ -78,11 +80,16 @@ public class Sample {
         this.segmentation = segmentation;
     }
 
-    public void update(String segmentation, double poissonScore, double similarityScore, double presenceScore) {
+    public double getLenghtPrior() {
+        return lenghtPrior;
+    }
+
+    public void update(String segmentation, double poissonScore, double similarityScore, double presenceScore, double lenghtPrior) {
         this.segmentation = segmentation;
         this.poissonScore = poissonScore;
         this.similarityScore = similarityScore;
         this.presenceScore = presenceScore;
+        this.lenghtPrior = lenghtPrior;
     }
 
     public Sample(String word, String segmentation, TrieST inTrie) {
@@ -99,7 +106,7 @@ public class Sample {
         */
     }
 
-    public ArrayList<Double> calculateScores(String segmentation, boolean presence) {
+    public ArrayList<Double> calculateScores(String segmentation, boolean presence, boolean lenght) {
         //0:poisson, 1:similarity, 2:presence
         ArrayList<Double> scores = new ArrayList<>();
 
@@ -113,11 +120,30 @@ public class Sample {
         if (presence)
             presenceScore = calculatePresenceScore(segments);
 
+        double lenghtScore = 0;
+        if (lenght)
+            lenghtScore = calculateLenghtScore(segmentation);
+
         scores.add(poissonScore);
         scores.add(similarityScore);
         scores.add(presenceScore);
-
+        scores.add(lenghtScore);
         return scores;
+    }
+
+    private double calculateLenghtScore(String segmentation) {
+        double lenghtScore = 0;
+        StringTokenizer tokenizer = new StringTokenizer(segmentation, "+");
+        int length = 0;
+        int c = 0;
+        while (tokenizer.hasMoreTokens()) {
+            length = length + tokenizer.nextToken().length();
+            c++;
+        }
+        lenghtScore = Math.pow(0.037, length / c);
+
+        return Math.log10(lenghtScore);
+
     }
 
     private double calculatePoisson(ArrayList<String> segments) {
@@ -129,6 +155,9 @@ public class Sample {
     }
 
     private double calculateSimilarity(ArrayList<String> segments) {
+
+        if (segments.size() == 1)
+            return Math.log10(0.000001);
 
         double similarityScore = 0;
 
@@ -150,7 +179,7 @@ public class Sample {
         double presenceScore = 0;
 
         for (String s : segments) {
-            System.out.println("presence segment: " + s);
+            //    System.out.println("presence segment: " + s);
             presenceScore = presenceScore + Math.log10(Constant.getNewCorpus().get(s) / Constant.getNewCorpusSize());
         }
 

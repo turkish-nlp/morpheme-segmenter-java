@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by ahmetu on 17.10.2016.
@@ -22,6 +20,7 @@ public class ManuelTest {
     private double gamma;
     private ArrayList<String> segments = new ArrayList<>();
     private HashMap<String, ArrayList<String>> segmentsForSimilarity = new HashMap<>();
+    private HashMap<String, ArrayList<String>> morphemesForLenght = new HashMap<>();
     private ArrayList<String> morphemes = new ArrayList<>();
     private String inFile;
     private TrieST inTrie;
@@ -80,6 +79,26 @@ public class ManuelTest {
         }
         System.out.println("Overall presence score: " + presenceScore);
 
+
+        System.out.println("--------------------------------------------------------");
+        System.out.println("Calculating overall length score..");
+
+        double lengthScore = 0;
+
+        for (String segmentation : morphemesForLenght.keySet()) {
+            ArrayList<String> ms = morphemesForLenght.get(segmentation);
+            int length = 0;
+            double localScore = 0;
+            for (String m : ms) {
+                length = length + m.length();
+            }
+            localScore = Math.log10(Math.pow(0.037, length / ms.size()));
+            lengthScore = lengthScore + localScore;
+        }
+
+        System.out.println("Overall length score: " + lengthScore);
+
+
         System.out.println("--------------------------------------------------------");
         System.out.println("Calculating overall DP score..");
         double dpScore = 0;
@@ -133,6 +152,14 @@ public class ManuelTest {
                 String morpheme = tokenizer.nextToken();
                 morphemes.add(morpheme);
             }
+
+            tokenizer = new StringTokenizer(line, separator);
+            ArrayList<String> ms = new ArrayList<>();
+            while (tokenizer.hasMoreTokens()) {
+                String morpheme = tokenizer.nextToken();
+                ms.add(morpheme);
+            }
+            morphemesForLenght.put(line, ms);
         }
         serializeToFile(st, "testTrie", "trieData");
         System.out.println("--------------------------------------------------------");
