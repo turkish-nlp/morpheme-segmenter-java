@@ -26,12 +26,23 @@ public class Operations {
             segments.add(segment);
         }
 
-        //poisson'da son segmenti kaldırmak için yaptım !!!!
         return segments;
     }
 
     public static double getPoissonScore(int branchingFactor, double lambda) {
         return (Math.pow(lambda, branchingFactor) * Math.exp(-1 * lambda)) / MathUtils.factorial(branchingFactor);
+    }
+
+    public static ArrayList<String> getPossibleBinarySplits(String word) {
+        ArrayList<String> splits = new ArrayList<>();
+
+        // splitPoint = 0;
+        splits.add(word);
+        for (int i = 1; i < (word.length() > 4 ? 5 : word.length()); i++) {
+            String split = word.substring(0, word.length() - i) + "+" + word.substring(word.length() - i);
+            splits.add(split);
+        }
+        return splits;
     }
 
     public static String biasedBinarySplit(String word) {
@@ -93,10 +104,8 @@ public class Operations {
     }
 
     public static void main(String[] args) {
-        int a = 100;
-        while (a > 0) {
-            System.out.println(biasedBinarySplit("lise"));
-            a--;
+        for (String s : getPossibleBinarySplits("ahmet")) {
+            System.out.println(s);
         }
     }
 }
