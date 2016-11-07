@@ -33,12 +33,21 @@ public class Operations {
         return (Math.pow(lambda, branchingFactor) * Math.exp(-1 * lambda)) / MathUtils.factorial(branchingFactor);
     }
 
-    public static ArrayList<String> getPossibleBinarySplits(String word) {
+    public static ArrayList<String> getPossibleBinarySplits(String word, int root) {
         ArrayList<String> splits = new ArrayList<>();
+
+        int k = 0;
+        if (word.length() >= root + 4) {
+            k = 5;
+        } else if (word.length() > root - 1) {
+            k = word.length() - root + 1;
+        } else {
+            k = word.length();
+        }
 
         // splitPoint = 0;
         splits.add(word);
-        for (int i = 1; i < (word.length() > 4 ? 5 : word.length()); i++) {
+        for (int i = 1; i < k; i++) {
             String split = word.substring(0, word.length() - i) + "+" + word.substring(word.length() - i);
             splits.add(split);
         }
@@ -104,7 +113,7 @@ public class Operations {
     }
 
     public static void main(String[] args) {
-        for (String s : getPossibleBinarySplits("ahmet")) {
+        for (String s : getPossibleBinarySplits("lisenini", 3)) {
             System.out.println(s);
         }
     }

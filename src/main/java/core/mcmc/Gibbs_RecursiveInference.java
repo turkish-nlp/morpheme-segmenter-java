@@ -84,7 +84,7 @@ public class Gibbs_RecursiveInference {
 
     private String recursiveSplit(Sample sample, String word) {
 
-        ArrayList<String> possibleSplits = Operations.getPossibleBinarySplits(word);
+        ArrayList<String> possibleSplits = Operations.getPossibleBinarySplits(word, 2);
         ArrayList<Double> scores = new ArrayList<>();
 
         double forNormalize = 0.0;
