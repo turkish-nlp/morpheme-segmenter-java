@@ -105,7 +105,7 @@ public class Constant {
             trieList.add(trie);
             searchedWordList.add(f.getName());
         }
-        generateBoundaryListforBaseline(1);
+        generateBoundaryListforBaseline(3);
     }
 
     private void createSmoothCorpus(Map<String, Double> corpus) {

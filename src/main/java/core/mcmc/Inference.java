@@ -81,13 +81,13 @@ public class Inference {
                     oldPriors.add(sample.getPresenceScore());
                     oldPriors.add(sample.getLenghtPrior());
                 }
-                String newSegmentation = Operations.randomSplitB(sample.getWord());
+                String newSegmentation = Operations.randomSplit(sample.getWord());
                 // if the random segmentation is equal to the current segmentation
                 if (newSegmentation.equalsIgnoreCase(sample.getSegmentation())) {
                     continue;
                 }
-                System.out.println("Current segmentation is: " + sample.getSegmentation());
-                System.out.println("Candidate Segmentation is: " + newSegmentation);
+                System.out.print("Current: " + sample.getSegmentation() + "  " );
+                System.out.print("Candidate: " + newSegmentation + " -> ");
 
                 int deleteNo = deleteFromTable(sample.getSegmentation());
                 sizeOfTable = sizeOfTable - deleteNo;
@@ -96,7 +96,7 @@ public class Inference {
                 ArrayList<Double> likelihoods = calculateLikelihoodsWithDP(sample.getSegmentation(), newSegmentation);
 
                 // print
-                System.out.println("Old priors are:  //0:poisson, 1:similarity, 2:presence");
+            /*    System.out.println("Old priors are:  //0:poisson, 1:similarity, 2:presence");
                 for (Double d : oldPriors)
                     System.out.print("-->" + d + " \t");
                 System.out.println("Old likelihood is : " + likelihoods.get(0));
@@ -107,7 +107,7 @@ public class Inference {
                 for (Double d : newPriors)
                     System.out.print("-->" + d + " \t");
                 System.out.println("New likelihood is : " + likelihoods.get(1));
-                // print
+                // print*/
 
                 double oldJointProbability = likelihoods.get(0) + oldPriors.get(0) + oldPriors.get(1) + oldPriors.get(2) + oldPriors.get(3);
                 double newJointProbability = likelihoods.get(1) + newPriors.get(0) + newPriors.get(1) + newPriors.get(2) + newPriors.get(3);
@@ -265,7 +265,7 @@ public class Inference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("newInferenceModel_randomSplitBurcu_" + noOfIteration + "_" + alpha), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("newInferenceModel_randomSplitAhmet_" + noOfIteration + "_" + alpha), yourBytes);
     }
 
 }
