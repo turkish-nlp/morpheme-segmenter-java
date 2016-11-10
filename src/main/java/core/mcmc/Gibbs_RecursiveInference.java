@@ -93,7 +93,7 @@ public class Gibbs_RecursiveInference {
             ArrayList<Double> priors = sample.calculateScores(split, false, false);  // 2nd parameter = presence, 3rd = length
 
             /// add $ to unsegmented words ????
-            if(!split.contains("\\+"))
+            if(!split.contains("+"))
                 dpScore = calculateLikelihoodsWithDP(split + "+$");
             else
                 dpScore = calculateLikelihoodsWithDP(split);
