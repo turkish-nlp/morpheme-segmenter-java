@@ -157,8 +157,8 @@ public class Sample {
     private double calculateSimilarity(ArrayList<String> segments) {
 
         if (segments.size() == 1)
-            return Math.log10(0.000001);
-
+         //   return Math.log10(0.000001); ??
+            return Math.log10(1);
         double similarityScore = 0;
 
         String w1 = segments.get(0);

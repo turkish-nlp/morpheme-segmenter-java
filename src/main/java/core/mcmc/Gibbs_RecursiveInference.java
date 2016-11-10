@@ -88,9 +88,15 @@ public class Gibbs_RecursiveInference {
         ArrayList<Double> scores = new ArrayList<>();
 
         double forNormalize = 0.0;
+        double dpScore = 0.0;
         for (String split : possibleSplits) {
             ArrayList<Double> priors = sample.calculateScores(split, false, false);  // 2nd parameter = presence, 3rd = length
-            double dpScore = calculateLikelihoodsWithDP(split);
+
+            /// add $ to unsegmented words ????
+            if(!split.contains("\\+"))
+                dpScore = calculateLikelihoodsWithDP(split + "+$");
+            else
+                dpScore = calculateLikelihoodsWithDP(split);
             double total = dpScore + priors.get(0) + priors.get(1);
          //   System.out.println(split + " " +  dpScore + " " + priors.get(0) + " " + priors.get(1));
             double nonlog_total = Math.pow(10, total);
