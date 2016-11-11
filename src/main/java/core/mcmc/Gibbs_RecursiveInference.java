@@ -69,7 +69,8 @@ public class Gibbs_RecursiveInference {
                 sizeOfTable = sizeOfTable - deleteNo;
 
                 System.out.println("\nSelected item: " + sample.getSegmentation());
-          //      System.out.println("---> Recursive operation started..");
+                //      System.out.println("---> Recursive operation started..");
+                System.out.println( "Split\t\t" +"Dp Score\t\t\t" + "poisson\t\t\t" + "similarity");
 
                 sample.setSegmentation("");
                 recursiveSplit(sample, sample.getWord());
@@ -93,17 +94,18 @@ public class Gibbs_RecursiveInference {
             ArrayList<Double> priors = sample.calculateScores(split, false, false);  // 2nd parameter = presence, 3rd = length
 
             /// add $ to unsegmented words ????
-            if(!split.contains("+"))
-                dpScore = calculateLikelihoodsWithDP(split + "+$");
-            else
+            if (!split.contains("+")) {
+                split = split + "+$";
+                dpScore = calculateLikelihoodsWithDP(split);
+            } else
                 dpScore = calculateLikelihoodsWithDP(split);
             double total = dpScore + priors.get(0) + priors.get(1);
-         //   System.out.println(split + " " +  dpScore + " " + priors.get(0) + " " + priors.get(1));
+            System.out.println(split + " " + dpScore + " " + priors.get(0) + " " + priors.get(1));
             double nonlog_total = Math.pow(10, total);
             forNormalize = forNormalize + nonlog_total;
             scores.add(nonlog_total);
         }
-     //   System.out.println("-------------");
+           System.out.println("-------------");
 
         ArrayList<Double> sortedScores = new ArrayList<>(scores);
         Collections.sort(sortedScores);
