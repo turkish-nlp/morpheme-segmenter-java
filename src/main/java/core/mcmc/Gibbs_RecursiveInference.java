@@ -29,7 +29,8 @@ public class Gibbs_RecursiveInference {
         String[] parameterList = parameters.split(" ");
         Inference i = new Inference(parameterList[0], parameterList[1], parameterList[2], Double.parseDouble(parameterList[3]), Integer.parseInt(parameterList[4]), Double.parseDouble(parameterList[5]), Double.parseDouble(parameterList[6]));
         */
-        Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]), Double.parseDouble(args[6]));
+
+       Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]), Double.parseDouble(args[6]));
 
         System.out.println("-----BASELINE SEGMENTATIONS-------");
         for (Sample s : i.samples) {
@@ -54,7 +55,6 @@ public class Gibbs_RecursiveInference {
         this.samples = new CopyOnWriteArrayList<>(baseline.getSampleList());
         this.alpha = alpha;
         this.gamma = gamma;
-
         for (String str : frequencyTable.keySet()) {
             sizeOfTable = sizeOfTable + frequencyTable.get(str);
         }
@@ -68,18 +68,18 @@ public class Gibbs_RecursiveInference {
                 int deleteNo = deleteFromTable(sample.getSegmentation());
                 sizeOfTable = sizeOfTable - deleteNo;
 
-                System.out.println("\nSelected item: " + sample.getSegmentation());
-                //      System.out.println("---> Recursive operation started..");
-                System.out.println( "Split\t\t" +"Dp Score\t\t\t" + "poisson\t\t\t" + "similarity");
+                System.out.print("Selected item: " + sample.getSegmentation() + "     ");
+                //            System.out.println("---> Recursive operation started..");
+                //     System.out.printf("%s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence");
+                //       System.out.println();
 
                 sample.setSegmentation("");
                 recursiveSplit(sample, sample.getWord());
 
-                System.out.println("---> Selected segmentation: " + sample.getSegmentation());
+                System.out.println("Selected segmentation: " + sample.getSegmentation());
             }
             noOfIteration--;
         }
-
         saveModel();
     }
 
@@ -91,21 +91,22 @@ public class Gibbs_RecursiveInference {
         double forNormalize = 0.0;
         double dpScore = 0.0;
         for (String split : possibleSplits) {
-            ArrayList<Double> priors = sample.calculateScores(split, false, false);  // 2nd parameter = presence, 3rd = length
+            ArrayList<Double> priors = sample.calculateScores(split, true, false);  // 2nd parameter = presence, 3rd = length
 
             /// add $ to unsegmented words ????
             if (!split.contains("+")) {
-                split = split + "+$";
+              //  split = split + "+$";
                 dpScore = calculateLikelihoodsWithDP(split);
             } else
                 dpScore = calculateLikelihoodsWithDP(split);
-            double total = dpScore + priors.get(0) + priors.get(1);
-            System.out.println(split + " " + dpScore + " " + priors.get(0) + " " + priors.get(1));
+            double total = dpScore + priors.get(0) + priors.get(1)+ priors.get(2);
+            //   System.out.printf("%s%13f%13f%13f%13f", split, dpScore , priors.get(0), priors.get(1),  priors.get(2));
+            //      System.out.println();
             double nonlog_total = Math.pow(10, total);
             forNormalize = forNormalize + nonlog_total;
             scores.add(nonlog_total);
         }
-           System.out.println("-------------");
+     //      System.out.println("-------------");
 
         ArrayList<Double> sortedScores = new ArrayList<>(scores);
         Collections.sort(sortedScores);
