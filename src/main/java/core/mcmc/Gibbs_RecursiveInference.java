@@ -30,7 +30,7 @@ public class Gibbs_RecursiveInference {
         Inference i = new Inference(parameterList[0], parameterList[1], parameterList[2], Double.parseDouble(parameterList[3]), Integer.parseInt(parameterList[4]), Double.parseDouble(parameterList[5]), Double.parseDouble(parameterList[6]));
         */
 
-       Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]), Double.parseDouble(args[6]));
+        Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]), Double.parseDouble(args[6]));
 
         System.out.println("-----BASELINE SEGMENTATIONS-------");
         for (Sample s : i.samples) {
@@ -94,19 +94,19 @@ public class Gibbs_RecursiveInference {
             ArrayList<Double> priors = sample.calculateScores(split, true, false);  // 2nd parameter = presence, 3rd = length
 
             /// add $ to unsegmented words ????
-            if (!split.contains("+")) {
-              //  split = split + "+$";
-                dpScore = calculateLikelihoodsWithDP(split);
-            } else
-                dpScore = calculateLikelihoodsWithDP(split);
-            double total = dpScore + priors.get(0) + priors.get(1)+ priors.get(2);
+            // if (!split.contains("+")) {
+            //  split = split + "+$";
+            //  dpScore = calculateLikelihoodsWithDP(split);
+            // } else
+            dpScore = calculateLikelihoodsWithDP(split);
+            double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2);
             //   System.out.printf("%s%13f%13f%13f%13f", split, dpScore , priors.get(0), priors.get(1),  priors.get(2));
             //      System.out.println();
             double nonlog_total = Math.pow(10, total);
             forNormalize = forNormalize + nonlog_total;
             scores.add(nonlog_total);
         }
-     //      System.out.println("-------------");
+        //      System.out.println("-------------");
 
         ArrayList<Double> sortedScores = new ArrayList<>(scores);
         Collections.sort(sortedScores);
@@ -189,6 +189,82 @@ public class Gibbs_RecursiveInference {
         deleteFromTable(newSegmentation);
 
         return newLikelihood;
+    }
+
+    private Double calculateLikelihoodsWithDPForOneSplit(String newSegmentation, Map<String, Integer> frequencyTable) {
+
+        int size = 0;
+
+        for (String str : frequencyTable.keySet()) {
+            size = size + frequencyTable.get(str);
+        }
+
+        double newLikelihood = 0;
+        StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
+        while (newSegments.hasMoreTokens()) {
+            String morpheme = newSegments.nextToken();
+            if (frequencyTable.containsKey(morpheme)) {
+                if (frequencyTable.get(morpheme) > 0) {
+                    newLikelihood = newLikelihood + Math.log10(frequencyTable.get(morpheme) / (size + alpha));
+                    frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
+                    size++;
+                } else {
+                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
+                    frequencyTable.put(morpheme, 1);
+                    size++;
+                }
+            } else {
+                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
+                frequencyTable.put(morpheme, 1);
+                size++;
+            }
+        }
+        // deleteFromTable(newSegmentation);
+
+        return newLikelihood;
+    }
+
+    private double leftRecursion(Sample sample, String left, double value, int heuristic, Map<String, Integer> localFrequencyTable, boolean first) {
+        double total = 0;
+        if (left.length() == 1) {
+            return total;
+        } else {
+            int k = 0;
+            if (left.length() >= heuristic + 4) {
+                k = 5;
+            } else if (left.length() > heuristic - 1) {
+                k = left.length() - heuristic + 1;
+            } else {
+                k = left.length();
+            }
+
+            Map<String, Integer> inscopeLocalFrequencyTable;
+
+            // for unsegmented
+            if (first) {
+                inscopeLocalFrequencyTable = localFrequencyTable;
+                total = total + calculateTotalScoreForOneSplit(sample, left, inscopeLocalFrequencyTable);
+            }
+
+            //for other split
+            for (int i = 1; i < k; i++) {
+                String split = left.substring(0, left.length() - i) + "+" + left.substring(left.length() - i);
+
+                inscopeLocalFrequencyTable = localFrequencyTable;
+                total = total + calculateTotalScoreForOneSplit(sample, split, inscopeLocalFrequencyTable);
+                leftRecursion(sample, left.substring(0, left.length() - i), )
+            }
+        }
+        return total;
+    }
+
+    private double calculateTotalScoreForOneSplit(Sample sample, String split, Map<String, Integer> localFrequencyTable) {
+
+        ArrayList<Double> priors = sample.calculateScores(split, true, false);  // 2nd parameter = presence, 3rd = length
+        double dpScore = calculateLikelihoodsWithDPForOneSplit(split, localFrequencyTable);
+        double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2);
+
+        return total;
     }
 
     private boolean isAccepted(double newJointProbability, double oldJointProbability) {

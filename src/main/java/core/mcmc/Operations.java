@@ -113,7 +113,7 @@ public class Operations {
     }
 
     public static void main(String[] args) {
-        for (String s : getPossibleBinarySplits("lisenini", 3)) {
+        for (String s : getPossibleBinarySplits("l", 3)) {
             System.out.println(s);
         }
     }
