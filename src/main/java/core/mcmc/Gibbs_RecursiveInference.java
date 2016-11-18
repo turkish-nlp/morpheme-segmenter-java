@@ -19,18 +19,41 @@ public class Gibbs_RecursiveInference {
     private int sizeOfTable = 0;
     private double alpha;
     private double gamma;
+    private String featureList = "";
+    static double SimUnsegmented = 0;
+    private static boolean[] featuresBooleanList = {true,true,true,false}; //0:poisson, 1:similarity, 2:presence, 3: length
+    private String featString = "";
+
+    public String generateFeatureString()
+    {
+        if(featuresBooleanList[0] == true)
+            featString = featString + "_Pois";
+        if(featuresBooleanList[1] == true)
+            featString = featString + "_Sim";
+        if(featuresBooleanList[2] == true)
+            featString = featString + "_Pres";
+        if(featuresBooleanList[3] == true)
+            featString = featString + "_Len";
+
+        return featString;
+    }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        /*
-        System.out.println("Enter the parameters in the following order: triesDir, vectorDir, wordListDir, lambda, noOfIteration, alpha, gamma");
-        Scanner scan = new Scanner(System.in);
-        String parameters = scan.nextLine();
-        String[] parameterList = parameters.split(" ");
-        Inference i = new Inference(parameterList[0], parameterList[1], parameterList[2], Double.parseDouble(parameterList[3]), Integer.parseInt(parameterList[4]), Double.parseDouble(parameterList[5]), Double.parseDouble(parameterList[6]));
-        */
 
         Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]), Double.parseDouble(args[6]));
+        System.out.println("//0:poisson, 1:similarity, 2:presence, 3: length");
+        Scanner scan = new Scanner(System.in);
+        String str = scan.nextLine();
+        String[] bArray = str.split(" ");
+        int index = 0;
+        for(String b: bArray)
+        {
+            featuresBooleanList[index] = Boolean.valueOf(b);
+            index++;
+        }
+        SimUnsegmented = Sample.SimUnsegmented;
+        i.featString = i.generateFeatureString();
 
         System.out.println("-----BASELINE SEGMENTATIONS-------");
         for (Sample s : i.samples) {
@@ -91,8 +114,8 @@ public class Gibbs_RecursiveInference {
         double forNormalize = 0.0;
         double dpScore = 0.0;
         for (String split : possibleSplits) {
-            ArrayList<Double> priors = sample.calculateScores(split, true, false);  // 2nd parameter = presence, 3rd = length
-
+            ArrayList<Double> priors = sample.calculateScores(split, featuresBooleanList);  // //0:poisson, 1:similarity, 2:presence, 3: length
+            featureList = Sample.featureList;
             /// add $ to unsegmented words ????
             // if (!split.contains("+")) {
             //  split = split + "+$";
@@ -100,6 +123,7 @@ public class Gibbs_RecursiveInference {
             // } else
             dpScore = calculateLikelihoodsWithDP(split);
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2);
+
             //   System.out.printf("%s%13f%13f%13f%13f", split, dpScore , priors.get(0), priors.get(1),  priors.get(2));
             //      System.out.println();
             double nonlog_total = Math.pow(10, total);
@@ -252,7 +276,7 @@ public class Gibbs_RecursiveInference {
 
                 inscopeLocalFrequencyTable = localFrequencyTable;
                 total = total + calculateTotalScoreForOneSplit(sample, split, inscopeLocalFrequencyTable);
-                leftRecursion(sample, left.substring(0, left.length() - i), )
+                //   leftRecursion(sample, left.substring(0, left.length() - i), );
             }
         }
         return total;
@@ -260,7 +284,7 @@ public class Gibbs_RecursiveInference {
 
     private double calculateTotalScoreForOneSplit(Sample sample, String split, Map<String, Integer> localFrequencyTable) {
 
-        ArrayList<Double> priors = sample.calculateScores(split, true, false);  // 2nd parameter = presence, 3rd = length
+        ArrayList<Double> priors = sample.calculateScores(split, featuresBooleanList);   // //0:poisson, 1:similarity, 2:presence, 3: length
         double dpScore = calculateLikelihoodsWithDPForOneSplit(split, localFrequencyTable);
         double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2);
 
@@ -339,7 +363,7 @@ public class Gibbs_RecursiveInference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("RecursiveInferenceModel_" + noOfIteration + "_" + alpha), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("gibbs-NOI_" + noOfIteration + "-A_" + alpha+ "-G_" + gamma + "-Feat"+featString+"-base_"+ "-SimUNS_"+SimUnsegmented), yourBytes);
     }
 
 }

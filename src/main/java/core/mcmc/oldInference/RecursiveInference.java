@@ -1,5 +1,9 @@
-package core.mcmc;
+package core.mcmc.oldInference;
 
+import core.mcmc.Constant;
+import core.mcmc.Operations;
+import core.mcmc.Sample;
+import core.mcmc.SerializableModel;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -18,6 +22,7 @@ public class RecursiveInference {
     private int sizeOfTable = 0;
     private double alpha;
     private double gamma;
+    private boolean[] featuresBooleanList = {true,true,true,false}; //0:poisson, 1:similarity, 2:presence, 3: length
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
@@ -103,8 +108,8 @@ public class RecursiveInference {
 
         System.out.println("---> proposed segmentetation: " + newSegmentation);
 
-        ArrayList<Double> newPriors = sample.calculateScores(newSegmentation, false, false);
-        ArrayList<Double> oldPriors = sample.calculateScores(word, false, false);
+        ArrayList<Double> newPriors = sample.calculateScores(newSegmentation, featuresBooleanList);
+        ArrayList<Double> oldPriors = sample.calculateScores(word, featuresBooleanList);
 
         ArrayList<Double> likelihoods = calculateLikelihoodsWithDP(word, newSegmentation);
 

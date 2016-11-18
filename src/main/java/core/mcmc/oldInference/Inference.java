@@ -1,12 +1,13 @@
-package core.mcmc;
+package core.mcmc.oldInference;
 
-import org.apache.commons.collections.map.HashedMap;
+import core.mcmc.Constant;
+import core.mcmc.Operations;
+import core.mcmc.Sample;
+import core.mcmc.SerializableModel;
 import org.apache.commons.io.FileUtils;
 
-import java.awt.*;
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -21,6 +22,7 @@ public class Inference {
     private int sizeOfTable = 0;
     private double alpha;
     private double gamma;
+    private boolean[] featuresBooleanList = {true,true,true,false}; //0:poisson, 1:similarity, 2:presence, 3: length
 
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
@@ -71,7 +73,7 @@ public class Inference {
 
                 ArrayList<Double> oldPriors;
                 if (!sample.isCalculated()) {
-                    oldPriors = sample.calculateScores(sample.getSegmentation(), false, true);
+                    oldPriors = sample.calculateScores(sample.getSegmentation(), featuresBooleanList);
                     sample.update(sample.getSegmentation(), oldPriors.get(0), oldPriors.get(1), oldPriors.get(2), oldPriors.get(3));
                     sample.setCalculated(true);
                 } else {
@@ -92,7 +94,7 @@ public class Inference {
                 int deleteNo = deleteFromTable(sample.getSegmentation());
                 sizeOfTable = sizeOfTable - deleteNo;
 
-                ArrayList<Double> newPriors = sample.calculateScores(newSegmentation, false, true);
+                ArrayList<Double> newPriors = sample.calculateScores(newSegmentation, featuresBooleanList);
                 ArrayList<Double> likelihoods = calculateLikelihoodsWithDP(sample.getSegmentation(), newSegmentation);
 
                 // print

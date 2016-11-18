@@ -155,7 +155,7 @@ public class SegmentationGenerator {
 
             int freq = Integer.parseInt(st.nextToken());
             String word = st.nextToken();
-            finalSegmentation.put(word, "err");
+            finalSegmentation.put(word, word);
         }
     }
 

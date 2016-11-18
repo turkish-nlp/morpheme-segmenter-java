@@ -1,5 +1,7 @@
-package core.mcmc;
+package core.mcmc.oldInference;
 
+import core.mcmc.Constant;
+import core.mcmc.Operations;
 import org.apache.commons.io.FileUtils;
 import tries.TrieST;
 

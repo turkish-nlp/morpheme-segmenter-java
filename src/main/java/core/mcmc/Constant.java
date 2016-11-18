@@ -26,6 +26,7 @@ public class Constant {
     private Map<TrieST, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
     private Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
     private CopyOnWriteArrayList<Sample> sampleList = new CopyOnWriteArrayList<>();
+    private int baselineBranchNo = 1;
 
     public Map<TrieST, Set<String>> getBaselineBoundaries() {
         return baselineBoundaries;
@@ -105,7 +106,8 @@ public class Constant {
             trieList.add(trie);
             searchedWordList.add(f.getName());
         }
-        generateBoundaryListforBaseline(1);
+        System.out.println("!!! baselineBranchNo: " + baselineBranchNo);
+        generateBoundaryListforBaseline(baselineBranchNo);
     }
 
     private void createSmoothCorpus(Map<String, Double> corpus) {

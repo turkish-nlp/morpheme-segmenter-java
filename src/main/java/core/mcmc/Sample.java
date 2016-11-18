@@ -19,6 +19,9 @@ public class Sample {
     private double presenceScore;
     private double lenghtPrior;
     private boolean isCalculated;
+    static double SimUnsegmented = Math.log10(1);
+    static String featureList = "";
+
 
     public String toString() {
         return word + " " + segmentation;
@@ -106,28 +109,39 @@ public class Sample {
         */
     }
 
-    public ArrayList<Double> calculateScores(String segmentation, boolean presence, boolean lenght) {
+    public ArrayList<Double> calculateScores(String segmentation, boolean[] features) {
         //0:poisson, 1:similarity, 2:presence
         ArrayList<Double> scores = new ArrayList<>();
+        boolean poisson = features[0];
+        boolean sim = features[1];
+        boolean presence = features[2];
+        boolean length = features[3];
 
         ArrayList<String> segments = Operations.getSegments(segmentation);
         ArrayList<String> segmentsForPoisson = new ArrayList<>(segments);
         if (segmentsForPoisson.size() > 1)
             segmentsForPoisson.remove(segmentsForPoisson.size() - 1);
-        double poissonScore = calculatePoisson(segmentsForPoisson);
-        double similarityScore = calculateSimilarity(segments);
+
+        double poissonScore = 0;
+        if (poisson)
+            poissonScore = calculatePoisson(segmentsForPoisson);
+
+        double similarityScore = 0;
+        if (sim)
+            similarityScore = calculateSimilarity(segments);
+
         double presenceScore = 0;
         if (presence)
             presenceScore = calculatePresenceScore(segments);
 
-        double lenghtScore = 0;
-        if (lenght)
-            lenghtScore = calculateLenghtScore(segmentation);
+        double lengthScore = 0;
+        if (length)
+            lengthScore = calculateLenghtScore(segmentation);
 
         scores.add(poissonScore);
         scores.add(similarityScore);
         scores.add(presenceScore);
-        scores.add(lenghtScore);
+        scores.add(lengthScore);
         return scores;
     }
 
@@ -156,9 +170,10 @@ public class Sample {
 
     private double calculateSimilarity(ArrayList<String> segments) {
 
-        if (segments.size() == 1)
-           return Math.log10(0.000001); //??
-        //    return Math.log10(1);
+        if (segments.size() == 1) {
+            //   return Math.log10(0.000001); //??
+            return SimUnsegmented;
+        }
         double similarityScore = 0;
 
         String w1 = segments.get(0);
