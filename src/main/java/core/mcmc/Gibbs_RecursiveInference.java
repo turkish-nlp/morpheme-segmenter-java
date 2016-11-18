@@ -16,12 +16,14 @@ public class Gibbs_RecursiveInference {
     private Map<String, Integer> frequencyTable = new ConcurrentHashMap<>();
     private CopyOnWriteArrayList<Sample> samples = new CopyOnWriteArrayList<>();
     private int noOfIteration;
+    private int noOfIterationCopy;
+
     private int sizeOfTable = 0;
     private double alpha;
     private double gamma;
     private String featureList = "";
     static double SimUnsegmented = 0;
-    private static boolean[] featuresBooleanList = {true,true,true,false}; //0:poisson, 1:similarity, 2:presence, 3: length
+    private static boolean[] featuresBooleanList = new boolean[4]; //0:poisson, 1:similarity, 2:presence, 3: length
     private String featString = "";
 
     public String generateFeatureString()
@@ -41,17 +43,10 @@ public class Gibbs_RecursiveInference {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
 
-        Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]), Double.parseDouble(args[6]));
+        Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]),
+                Double.parseDouble(args[6]), Boolean.valueOf(args[7]),  Boolean.valueOf(args[8]),  Boolean.valueOf(args[9]),  Boolean.valueOf(args[10]));
         System.out.println("//0:poisson, 1:similarity, 2:presence, 3: length");
-        Scanner scan = new Scanner(System.in);
-        String str = scan.nextLine();
-        String[] bArray = str.split(" ");
-        int index = 0;
-        for(String b: bArray)
-        {
-            featuresBooleanList[index] = Boolean.valueOf(b);
-            index++;
-        }
+
         SimUnsegmented = Sample.SimUnsegmented;
         i.featString = i.generateFeatureString();
 
@@ -60,7 +55,6 @@ public class Gibbs_RecursiveInference {
             System.out.println(s.getWord() + "--> " + s.getSegmentation());
         }
         System.out.println("-----END OF BASELINE SEGMENTATIONS-------");
-
         System.out.println("-----SAMPLING-------");
         i.doSampling();
         System.out.println("-----END OF SAMPLING-------");
@@ -71,9 +65,11 @@ public class Gibbs_RecursiveInference {
         }
     }
 
-    public Gibbs_RecursiveInference(String triesDir, String vectorDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma) throws IOException, ClassNotFoundException {
+    public Gibbs_RecursiveInference(String triesDir, String vectorDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma, boolean poisson,
+                                    boolean sim, boolean presence, boolean length) throws IOException, ClassNotFoundException {
         Constant baseline = new Constant(triesDir, vectorDir, wordListDir, lambda);
         this.noOfIteration = noOfIteration;
+        this.noOfIterationCopy = noOfIteration;
         this.frequencyTable = new ConcurrentHashMap<>(baseline.getMorphemeFreq());
         this.samples = new CopyOnWriteArrayList<>(baseline.getSampleList());
         this.alpha = alpha;
@@ -81,9 +77,14 @@ public class Gibbs_RecursiveInference {
         for (String str : frequencyTable.keySet()) {
             sizeOfTable = sizeOfTable + frequencyTable.get(str);
         }
+        featuresBooleanList[0] = poisson;
+        featuresBooleanList[1] = sim;
+        featuresBooleanList[2] = presence;
+        featuresBooleanList[3] = length;
     }
 
     public void doSampling() throws IOException {
+
         while (noOfIteration > 0) {
             Collections.shuffle(samples);
             for (Sample sample : samples) {
@@ -363,7 +364,7 @@ public class Gibbs_RecursiveInference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("gibbs-NOI_" + noOfIteration + "-A_" + alpha+ "-G_" + gamma + "-Feat"+featString+"-base_"+ "-SimUNS_"+SimUnsegmented), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("gibbsMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha+ "-G_" + gamma + "-Feat"+featString+"-base_"+ "-SimUNS_"+SimUnsegmented), yourBytes);
     }
 
 }
