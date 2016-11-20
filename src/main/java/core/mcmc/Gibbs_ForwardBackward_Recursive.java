@@ -3,7 +3,6 @@ package core.mcmc;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -11,7 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Created by Murathan on 29-Sep-16.
  */
-public class Gibbs_RecursiveInference {
+public class Gibbs_ForwardBackward_Recursive {
 
     private Map<String, Integer> frequencyTable = new ConcurrentHashMap<>();
     private CopyOnWriteArrayList<Sample> samples = new CopyOnWriteArrayList<>();
@@ -43,7 +42,7 @@ public class Gibbs_RecursiveInference {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
 
-        Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]),
+        Gibbs_ForwardBackward_Recursive i = new Gibbs_ForwardBackward_Recursive(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]),
                 Double.parseDouble(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]), Boolean.valueOf(args[10]));
 
         SimUnsegmented = Sample.SimUnsegmented;
@@ -64,8 +63,8 @@ public class Gibbs_RecursiveInference {
         }
     }
 
-    public Gibbs_RecursiveInference(String triesDir, String vectorDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma, boolean poisson,
-                                    boolean sim, boolean presence, boolean length) throws IOException, ClassNotFoundException {
+    public Gibbs_ForwardBackward_Recursive(String triesDir, String vectorDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma, boolean poisson,
+                                           boolean sim, boolean presence, boolean length) throws IOException, ClassNotFoundException {
         Constant baseline = new Constant(triesDir, vectorDir, wordListDir, lambda);
         this.noOfIteration = noOfIteration;
         this.noOfIterationCopy = noOfIteration;
@@ -213,6 +212,92 @@ public class Gibbs_RecursiveInference {
         deleteFromTable(newSegmentation);
 
         return newLikelihood;
+    }
+
+    private Double calculateLikelihoodsWithDPForOneSplit(String newSegmentation, Map<String, Integer> frequencyTable) {
+
+        int size = 0;
+
+        for (String str : frequencyTable.keySet()) {
+            size = size + frequencyTable.get(str);
+        }
+
+        double newLikelihood = 0;
+        StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
+        while (newSegments.hasMoreTokens()) {
+            String morpheme = newSegments.nextToken();
+            if (frequencyTable.containsKey(morpheme)) {
+                if (frequencyTable.get(morpheme) > 0) {
+                    newLikelihood = newLikelihood + Math.log10(frequencyTable.get(morpheme) / (size + alpha));
+                    frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
+                    size++;
+                } else {
+                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
+                    frequencyTable.put(morpheme, 1);
+                    size++;
+                }
+            } else {
+                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
+                frequencyTable.put(morpheme, 1);
+                size++;
+            }
+        }
+        deleteFromTable(newSegmentation);
+
+        return newLikelihood;
+    }
+
+    private double leftRecursion(Sample sample, String left, int heuristic, Map<String, Integer> localFrequencyTable) {
+        double total = 0;
+        if (left.length() == heuristic) {
+            total = 1;
+            return total;
+        } else {
+            int k = 0;
+            if (left.length() >= heuristic + 4) {
+                k = 5;
+            } else if (left.length() > heuristic - 1) {
+                k = left.length() - heuristic + 1;
+            } else {
+                k = left.length();
+            }
+
+            Map<String, Integer> inscopeLocalFrequencyTable;
+
+            // for unsegmented
+            /*
+            if (first) {
+                inscopeLocalFrequencyTable = localFrequencyTable;
+                total = total + calculateTotalScoreForOneSplit(sample, left, inscopeLocalFrequencyTable);
+            }
+            */
+
+            //for other split
+            for (int i = 1; i < k; i++) {
+                String split = left.substring(0, left.length() - i) + "+" + left.substring(left.length() - i);
+
+                inscopeLocalFrequencyTable = localFrequencyTable;
+                double localValue = calculateTotalScoreForOneSplit(sample, split, inscopeLocalFrequencyTable);
+
+                if (inscopeLocalFrequencyTable.containsKey(left.substring(left.length() - i)))
+                    inscopeLocalFrequencyTable.put(left.substring(left.length() - i), inscopeLocalFrequencyTable.get(left.substring(left.length() - i)) + 1);
+                else
+                    inscopeLocalFrequencyTable.put(left.substring(left.length() - i), 1);
+
+                double innerValue = leftRecursion(sample, left.substring(0, left.length() - i), heuristic, inscopeLocalFrequencyTable);
+                total = total + localValue * innerValue;
+            }
+        }
+        return total;
+    }
+
+    private double calculateTotalScoreForOneSplit(Sample sample, String split, Map<String, Integer> localFrequencyTable) {
+
+        ArrayList<Double> priors = sample.calculateScores(split, featuresBooleanList);   // //0:poisson, 1:similarity, 2:presence, 3: length
+        double dpScore = calculateLikelihoodsWithDPForOneSplit(split, localFrequencyTable);
+        double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2);
+
+        return total;
     }
 
     private boolean isAccepted(double newJointProbability, double oldJointProbability) {
