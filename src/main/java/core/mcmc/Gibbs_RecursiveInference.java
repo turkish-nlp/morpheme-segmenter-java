@@ -25,6 +25,7 @@ public class Gibbs_RecursiveInference {
     static double SimUnsegmented = 0;
     private static boolean[] featuresBooleanList = new boolean[4]; //0:poisson, 1:similarity, 2:presence, 3: length
     private String featString = "";
+    private  int baselineBranchNo = Constant.baselineBranchNo;
 
     public String generateFeatureString()
     {
@@ -45,7 +46,6 @@ public class Gibbs_RecursiveInference {
 
         Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]),
                 Double.parseDouble(args[6]), Boolean.valueOf(args[7]),  Boolean.valueOf(args[8]),  Boolean.valueOf(args[9]),  Boolean.valueOf(args[10]));
-        System.out.println("//0:poisson, 1:similarity, 2:presence, 3: length");
 
         SimUnsegmented = Sample.SimUnsegmented;
         i.featString = i.generateFeatureString();
@@ -364,7 +364,7 @@ public class Gibbs_RecursiveInference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("gibbsMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha+ "-G_" + gamma + "-Feat"+featString+"-base_"+ "-SimUNS_"+SimUnsegmented), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("gibbsMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha+ "-G_" + gamma + "-Feat"+featString+"-base_" + baselineBranchNo + "-SimUNS_"+SimUnsegmented), yourBytes);
     }
 
 }
