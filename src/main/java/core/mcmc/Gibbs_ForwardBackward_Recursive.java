@@ -123,6 +123,9 @@ public class Gibbs_ForwardBackward_Recursive {
             dpScore = calculateLikelihoodsWithDP(split);
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2);
 
+            StringTokenizer stringTokenizer = new StringTokenizer(split, "+");
+            total = total + leftRecursion(sample, stringTokenizer.nextToken(), 2, this.frequencyTable);
+
             //   System.out.printf("%s%13f%13f%13f%13f", split, dpScore , priors.get(0), priors.get(1),  priors.get(2));
             //      System.out.println();
             double nonlog_total = Math.pow(10, total);
