@@ -23,10 +23,20 @@ public class Constant {
     private static List<TrieST> trieList = new ArrayList<>();
     private static List<String> searchedWordList = new ArrayList<>();
     private double laplaceCoefficient = 0.1;
+    private static double simUnsegmented = Math.log10(1);
+    private static int heristic = 2;
     private Map<TrieST, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
     private Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
     private CopyOnWriteArrayList<Sample> sampleList = new CopyOnWriteArrayList<>();
     static int baselineBranchNo = 1;
+
+    public static int getHeristic() {
+        return heristic;
+    }
+
+    public static double getSimUnsegmented() {
+        return simUnsegmented;
+    }
 
     public Map<TrieST, Set<String>> getBaselineBoundaries() {
         return baselineBoundaries;

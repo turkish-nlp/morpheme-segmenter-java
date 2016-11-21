@@ -19,9 +19,6 @@ public class Sample {
     private double presenceScore;
     private double lenghtPrior;
     private boolean isCalculated;
-    static double SimUnsegmented = Math.log10(1);
-    static String featureList = "";
-
 
     public String toString() {
         return word + " " + segmentation;
@@ -172,7 +169,7 @@ public class Sample {
 
         if (segments.size() == 1) {
             //   return Math.log10(0.000001); //??
-            return SimUnsegmented;
+            return Constant.getSimUnsegmented();
         }
         double similarityScore = 0;
 

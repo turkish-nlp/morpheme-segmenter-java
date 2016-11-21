@@ -20,8 +20,6 @@ public class Gibbs_ForwardBackward_Recursive {
     private int sizeOfTable = 0;
     private double alpha;
     private double gamma;
-    private String featureList = "";
-    static double SimUnsegmented = 0;
     private static boolean[] featuresBooleanList = new boolean[4]; //0:poisson, 1:similarity, 2:presence, 3: length
     private String featString = "";
     private int baselineBranchNo = Constant.baselineBranchNo;
@@ -45,7 +43,6 @@ public class Gibbs_ForwardBackward_Recursive {
         Gibbs_ForwardBackward_Recursive i = new Gibbs_ForwardBackward_Recursive(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]),
                 Double.parseDouble(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]), Boolean.valueOf(args[10]));
 
-        SimUnsegmented = Sample.SimUnsegmented;
         i.featString = i.generateFeatureString();
 
         System.out.println("-----BASELINE SEGMENTATIONS-------");
@@ -107,14 +104,13 @@ public class Gibbs_ForwardBackward_Recursive {
 
     private String recursiveSplit(Sample sample, String word) {
 
-        ArrayList<String> possibleSplits = Operations.getPossibleBinarySplits(word, 2);
+        ArrayList<String> possibleSplits = Operations.getPossibleBinarySplits(word, Constant.getHeristic());
         ArrayList<Double> scores = new ArrayList<>();
 
         double forNormalize = 0.0;
         double dpScore = 0.0;
         for (String split : possibleSplits) {
             ArrayList<Double> priors = sample.calculateScores(split, featuresBooleanList);  // //0:poisson, 1:similarity, 2:presence, 3: length
-            featureList = Sample.featureList;
             /// add $ to unsegmented words ????
             // if (!split.contains("+")) {
             //  split = split + "+$";
@@ -123,12 +119,14 @@ public class Gibbs_ForwardBackward_Recursive {
             dpScore = calculateLikelihoodsWithDP(split);
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2);
 
+            double nonlog_total = Math.pow(10, total);
+
             StringTokenizer stringTokenizer = new StringTokenizer(split, "+");
-            total = total + leftRecursion(sample, stringTokenizer.nextToken(), 2, this.frequencyTable);
+            nonlog_total = nonlog_total * leftRecursion(sample, stringTokenizer.nextToken(), Constant.getHeristic(), this.frequencyTable);
 
             //   System.out.printf("%s%13f%13f%13f%13f", split, dpScore , priors.get(0), priors.get(1),  priors.get(2));
             //      System.out.println();
-            double nonlog_total = Math.pow(10, total);
+
             forNormalize = forNormalize + nonlog_total;
             scores.add(nonlog_total);
         }
@@ -300,7 +298,8 @@ public class Gibbs_ForwardBackward_Recursive {
         double dpScore = calculateLikelihoodsWithDPForOneSplit(split, localFrequencyTable);
         double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2);
 
-        return total;
+        return Math.pow(10, total);
+        //return total;
     }
 
     private boolean isAccepted(double newJointProbability, double oldJointProbability) {
@@ -375,7 +374,7 @@ public class Gibbs_ForwardBackward_Recursive {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("gibbsMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha + "-G_" + gamma + "-Feat" + featString + "-base_" + baselineBranchNo + "-SimUNS_" + SimUnsegmented), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("gibbsMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha + "-G_" + gamma + "-Feat" + featString + "-base_" + baselineBranchNo + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
     }
 
 }
