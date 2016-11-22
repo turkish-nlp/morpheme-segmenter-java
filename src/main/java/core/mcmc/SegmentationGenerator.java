@@ -50,31 +50,7 @@ public class SegmentationGenerator {
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-      /*  Set<String> affixes = new HashSet<>();
-        affixes.add("ki");
-        affixes.add("tap");
-        affixes.add("k");
-        affixes.add("i");
-        affixes.add("in");
-        affixes.add("ap");
-        //affixes.put("n", 1d);
-        affixes.add("t");
-        affixes.add("itap");
-        affixes.add("da");
-        affixes.add("n");
-        affixes.add("dan");
 
-
-        ArrayList<String> results = getPossibleSplits("kitapdan", affixes);
-
-        for (String s : results) {
-            System.out.println(s);
-        }
-
-        System.out.println(s.morphemeFreq.size());
-        for (String str : s.morphemeFreq.keySet()) {
-                System.out.println(str + "-->" + s.morphemeFreq.get(str));
-        }*/
         SegmentationGenerator s = new SegmentationGenerator(args[0], args[1], args[2]);
 
     }
@@ -117,7 +93,6 @@ public class SegmentationGenerator {
         }
     }
 
-
     public void deSerialize(String file) throws IOException, ClassNotFoundException {
 
         FileInputStream fis = new FileInputStream(new File(file));
@@ -143,7 +118,6 @@ public class SegmentationGenerator {
         });
     }
 
-
     public void readWords(String inputFile) throws IOException {
         BufferedReader reader = null;
         reader = new BufferedReader(new FileReader(inputFile));
@@ -155,7 +129,7 @@ public class SegmentationGenerator {
 
             int freq = Integer.parseInt(st.nextToken());
             String word = st.nextToken();
-            finalSegmentation.put(word, word);
+            finalSegmentation.put(word, "err");
         }
     }
 
@@ -254,3 +228,30 @@ public class SegmentationGenerator {
     }
 
 }
+
+
+ /*  Set<String> affixes = new HashSet<>();
+        affixes.add("ki");
+        affixes.add("tap");
+        affixes.add("k");
+        affixes.add("i");
+        affixes.add("in");
+        affixes.add("ap");
+        //affixes.put("n", 1d);
+        affixes.add("t");
+        affixes.add("itap");
+        affixes.add("da");
+        affixes.add("n");
+        affixes.add("dan");
+
+
+        ArrayList<String> results = getPossibleSplits("kitapdan", affixes);
+
+        for (String s : results) {
+            System.out.println(s);
+        }
+
+        System.out.println(s.morphemeFreq.size());
+        for (String str : s.morphemeFreq.keySet()) {
+                System.out.println(str + "-->" + s.morphemeFreq.get(str));
+        }*/

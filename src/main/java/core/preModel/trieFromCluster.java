@@ -72,7 +72,6 @@ public class trieFromCluster {
             }
         }
         serializeToFile(st, word);
-
     }
 
     private void serializeToFile(TrieST st, String word) throws IOException {

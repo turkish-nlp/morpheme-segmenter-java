@@ -82,13 +82,14 @@ public class Gibbs_ForwardBackward_Recursive {
     public void doSampling() throws IOException {
 
         while (noOfIteration > 0) {
+            System.out.println("Iter: " + noOfIteration);
             Collections.shuffle(samples);
             for (Sample sample : samples) {
 
                 int deleteNo = deleteFromTable(sample.getSegmentation());
                 sizeOfTable = sizeOfTable - deleteNo;
 
-                System.out.print("Selected item: " + sample.getSegmentation() + "     ");
+             //   System.out.print("Selected item: " + sample.getSegmentation() + "     ");
                 //            System.out.println("---> Recursive operation started..");
                 //     System.out.printf("%s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence");
                 //       System.out.println();
@@ -96,7 +97,7 @@ public class Gibbs_ForwardBackward_Recursive {
                 sample.setSegmentation("");
                 recursiveSplit(sample, sample.getWord());
 
-                System.out.println("Selected segmentation: " + sample.getSegmentation());
+            //  System.out.println("Selected segmentation: " + sample.getSegmentation());
             }
             noOfIteration--;
         }

@@ -32,7 +32,8 @@ public class Observe {
 
     public void printWords(TrieST trie) {
         for (String s : trie.getWordList().keySet()) {
-            System.out.println(s);
+            if(s.contains("$"))
+                System.out.println(s);
         }
     }
 
