@@ -27,17 +27,17 @@ public class ManuelTest {
     private String inFile;
     private TrieST inTrie;
 
-    public ManuelTest(String inputFile, String triesDir, String vectorDir, String wordListDir, double lambda, double alpha, double gamma) throws IOException, ClassNotFoundException {
+    public ManuelTest(String inputFile, String triesDir, String vectorDir, String wordListDir, double lambda, double alpha, double gamma, int baselineBranchNoArg) throws IOException, ClassNotFoundException {
         this.alpha = alpha;
         this.gamma = gamma;
         inFile = inputFile;
         readSegmentations(triesDir);
-        Constant baseline = new Constant(triesDir, vectorDir, wordListDir, lambda);
+        Constant baseline = new Constant(triesDir, vectorDir, wordListDir, lambda, baselineBranchNoArg);
         inTrie = baseline.getBaselineBoundaries().keySet().iterator().next();
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        ManuelTest mt = new ManuelTest(args[0], args[1], args[2], args[3], Double.parseDouble(args[4]), Double.parseDouble(args[5]), Double.parseDouble(args[6]));
+        ManuelTest mt = new ManuelTest(args[0], args[1], args[2], args[3], Double.parseDouble(args[4]), Double.parseDouble(args[5]), Double.parseDouble(args[6]), Integer.parseInt(args[7]));
         mt.calculateJointProbability();
     }
 

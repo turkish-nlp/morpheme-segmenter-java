@@ -52,7 +52,7 @@ public class RecursiveInference {
     }
 
     public RecursiveInference(String triesDir, String vectorDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma) throws IOException, ClassNotFoundException {
-        Constant baseline = new Constant(triesDir, vectorDir, wordListDir, lambda);
+        Constant baseline = new Constant(triesDir, vectorDir, wordListDir, lambda, 1); /// !!!!!!!!!!!!!!!!!!!!!!!!! BASELINEBRANCHNO
         this.noOfIteration = noOfIteration;
         this.frequencyTable = new ConcurrentHashMap<>(baseline.getMorphemeFreq());
         this.samples = new CopyOnWriteArrayList<>(baseline.getSampleList());

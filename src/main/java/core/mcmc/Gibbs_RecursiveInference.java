@@ -23,7 +23,7 @@ public class Gibbs_RecursiveInference {
     private double gamma;
     private static boolean[] featuresBooleanList = new boolean[4]; //0:poisson, 1:similarity, 2:presence, 3: length
     private String featString = "";
-    private int baselineBranchNo = Constant.baselineBranchNo;
+    private int baselineBranchNo;
 
     public String generateFeatureString() {
         if (featuresBooleanList[0] == true)
@@ -42,7 +42,7 @@ public class Gibbs_RecursiveInference {
 
 
         Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]),
-                Double.parseDouble(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]), Boolean.valueOf(args[10]));
+                Double.parseDouble(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]), Boolean.valueOf(args[10]), Integer.parseInt(args[11]));
 
         i.featString = i.generateFeatureString();
 
@@ -62,8 +62,9 @@ public class Gibbs_RecursiveInference {
     }
 
     public Gibbs_RecursiveInference(String triesDir, String vectorDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma, boolean poisson,
-                                    boolean sim, boolean presence, boolean length) throws IOException, ClassNotFoundException {
-        Constant baseline = new Constant(triesDir, vectorDir, wordListDir, lambda);
+                                    boolean sim, boolean presence, boolean length, int baselineBranchNoArg) throws IOException, ClassNotFoundException {
+        Constant baseline = new Constant(triesDir, vectorDir, wordListDir, lambda, baselineBranchNoArg);
+        this.baselineBranchNo = baselineBranchNoArg;
         this.noOfIteration = noOfIteration;
         this.noOfIterationCopy = noOfIteration;
         this.frequencyTable = new ConcurrentHashMap<>(baseline.getMorphemeFreq());
@@ -82,21 +83,22 @@ public class Gibbs_RecursiveInference {
     public void doSampling() throws IOException {
 
         while (noOfIteration > 0) {
+            System.out.println("Iter: " + noOfIteration);
+
             Collections.shuffle(samples);
             for (Sample sample : samples) {
 
                 int deleteNo = deleteFromTable(sample.getSegmentation());
                 sizeOfTable = sizeOfTable - deleteNo;
-
-                System.out.print("Selected item: " + sample.getSegmentation() + "     ");
-                //            System.out.println("---> Recursive operation started..");
-                //     System.out.printf("%s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence");
-                //       System.out.println();
+                //      System.out.print("Selected item: " + sample.getSegmentation() + "     ");
+                //         System.out.println("---> Recursive operation started..");
+                //          System.out.printf("%s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence");
+                //         System.out.println();
 
                 sample.setSegmentation("");
                 recursiveSplit(sample, sample.getWord());
 
-                System.out.println("Selected segmentation: " + sample.getSegmentation());
+                //         System.out.println("Selected segmentation: " + sample.getSegmentation());
             }
             noOfIteration--;
         }
@@ -118,20 +120,22 @@ public class Gibbs_RecursiveInference {
             //  dpScore = calculateLikelihoodsWithDP(split);
             // } else
             dpScore = calculateLikelihoodsWithDP(split);
-            double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2);
+            double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
 
-            //   System.out.printf("%s%13f%13f%13f%13f", split, dpScore , priors.get(0), priors.get(1),  priors.get(2));
-            //      System.out.println();
+            //     System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
+            //     System.out.println();
             double nonlog_total = Math.pow(10, total);
             forNormalize = forNormalize + nonlog_total;
+            //       System.out.println("nonlog_total: " + nonlog_total);
             scores.add(nonlog_total);
         }
-        //      System.out.println("-------------");
-
+        //    System.out.println("-------------");
+        //     System.out.println("forNormalize: " + forNormalize);
         ArrayList<Double> sortedScores = new ArrayList<>(scores);
         Collections.sort(sortedScores);
 
         double normalizationConst = 1 / forNormalize;
+        //    System.out.println("normalizationConst: " + normalizationConst);
 
         Random rand = new Random();
         double rndSample = rand.nextDouble();
@@ -145,7 +149,7 @@ public class Gibbs_RecursiveInference {
                 break;
             }
         }
-
+        //   System.out.println("s_value: " + s_value);
         String selected = possibleSplits.get(scores.indexOf(s_value));
 
 

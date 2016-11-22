@@ -74,10 +74,11 @@ public class Constant {
         return newCorpusSize;
     }
 
-    public Constant(String triesDir, String vectorDir, String wordListDir, double lambda) throws IOException, ClassNotFoundException {
+    public Constant(String triesDir, String vectorDir, String wordListDir, double lambda, int baselineBranchNoArg) throws IOException, ClassNotFoundException {
 
         this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
         this.lambda = lambda;
+        baselineBranchNo = baselineBranchNoArg;
         List<String> freqWords = Files.readAllLines(new File(wordListDir).toPath(), Charset.forName("UTF-8"));
 
         Map<String, Double> corpus = new HashMap<>();
