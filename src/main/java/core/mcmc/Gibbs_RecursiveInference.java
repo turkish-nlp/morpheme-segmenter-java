@@ -24,6 +24,8 @@ public class Gibbs_RecursiveInference {
     private static boolean[] featuresBooleanList = new boolean[4]; //0:poisson, 1:similarity, 2:presence, 3: length
     private String featString = "";
     private int baselineBranchNo;
+    private double simUnsegmented;
+
 
     public String generateFeatureString() {
         if (featuresBooleanList[0] == true)
@@ -42,7 +44,7 @@ public class Gibbs_RecursiveInference {
 
 
         Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]),
-                Double.parseDouble(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]), Boolean.valueOf(args[10]), Integer.parseInt(args[11]));
+                Double.parseDouble(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]), Boolean.valueOf(args[10]), Integer.parseInt(args[11]), Double.parseDouble(args[12]));
 
         i.featString = i.generateFeatureString();
 
@@ -62,9 +64,10 @@ public class Gibbs_RecursiveInference {
     }
 
     public Gibbs_RecursiveInference(String triesDir, String vectorDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma, boolean poisson,
-                                    boolean sim, boolean presence, boolean length, int baselineBranchNoArg) throws IOException, ClassNotFoundException {
-        Constant baseline = new Constant(triesDir, vectorDir, wordListDir, lambda, baselineBranchNoArg);
+                                    boolean sim, boolean presence, boolean length, int baselineBranchNoArg, double simUnsegmentedArg) throws IOException, ClassNotFoundException {
+        Constant baseline = new Constant(triesDir, vectorDir, wordListDir, lambda, baselineBranchNoArg, simUnsegmentedArg);
         this.baselineBranchNo = baselineBranchNoArg;
+        this.simUnsegmented = simUnsegmentedArg;
         this.noOfIteration = noOfIteration;
         this.noOfIterationCopy = noOfIteration;
         this.frequencyTable = new ConcurrentHashMap<>(baseline.getMorphemeFreq());
@@ -122,8 +125,8 @@ public class Gibbs_RecursiveInference {
             dpScore = calculateLikelihoodsWithDP(split);
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
 
-            //     System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
-            //     System.out.println();
+             //   System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
+             //    System.out.println();
             double nonlog_total = Math.pow(10, total);
             forNormalize = forNormalize + nonlog_total;
             //       System.out.println("nonlog_total: " + nonlog_total);

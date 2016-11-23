@@ -23,7 +23,7 @@ public class Constant {
     private static List<TrieST> trieList = new ArrayList<>();
     private static List<String> searchedWordList = new ArrayList<>();
     private double laplaceCoefficient = 0.1;
-    private static double simUnsegmented = Math.log10(1);
+    private static double simUnsegmented = Math.log10(0.0000001);
     private static int heristic = 2;
     private Map<TrieST, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
     private Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
@@ -74,11 +74,12 @@ public class Constant {
         return newCorpusSize;
     }
 
-    public Constant(String triesDir, String vectorDir, String wordListDir, double lambda, int baselineBranchNoArg) throws IOException, ClassNotFoundException {
+    public Constant(String triesDir, String vectorDir, String wordListDir, double lambda, int baselineBranchNoArg, double simUnsegmentedArg ) throws IOException, ClassNotFoundException {
 
         this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
         this.lambda = lambda;
         baselineBranchNo = baselineBranchNoArg;
+        this.simUnsegmented = simUnsegmentedArg;
         List<String> freqWords = Files.readAllLines(new File(wordListDir).toPath(), Charset.forName("UTF-8"));
 
         Map<String, Double> corpus = new HashMap<>();
