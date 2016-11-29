@@ -21,7 +21,7 @@ public class trieReader {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        trieReader tr = new trieReader("deneme_trieConstructor");
+        trieReader tr = new trieReader("trieData");
 
     }
 

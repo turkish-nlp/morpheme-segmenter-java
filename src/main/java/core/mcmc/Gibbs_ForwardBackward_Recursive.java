@@ -39,7 +39,7 @@ public class Gibbs_ForwardBackward_Recursive {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-
+        long start = System.nanoTime();
         Gibbs_ForwardBackward_Recursive i = new Gibbs_ForwardBackward_Recursive(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]),
                 Double.parseDouble(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]), Boolean.valueOf(args[10]), Integer.parseInt(args[11]), Double.parseDouble(args[12]));
 
@@ -58,6 +58,11 @@ public class Gibbs_ForwardBackward_Recursive {
         for (Sample s : i.samples) {
             System.out.println(s.getWord() + "--> " + s.getSegmentation());
         }
+        long end = System.nanoTime();
+        long elapsedTime = end - start;
+        double seconds = (double)elapsedTime / 1000000000.0;
+        System.out.println(seconds);
+
     }
 
     public Gibbs_ForwardBackward_Recursive(String triesDir, String vectorDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma, boolean poisson,
@@ -82,7 +87,8 @@ public class Gibbs_ForwardBackward_Recursive {
     public void doSampling() throws IOException {
 
         while (noOfIteration > 0) {
-            System.out.println("Iter: " + noOfIteration);
+            long start = System.nanoTime();
+            System.out.print("Iter: " + noOfIteration);
             Collections.shuffle(samples);
             for (Sample sample : samples) {
 
@@ -99,7 +105,12 @@ public class Gibbs_ForwardBackward_Recursive {
 
             //  System.out.println("Selected segmentation: " + sample.getSegmentation());
             }
+            long end = System.nanoTime();
+            long elapsedTime = end - start;
+            double seconds = (double)elapsedTime / 1000000000.0;
+            System.out.println(" --> Elapsed time: " + seconds);
             noOfIteration--;
+
         }
         saveModel();
     }

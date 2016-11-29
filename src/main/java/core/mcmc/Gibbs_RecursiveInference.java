@@ -65,6 +65,7 @@ public class Gibbs_RecursiveInference {
 
     public Gibbs_RecursiveInference(String triesDir, String vectorDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma, boolean poisson,
                                     boolean sim, boolean presence, boolean length, int baselineBranchNoArg, double simUnsegmentedArg) throws IOException, ClassNotFoundException {
+
         Constant baseline = new Constant(triesDir, vectorDir, wordListDir, lambda, baselineBranchNoArg, simUnsegmentedArg);
         this.baselineBranchNo = baselineBranchNoArg;
         this.simUnsegmented = simUnsegmentedArg;
@@ -95,8 +96,8 @@ public class Gibbs_RecursiveInference {
                 sizeOfTable = sizeOfTable - deleteNo;
                 //      System.out.print("Selected item: " + sample.getSegmentation() + "     ");
                 //         System.out.println("---> Recursive operation started..");
-                //          System.out.printf("%s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence");
-                //         System.out.println();
+                System.out.printf("%s%13s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence", "length");
+               System.out.println();
 
                 sample.setSegmentation("");
                 recursiveSplit(sample, sample.getWord());
@@ -125,8 +126,9 @@ public class Gibbs_RecursiveInference {
             dpScore = calculateLikelihoodsWithDP(split);
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
 
-             //   System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
-             //    System.out.println();
+            System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
+            System.out.println();
+
             double nonlog_total = Math.pow(10, total);
             forNormalize = forNormalize + nonlog_total;
             //       System.out.println("nonlog_total: " + nonlog_total);
