@@ -22,7 +22,7 @@ public class Constant {
     private static double newCorpusSize = 0;
     private static List<TrieST> trieList = new ArrayList<>();
     private static List<String> searchedWordList = new ArrayList<>();
-    private double laplaceCoefficient = 0.1;
+    private static double laplaceCoefficient = 0.0000001;
     private static double simUnsegmented = Math.log10(0.0000001);
     private static int heristic = 2;
     private Map<TrieST, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
@@ -32,6 +32,10 @@ public class Constant {
 
     public static int getHeristic() {
         return heristic;
+    }
+
+    public static double getLaplaceCoefficient() {
+        return laplaceCoefficient;
     }
 
     public static double getSimUnsegmented() {
@@ -74,7 +78,7 @@ public class Constant {
         return newCorpusSize;
     }
 
-    public Constant(String triesDir, String vectorDir, String wordListDir, double lambda, int baselineBranchNoArg, double simUnsegmentedArg ) throws IOException, ClassNotFoundException {
+    public Constant(String triesDir, String vectorDir, String wordListDir, double lambda, int baselineBranchNoArg, double simUnsegmentedArg) throws IOException, ClassNotFoundException {
 
         this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
         this.lambda = lambda;
@@ -82,7 +86,7 @@ public class Constant {
         this.simUnsegmented = simUnsegmentedArg;
         List<String> freqWords = Files.readAllLines(new File(wordListDir).toPath(), Charset.forName("UTF-8"));
 
-        Map<String, Double> corpus = new HashMap<>();
+        //Map<String, Double> corpus = new HashMap<>();
 
         generateTrieList(triesDir);
 
@@ -94,11 +98,11 @@ public class Constant {
             StringTokenizer tokens = new StringTokenizer(str, " ");
             String f = tokens.nextToken();
             String w = tokens.nextToken();
-            corpus.put(w, Double.parseDouble(f));
+            newCorpus.put(w, Double.parseDouble(f));
         }
 
-        createSmoothCorpus(corpus);
-        corpus.clear();
+        //createSmoothCorpus(corpus);
+        //corpus.clear();
     }
 
     public void generateTrieList(String dir) throws IOException, ClassNotFoundException {
@@ -121,7 +125,7 @@ public class Constant {
         generateBoundaryListforBaseline(baselineBranchNo);
     }
 
-    private void createSmoothCorpus(Map<String, Double> corpus) {
+    private void createSmoothCorpusWithAddition(Map<String, Double> corpus) {
 
         trieList.parallelStream().forEach((n) -> {
             for (String str : n.getWordList().keySet()) {

@@ -115,13 +115,14 @@ public class Sample {
         boolean length = features[3];
 
         ArrayList<String> segments = Operations.getSegments(segmentation);
-        ArrayList<String> segmentsForPoisson = new ArrayList<>(segments);
-        if (segmentsForPoisson.size() > 1)
-            segmentsForPoisson.remove(segmentsForPoisson.size() - 1);
+        ArrayList<String> segmentsForRecursive = new ArrayList<>(segments);
+
+        if (segmentsForRecursive.size() > 1)
+            segmentsForRecursive.remove(segmentsForRecursive.size() - 1);
 
         double poissonScore = 0;
         if (poisson)
-            poissonScore = calculatePoisson(segmentsForPoisson);
+            poissonScore = calculatePoisson(segmentsForRecursive);
 
         double similarityScore = 0;
         if (sim)
@@ -129,7 +130,7 @@ public class Sample {
 
         double presenceScore = 0;
         if (presence)
-            presenceScore = calculatePresenceScore(segments);
+            presenceScore = calculatePresenceScore(segmentsForRecursive);
 
         double lengthScore = 0;
         if (length)
@@ -191,7 +192,12 @@ public class Sample {
 
         for (String s : segments) {
             //    System.out.println("presence segment: " + s);
-            presenceScore = presenceScore + Math.log10(Constant.getNewCorpus().get(s) / Constant.getNewCorpusSize());
+
+            if (Constant.getNewCorpus().contains(s)) {
+                presenceScore = presenceScore + Math.log10(Constant.getNewCorpus().get(s) / Constant.getNewCorpusSize());
+            } else {
+                presenceScore = presenceScore + Math.log10(Constant.getLaplaceCoefficient() / Constant.getNewCorpusSize());
+            }
         }
 
         return presenceScore;
