@@ -61,7 +61,7 @@ public class Gibbs_ForwardBackward_Recursive {
         long end = System.nanoTime();
         long elapsedTime = end - start;
         double seconds = (double)elapsedTime / 1000000000.0;
-        System.out.println(seconds);
+        System.out.println(seconds + "sec");
 
     }
 

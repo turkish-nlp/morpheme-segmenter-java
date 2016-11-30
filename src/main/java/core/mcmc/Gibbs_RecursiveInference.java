@@ -87,6 +87,7 @@ public class Gibbs_RecursiveInference {
     public void doSampling() throws IOException {
 
         while (noOfIteration > 0) {
+
             System.out.println("Iter: " + noOfIteration);
 
             Collections.shuffle(samples);
@@ -94,10 +95,10 @@ public class Gibbs_RecursiveInference {
 
                 int deleteNo = deleteFromTable(sample.getSegmentation());
                 sizeOfTable = sizeOfTable - deleteNo;
-                //      System.out.print("Selected item: " + sample.getSegmentation() + "     ");
+                //     System.out.print("Selected item: " + sample.getSegmentation() + "     ");
                 //         System.out.println("---> Recursive operation started..");
-                System.out.printf("%s%13s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence", "length");
-               System.out.println();
+                //    System.out.printf("%s%13s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence", "length");
+                //    System.out.println();
 
                 sample.setSegmentation("");
                 recursiveSplit(sample, sample.getWord());
@@ -105,9 +106,12 @@ public class Gibbs_RecursiveInference {
                 //         System.out.println("Selected segmentation: " + sample.getSegmentation());
             }
             noOfIteration--;
+
         }
         saveModel();
+        //  saveSimiliarityValues();
     }
+
 
     private String recursiveSplit(Sample sample, String word) {
 
@@ -118,23 +122,18 @@ public class Gibbs_RecursiveInference {
         double dpScore = 0.0;
         for (String split : possibleSplits) {
             ArrayList<Double> priors = sample.calculateScores(split, featuresBooleanList);  // //0:poisson, 1:similarity, 2:presence, 3: length
-            /// add $ to unsegmented words ????
-            // if (!split.contains("+")) {
-            //  split = split + "+$";
-            //  dpScore = calculateLikelihoodsWithDP(split);
-            // } else
             dpScore = calculateLikelihoodsWithDP(split);
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
 
-            System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
-            System.out.println();
+            //   System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
+            //    System.out.println();
 
             double nonlog_total = Math.pow(10, total);
             forNormalize = forNormalize + nonlog_total;
             //       System.out.println("nonlog_total: " + nonlog_total);
             scores.add(nonlog_total);
         }
-        //    System.out.println("-------------");
+        //  System.out.println("-------------");
         //     System.out.println("forNormalize: " + forNormalize);
         ArrayList<Double> sortedScores = new ArrayList<>(scores);
         Collections.sort(sortedScores);
@@ -278,7 +277,6 @@ public class Gibbs_RecursiveInference {
                 segmentationsList.put(s.getWord(), segmentationsOfsample);
             }
         }
-
         SerializableModel model = new SerializableModel(frequencyTable, segmentationsList);
 
         // toByteArray

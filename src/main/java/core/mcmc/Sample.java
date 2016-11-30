@@ -1,10 +1,14 @@
 package core.mcmc;
 
+import it.unimi.dsi.fastutil.BigArrays;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tries.TrieST;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by ahmetu on 28.09.2016.
@@ -126,7 +130,7 @@ public class Sample {
 
         double similarityScore = 0;
         if (sim)
-            similarityScore = calculateSimilarity(segments);
+            similarityScore = calculateSimilarityWithHashMap(segments);
 
         double presenceScore = 0;
         if (presence)
@@ -166,25 +170,47 @@ public class Sample {
         return totalPoisson;
     }
 
-    private double calculateSimilarity(ArrayList<String> segments) {
+    private double calculateSimilarityWithHashMap(ArrayList<String> segments) {
+
+        if (segments.size() != 2 && segments.size() != 1)
+            System.out.println("Cosine Segments Size Problem!!");
 
         if (segments.size() == 1) {
             return Constant.getSimUnsegmented();
         }
         double similarityScore = 0;
-
-        String w1 = segments.get(0);
-        String w2 = "";
-        for (int i = 1; i < segments.size(); i++) {
-            w2 = segments.get(i);
-            double cosine = Operations.getCosineScore(w1, w2);
-            //System.out.println("Cosine similarity between " + w1 + " " + w2 + " is " + cosine);
-            similarityScore = similarityScore + Math.log10(cosine);
-            w1 = w2;
+        if (Constant.getWordPairSimilarityMap().containsKey(segments.get(0) + "_" + segments.get(1)))
+            return Constant.getWordPairSimilarityMap().get(segments.get(0) + "_" + segments.get(1));
+        else {
+            double cosine = Operations.getCosineScore(segments.get(0), segments.get(1));
+            Constant.getWordPairSimilarityMap().put(segments.get(0) + "_" + segments.get(1),Math.log10(cosine));
+            return Math.log10(cosine);
         }
 
-        return similarityScore;
     }
+
+    private double calculateSimilarity(ArrayList<String> segments) {
+        if (segments.size() == 1) {
+            return Constant.getSimUnsegmented();
+        }
+        double similarityScore = 0;
+        if (Constant.getWordPairSimilarityMap().containsKey(segments.get(0) + "_" + segments.get(1)))
+            return Constant.getWordPairSimilarityMap().get(segments.get(0) + "_" + segments.get(1));
+        else {
+            String w1 = segments.get(0);
+            String w2 = "";
+            for (int i = 1; i < segments.size(); i++) {
+                w2 = segments.get(i);
+                double cosine = Operations.getCosineScore(w1, w2);
+                //System.out.println("Cosine similarity between " + w1 + " " + w2 + " is " + cosine);
+                similarityScore = similarityScore + Math.log10(cosine);
+                w1 = w2;
+            }
+            return similarityScore;
+        }
+
+    }
+
 
     private double calculatePresenceScore(ArrayList<String> segments) {
 
@@ -193,7 +219,7 @@ public class Sample {
         for (String s : segments) {
             //    System.out.println("presence segment: " + s);
 
-            if (Constant.getNewCorpus().contains(s)) {
+            if (Constant.getNewCorpus().containsKey(s)) {
                 presenceScore = presenceScore + Math.log10(Constant.getNewCorpus().get(s) / Constant.getNewCorpusSize());
             } else {
                 presenceScore = presenceScore + Math.log10(Constant.getLaplaceCoefficient() / Constant.getNewCorpusSize());

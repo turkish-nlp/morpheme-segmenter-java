@@ -18,16 +18,23 @@ public class Constant {
 
     private static WordVectors vectors;
     private static double lambda;
-    private static ConcurrentHashMap<String, Double> newCorpus = new ConcurrentHashMap<>();
+    private static HashMap<String, Double> newCorpus = new HashMap<>();
     private static double newCorpusSize = 0;
     private static List<TrieST> trieList = new ArrayList<>();
     private static List<String> searchedWordList = new ArrayList<>();
     private static double laplaceCoefficient = 0.0000001;
-    private static double simUnsegmented = Math.log10(0.0000001);
+    private static double simUnsegmented;
     private static int heristic = 2;
     private Map<TrieST, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
     private Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
     private CopyOnWriteArrayList<Sample> sampleList = new CopyOnWriteArrayList<>();
+
+    public static Map<String, Double> getWordPairSimilarityMap() {
+        return wordPairSimilarityMap;
+    }
+
+    private static Map<String, Double> wordPairSimilarityMap = new HashMap<>();
+
     static int baselineBranchNo = 1;
 
     public static int getHeristic() {
@@ -39,7 +46,7 @@ public class Constant {
     }
 
     public static double getSimUnsegmented() {
-        return simUnsegmented;
+        return Math.log10(simUnsegmented);
     }
 
     public Map<TrieST, Set<String>> getBaselineBoundaries() {
@@ -70,7 +77,7 @@ public class Constant {
         return lambda;
     }
 
-    public static ConcurrentHashMap<String, Double> getNewCorpus() {
+    public static HashMap<String, Double> getNewCorpus() {
         return newCorpus;
     }
 
@@ -99,6 +106,10 @@ public class Constant {
             String f = tokens.nextToken();
             String w = tokens.nextToken();
             newCorpus.put(w, Double.parseDouble(f));
+        }
+
+        for (String str : newCorpus.keySet()) {
+            newCorpusSize = newCorpusSize + newCorpus.get(str);
         }
 
         //createSmoothCorpus(corpus);
@@ -181,6 +192,7 @@ public class Constant {
                         found = true;
                     }
                 }
+
                 String morpheme = node.substring(current.length(), node.length() - 1);
                 morphemeStack.add(morpheme);
 
