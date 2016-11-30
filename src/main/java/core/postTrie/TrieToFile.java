@@ -17,6 +17,7 @@ public class TrieToFile {
     private List<String> searchedWordList = new ArrayList<>();
 
     public HashMap<String, HashMap<String, Integer>> branchFactors = new HashMap<>();
+    public HashMap<String, ArrayList<String>> trieWords = new HashMap<>();
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         TrieToFile ttf = new TrieToFile();
@@ -24,6 +25,12 @@ public class TrieToFile {
 
         for (String s : ttf.branchFactors.keySet()) {
             System.out.println(s + " : " + ttf.branchFactors.get(s));
+        }
+
+        System.out.println("----------");
+
+        for (String s : ttf.trieWords.keySet()) {
+            System.out.println(s + " : " + ttf.trieWords.get(s));
         }
     }
 
@@ -47,6 +54,8 @@ public class TrieToFile {
 
         fillBranchFactorMap();
 
+        fillTrieMap();
+
     }
 
     private void fillBranchFactorMap() {
@@ -54,7 +63,6 @@ public class TrieToFile {
         for (TrieST trie : trieList) {
             for (String word : trie.getWordList().keySet()) {
                 if (!word.endsWith("$")) {
-
                     if (branchFactors.containsKey(word)) {
                         branchFactors.get(word).put(searchedWordList.get(trieList.indexOf(trie)), trie.getWordList().get(word));
                     } else {
@@ -62,19 +70,34 @@ public class TrieToFile {
                         branches.put(searchedWordList.get(trieList.indexOf(trie)), trie.getWordList().get(word));
                         branchFactors.put(word, branches);
                     }
-
                 }
             }
         }
     }
 
-    private void serialize(String dir, String fileName) throws IOException {
+    private void fillTrieMap() {
+        for (TrieST trie : trieList) {
+            for (String word : trie.getWordList().keySet()) {
+                if (word.endsWith("$")) {
+                    if (trieWords.containsKey(searchedWordList.get(trieList.indexOf(trie)))) {
+                        trieWords.get(searchedWordList.get(trieList.indexOf(trie))).add(word);
+                    } else {
+                        ArrayList<String> words = new ArrayList<>();
+                        words.add(word);
+                        trieWords.put(searchedWordList.get(trieList.indexOf(trie)), words);
+                    }
+                }
+            }
+        }
+    }
+
+    private void serialize(String dir, HashMap toBeSerialized, String fileName) throws IOException {
         // toByteArray
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutput out = null;
         byte[] yourBytes = null;
         out = new ObjectOutputStream(bos);
-        out.writeObject(branchFactors);
+        out.writeObject(toBeSerialized);
         yourBytes = bos.toByteArray();
 
         bos.close();
