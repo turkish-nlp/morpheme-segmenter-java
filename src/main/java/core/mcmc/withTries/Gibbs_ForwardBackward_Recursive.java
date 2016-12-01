@@ -1,5 +1,6 @@
-package core.mcmc;
+package core.mcmc.withTries;
 
+import core.mcmc.utils.SerializableModel;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;

@@ -1,5 +1,6 @@
-package core.mcmc;
+package core.mcmc.withDeserializedMaps;
 
+import core.mcmc.withDeserializedMaps.Sample;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tries.TrieST;
@@ -16,24 +17,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class Constant {
 
-    private static WordVectors vectors;
     private static double lambda;
     private static HashMap<String, Double> newCorpus = new HashMap<>();
     private static double newCorpusSize = 0;
-    private static List<TrieST> trieList = new ArrayList<>();
-    private static List<String> searchedWordList = new ArrayList<>();
     private static double laplaceCoefficient = 0.0000001;
     private static double simUnsegmented;
     private static int heristic = 2;
-    private Map<TrieST, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
+
+    private static HashMap<String, Double> cosineTable;
+    private static HashMap<String, HashMap<String, Integer>> branchTable;
+    private static HashMap<String, TreeSet<String>> trieTable;
+
+    private Map<String, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
     private Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
     private CopyOnWriteArrayList<Sample> sampleList = new CopyOnWriteArrayList<>();
-
-    public static Map<String, Double> getWordPairSimilarityMap() {
-        return wordPairSimilarityMap;
-    }
-
-    private static Map<String, Double> wordPairSimilarityMap = new HashMap<>();
 
     static int baselineBranchNo = 1;
 
@@ -49,7 +46,7 @@ public class Constant {
         return Math.log10(simUnsegmented);
     }
 
-    public Map<TrieST, Set<String>> getBaselineBoundaries() {
+    public Map<String, Set<String>> getBaselineBoundaries() {
         return baselineBoundaries;
     }
 
@@ -57,20 +54,8 @@ public class Constant {
         return sampleList;
     }
 
-    public static List<TrieST> getTrieList() {
-        return trieList;
-    }
-
-    public static List<String> getSearchedWordList() {
-        return searchedWordList;
-    }
-
     public Map<String, Integer> getMorphemeFreq() {
         return morphemeFreq;
-    }
-
-    public static WordVectors getVectors() {
-        return vectors;
     }
 
     public static double getLambda() {
@@ -85,19 +70,28 @@ public class Constant {
         return newCorpusSize;
     }
 
-    public Constant(String triesDir, String vectorDir, String wordListDir, double lambda, int baselineBranchNoArg, double simUnsegmentedArg) throws IOException, ClassNotFoundException {
+    public static HashMap<String, TreeSet<String>> getTrieTable() {
+        return trieTable;
+    }
 
-        this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
+    public static HashMap<String, HashMap<String, Integer>> getBranchTable() {
+        return branchTable;
+    }
+
+    public static HashMap<String, Double> getCosineTable() {
+        return cosineTable;
+    }
+
+    public Constant(String nameOfsimilarityScoresFile, String nameOfBranchFactors, String nameOfTrieWords, String wordListDir, double lambda, int baselineBranchNoArg, double simUnsegmentedArg) throws IOException, ClassNotFoundException {
+
         this.lambda = lambda;
         baselineBranchNo = baselineBranchNoArg;
         this.simUnsegmented = simUnsegmentedArg;
         List<String> freqWords = Files.readAllLines(new File(wordListDir).toPath(), Charset.forName("UTF-8"));
 
-        //Map<String, Double> corpus = new HashMap<>();
+        generateTrieList(nameOfsimilarityScoresFile, nameOfBranchFactors, nameOfTrieWords);
 
-        generateTrieList(triesDir);
-
-        this.trieList.parallelStream().forEach((n) -> {
+        trieTable.keySet().parallelStream().forEach((n) -> {
             this.calculateFrequencyForMorp(n);
         });
 
@@ -116,26 +110,46 @@ public class Constant {
         //corpus.clear();
     }
 
-    public void generateTrieList(String dir) throws IOException, ClassNotFoundException {
+    public void generateTrieList(String nameOfsimilarityScoresFile, String nameOfBranchFactors, String nameOfTrieWords) throws IOException, ClassNotFoundException {
 
-        File[] files = new File(dir + "/").listFiles();
+        File filesOfsimilarityScoresFile = new File(nameOfsimilarityScoresFile);
+        File filesOfBranchFactors = new File(nameOfBranchFactors);
+        File filesOfTrieWords = new File(nameOfTrieWords);
 
-        for (File f : files) {
-            FileInputStream fis = new FileInputStream(f);
-            ObjectInput in = null;
-            Object o = null;
-            in = new ObjectInputStream(fis);
-            o = in.readObject();
-            fis.close();
-            in.close();
+        FileInputStream fis = new FileInputStream(filesOfsimilarityScoresFile);
+        ObjectInput in = null;
+        Object o = null;
+        in = new ObjectInputStream(fis);
+        o = in.readObject();
+        fis.close();
+        in.close();
 
-            TrieST trie = (TrieST) o;
-            trieList.add(trie);
-            searchedWordList.add(f.getName());
-        }
+        cosineTable = (HashMap<String, Double>) o;
+
+        fis = new FileInputStream(filesOfBranchFactors);
+        in = null;
+        o = null;
+        in = new ObjectInputStream(fis);
+        o = in.readObject();
+        fis.close();
+        in.close();
+
+        branchTable = (HashMap<String, HashMap<String, Integer>>) o;
+
+        fis = new FileInputStream(filesOfTrieWords);
+        in = null;
+        o = null;
+        in = new ObjectInputStream(fis);
+        o = in.readObject();
+        fis.close();
+        in.close();
+
+        trieTable = (HashMap<String, TreeSet<String>>) o;
+
         generateBoundaryListforBaseline(baselineBranchNo);
     }
 
+/*
     private void createSmoothCorpusWithAddition(Map<String, Double> corpus) {
 
         trieList.parallelStream().forEach((n) -> {
@@ -156,58 +170,54 @@ public class Constant {
 
         corpus.clear();
     }
+*/
 
     public void generateBoundaryListforBaseline(int childLimit) {
 
-        for (TrieST st : trieList) {
-
-            Map<String, Integer> WordList = new TreeMap<>(st.getWordList());
+        for (String trie : branchTable.keySet()) {
             Set<String> boundaryList = new TreeSet<>();
             // for baseline
-            for (String s : WordList.keySet()) {
-                if (WordList.get(s) >= childLimit) {
+            for (String s : branchTable.get(trie).keySet()) {
+                if (branchTable.get(trie).get(s) >= childLimit) {
                     boundaryList.add(s);
                 }
             }
-            baselineBoundaries.put(st, boundaryList);
+            baselineBoundaries.put(trie, boundaryList);
         }
     }
 
-    private void calculateFrequencyForMorp(TrieST st) {
+    private void calculateFrequencyForMorp(String trie) {
 
-        Set<String> boundaries = baselineBoundaries.get(st);
-        Map<String, Integer> nodeList = new TreeMap<>(st.getWordList());
+        Set<String> boundaries = baselineBoundaries.get(trie);
 
         ArrayList<String> tokens = new ArrayList<String>(); // unique elements?? set??
-        for (String node : nodeList.keySet()) {
-            if (node.endsWith("$")) {
+        for (String node : trieTable.get(trie)) {
 
-                Stack<String> morphemeStack = new Stack<>();
+            Stack<String> morphemeStack = new Stack<>();
 
-                String current = "";
-                boolean found = false;
-                for (String boundary : boundaries) {
-                    if (node.startsWith(boundary) && !node.equals(boundary + "$")) {
-                        current = boundary;
-                        found = true;
-                    }
+            String current = "";
+            boolean found = false;
+            for (String boundary : boundaries) {
+                if (node.startsWith(boundary) && !node.equals(boundary + "$")) {
+                    current = boundary;
+                    found = true;
                 }
-
-                String morpheme = node.substring(current.length(), node.length() - 1);
-                morphemeStack.add(morpheme);
-
-                String word = node.substring(0, current.length());
-                doSegmentation(word, boundaries, morphemeStack);
-
-                String segmentation = morphemeStack.pop();
-                int a = morphemeStack.size();
-                for (int i = 0; i < a; i++) {
-                    String popped = morphemeStack.pop();
-                    segmentation = segmentation + "+" + popped;
-                }
-                tokens.addAll(tokenSegmentation(segmentation));
-                sampleList.add(new Sample(node.substring(0, node.length() - 1), segmentation, st));
             }
+
+            String morpheme = node.substring(current.length(), node.length() - 1);
+            morphemeStack.add(morpheme);
+
+            String word = node.substring(0, current.length());
+            doSegmentation(word, boundaries, morphemeStack);
+
+            String segmentation = morphemeStack.pop();
+            int a = morphemeStack.size();
+            for (int i = 0; i < a; i++) {
+                String popped = morphemeStack.pop();
+                segmentation = segmentation + "+" + popped;
+            }
+            tokens.addAll(tokenSegmentation(segmentation));
+            sampleList.add(new Sample(node.substring(0, node.length() - 1), segmentation, trie));
         }
 
         for (String morpheme : tokens) {

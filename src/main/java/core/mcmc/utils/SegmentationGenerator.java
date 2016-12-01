@@ -1,4 +1,4 @@
-package core.mcmc;
+package core.mcmc.utils;
 
 import core.blockSampling.Segmenter;
 

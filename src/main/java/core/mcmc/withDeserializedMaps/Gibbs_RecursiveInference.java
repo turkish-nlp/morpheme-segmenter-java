@@ -1,8 +1,6 @@
-package core.mcmc.oldInference;
+package core.mcmc.withDeserializedMaps;
 
-import core.mcmc.withTries.Constant;
-import core.mcmc.withTries.Operations;
-import core.mcmc.withTries.Sample;
+import core.mcmc.withDeserializedMaps.Operations;
 import core.mcmc.utils.SerializableModel;
 import org.apache.commons.io.FileUtils;
 
@@ -14,33 +12,49 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Created by Murathan on 29-Sep-16.
  */
-public class RecursiveInference {
+public class Gibbs_RecursiveInference {
 
     private Map<String, Integer> frequencyTable = new ConcurrentHashMap<>();
     private CopyOnWriteArrayList<Sample> samples = new CopyOnWriteArrayList<>();
     private int noOfIteration;
+    private int noOfIterationCopy;
+
     private int sizeOfTable = 0;
     private double alpha;
     private double gamma;
-    private boolean[] featuresBooleanList = {true,true,true,false}; //0:poisson, 1:similarity, 2:presence, 3: length
+    private static boolean[] featuresBooleanList = new boolean[4]; //0:poisson, 1:similarity, 2:presence, 3: length
+    private String featString = "";
+    private int baselineBranchNo;
+    private double simUnsegmented;
+
+
+    public String generateFeatureString() {
+        if (featuresBooleanList[0] == true)
+            featString = featString + "_Pois";
+        if (featuresBooleanList[1] == true)
+            featString = featString + "_Sim";
+        if (featuresBooleanList[2] == true)
+            featString = featString + "_Pres";
+        if (featuresBooleanList[3] == true)
+            featString = featString + "_Len";
+
+        return featString;
+    }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        /*
-        System.out.println("Enter the parameters in the following order: triesDir, vectorDir, wordListDir, lambda, noOfIteration, alpha, gamma");
-        Scanner scan = new Scanner(System.in);
-        String parameters = scan.nextLine();
-        String[] parameterList = parameters.split(" ");
-        Inference i = new Inference(parameterList[0], parameterList[1], parameterList[2], Double.parseDouble(parameterList[3]), Integer.parseInt(parameterList[4]), Double.parseDouble(parameterList[5]), Double.parseDouble(parameterList[6]));
-        */
-        RecursiveInference i = new RecursiveInference(args[0], args[1], args[2], Double.parseDouble(args[3]), Integer.parseInt(args[4]), Double.parseDouble(args[5]), Double.parseDouble(args[6]));
+
+        Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], args[2], args[3], Double.parseDouble(args[4]), Integer.parseInt(args[5]), Double.parseDouble(args[6]),
+                Double.parseDouble(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]), Boolean.valueOf(args[10]), Boolean.valueOf(args[11]),
+                Integer.parseInt(args[12]), Double.parseDouble(args[13]));
+
+        i.featString = i.generateFeatureString();
 
         System.out.println("-----BASELINE SEGMENTATIONS-------");
         for (Sample s : i.samples) {
             System.out.println(s.getWord() + "--> " + s.getSegmentation());
         }
         System.out.println("-----END OF BASELINE SEGMENTATIONS-------");
-
         System.out.println("-----SAMPLING-------");
         i.doSampling();
         System.out.println("-----END OF SAMPLING-------");
@@ -51,90 +65,107 @@ public class RecursiveInference {
         }
     }
 
-    public RecursiveInference(String triesDir, String vectorDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma) throws IOException, ClassNotFoundException {
-        Constant baseline = new Constant(triesDir, vectorDir, wordListDir, lambda, 1, 0); /// !!!!!!!!!!!!!!!!!!!!!!!!! BASELINEBRANCHNO
+    public Gibbs_RecursiveInference(String nameOfsimilarityScoresFile, String nameOfBranchFactors, String nameOfTrieWords, String wordListDir, double lambda,
+                                    int noOfIteration, double alpha, double gamma, boolean poisson,
+                                    boolean sim, boolean presence, boolean length, int baselineBranchNoArg, double simUnsegmentedArg) throws IOException, ClassNotFoundException {
+
+        Constant baseline = new Constant(nameOfsimilarityScoresFile, nameOfBranchFactors, nameOfTrieWords, wordListDir, lambda, baselineBranchNoArg, simUnsegmentedArg);
+        this.baselineBranchNo = baselineBranchNoArg;
+        this.simUnsegmented = simUnsegmentedArg;
         this.noOfIteration = noOfIteration;
+        this.noOfIterationCopy = noOfIteration;
         this.frequencyTable = new ConcurrentHashMap<>(baseline.getMorphemeFreq());
         this.samples = new CopyOnWriteArrayList<>(baseline.getSampleList());
         this.alpha = alpha;
         this.gamma = gamma;
-
         for (String str : frequencyTable.keySet()) {
             sizeOfTable = sizeOfTable + frequencyTable.get(str);
         }
+        featuresBooleanList[0] = poisson;
+        featuresBooleanList[1] = sim;
+        featuresBooleanList[2] = presence;
+        featuresBooleanList[3] = length;
     }
 
     public void doSampling() throws IOException {
+
         while (noOfIteration > 0) {
+
+            System.out.println("Iter: " + noOfIteration);
+
             Collections.shuffle(samples);
             for (Sample sample : samples) {
 
                 int deleteNo = deleteFromTable(sample.getSegmentation());
                 sizeOfTable = sizeOfTable - deleteNo;
-
-                System.out.println("\nSelected item: " + sample.getSegmentation());
-                System.out.println("---> Recursive operation started..");
+                //     System.out.print("Selected item: " + sample.getSegmentation() + "     ");
+                //         System.out.println("---> Recursive operation started..");
+                //    System.out.printf("%s%13s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence", "length");
+                //    System.out.println();
 
                 sample.setSegmentation("");
                 recursiveSplit(sample, sample.getWord());
 
-                System.out.println("---> Selected segmentation: " + sample.getSegmentation());
+                //         System.out.println("Selected segmentation: " + sample.getSegmentation());
             }
             noOfIteration--;
-        }
 
+        }
         saveModel();
+        //  saveSimiliarityValues();
     }
+
 
     private String recursiveSplit(Sample sample, String word) {
 
-        String newSegmentation = Operations.biasedBinarySplit(word);
+        ArrayList<String> possibleSplits = Operations.getPossibleBinarySplits(word, Constant.getHeristic());
+        ArrayList<Double> scores = new ArrayList<>();
 
-        // if the random segmentation is equal to the unsegmented word !!
-        if (newSegmentation.equalsIgnoreCase(word)) {
-            if (frequencyTable.containsKey(word))
-                frequencyTable.put(word, frequencyTable.get(word) + 1);
-            else
-                frequencyTable.put(word, 1);
-            sizeOfTable = sizeOfTable + 1;
+        double forNormalize = 0.0;
+        double dpScore = 0.0;
+        for (String split : possibleSplits) {
+            ArrayList<Double> priors = sample.calculateScores(split, featuresBooleanList);  // //0:poisson, 1:similarity, 2:presence, 3: length
+            dpScore = calculateLikelihoodsWithDP(split);
+            double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
 
-            if (sample.getSegmentation().equalsIgnoreCase(""))
-                sample.setSegmentation(word);
-            else
-                sample.setSegmentation(word + "+" + sample.getSegmentation());
+            //   System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
+            //    System.out.println();
 
-            return word;
+            double nonlog_total = Math.pow(10, total);
+            forNormalize = forNormalize + nonlog_total;
+            //       System.out.println("nonlog_total: " + nonlog_total);
+            scores.add(nonlog_total);
         }
+        //  System.out.println("-------------");
+        //     System.out.println("forNormalize: " + forNormalize);
+        ArrayList<Double> sortedScores = new ArrayList<>(scores);
+        Collections.sort(sortedScores);
 
-        System.out.println("---> proposed segmentetation: " + newSegmentation);
+        double normalizationConst = 1 / forNormalize;
+        //    System.out.println("normalizationConst: " + normalizationConst);
 
-        ArrayList<Double> newPriors = sample.calculateScores(newSegmentation, featuresBooleanList);
-        ArrayList<Double> oldPriors = sample.calculateScores(word, featuresBooleanList);
+        Random rand = new Random();
+        double rndSample = rand.nextDouble();
 
-        ArrayList<Double> likelihoods = calculateLikelihoodsWithDP(word, newSegmentation);
+        double s_value = 0;
+        double value = 0;
+        for (double i_value : sortedScores) {
+            value = value + i_value * normalizationConst;
+            if (value > rndSample) {
+                s_value = i_value;
+                break;
+            }
+        }
+        //   System.out.println("s_value: " + s_value);
+        String selected = possibleSplits.get(scores.indexOf(s_value));
 
-        double oldJointProbability = likelihoods.get(0) + oldPriors.get(0) + Math.log10(0.000001);
-        double newJointProbability = likelihoods.get(1) + newPriors.get(0) + newPriors.get(1);
 
-        System.out.println("---> new poisson score: " + newPriors.get(0));
-        System.out.println("---> new similarity score: " + newPriors.get(1));
-        System.out.println("---> new DP score: " + likelihoods.get(1));
-        System.out.println("---> new total: " + newJointProbability);
+        if (!selected.equals(word)) {
 
-        System.out.println("-----> unsegmented poisson score: " + oldPriors.get(0));
-        System.out.println("-----> unsegmented similarity score: " + Math.log10(0.0001));
-        System.out.println("-----> unsegented DP score: " + likelihoods.get(0));
-        System.out.println("-----> unsegmented total: " + oldJointProbability);
+            StringTokenizer tokenizer = new StringTokenizer(selected, "+");
+            String leftMorpheme = tokenizer.nextToken();
+            String rightMorpheme = tokenizer.nextToken();
 
-        boolean accept = isAccepted(newJointProbability, oldJointProbability);
-
-        System.out.println("ACCEPT status: " + accept);
-
-        StringTokenizer tokenizer = new StringTokenizer(newSegmentation, "+");
-        String leftMorpheme = tokenizer.nextToken();
-        String rightMorpheme = tokenizer.nextToken();
-
-        if (accept) {
             if (frequencyTable.containsKey(rightMorpheme))
                 frequencyTable.put(rightMorpheme, frequencyTable.get(rightMorpheme) + 1);
             else
@@ -164,34 +195,8 @@ public class RecursiveInference {
         }
     }
 
-    private ArrayList<Double> calculateLikelihoodsWithDP(String oldSegmentation, String newSegmentation) {
-        ArrayList<Double> likelihoods = new ArrayList<>();
-        //0:oldLikelihood, 1:newLikelihood
-
+    private Double calculateLikelihoodsWithDP(String newSegmentation) {
         int size = sizeOfTable;
-        double oldLikelihood = 0;
-        StringTokenizer oldSegments = new StringTokenizer(oldSegmentation, "+");
-        while (oldSegments.hasMoreTokens()) {
-            String morpheme = oldSegments.nextToken();
-            if (frequencyTable.containsKey(morpheme)) {
-                if (frequencyTable.get(morpheme) > 0) {
-                    oldLikelihood = oldLikelihood + Math.log10(frequencyTable.get(morpheme) / (size + alpha));
-                    frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
-                    size++;
-                } else {
-                    oldLikelihood = oldLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
-                    frequencyTable.put(morpheme, 1);
-                    size++;
-                }
-            } else {
-                oldLikelihood = oldLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
-                frequencyTable.put(morpheme, 1);
-                size++;
-            }
-        }
-        deleteFromTable(oldSegmentation);
-
-        size = sizeOfTable;
         double newLikelihood = 0;
         StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
         while (newSegments.hasMoreTokens()) {
@@ -214,9 +219,7 @@ public class RecursiveInference {
         }
         deleteFromTable(newSegmentation);
 
-        likelihoods.add(oldLikelihood);
-        likelihoods.add(newLikelihood);
-        return likelihoods;
+        return newLikelihood;
     }
 
     private boolean isAccepted(double newJointProbability, double oldJointProbability) {
@@ -277,7 +280,6 @@ public class RecursiveInference {
                 segmentationsList.put(s.getWord(), segmentationsOfsample);
             }
         }
-
         SerializableModel model = new SerializableModel(frequencyTable, segmentationsList);
 
         // toByteArray
@@ -291,7 +293,7 @@ public class RecursiveInference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("RecursiveInferenceModel_" + noOfIteration + "_" + alpha), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("gibbsMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha + "-G_" + gamma + "-Feat" + featString + "-base_" + baselineBranchNo + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
     }
 
 }

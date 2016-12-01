@@ -1,4 +1,4 @@
-package core.mcmc;
+package core.mcmc.utils;
 
 import java.io.Serializable;
 import java.util.ArrayList;

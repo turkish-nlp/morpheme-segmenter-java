@@ -1,7 +1,7 @@
 package core.mcmc.oldInference;
 
-import core.mcmc.Constant;
-import core.mcmc.Operations;
+import core.mcmc.withTries.Constant;
+import core.mcmc.withTries.Operations;
 import org.apache.commons.io.FileUtils;
 import tries.TrieST;
 

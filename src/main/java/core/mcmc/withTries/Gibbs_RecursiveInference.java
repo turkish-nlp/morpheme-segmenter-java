@@ -1,9 +1,9 @@
-package core.mcmc;
+package core.mcmc.withTries;
 
+import core.mcmc.utils.SerializableModel;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;

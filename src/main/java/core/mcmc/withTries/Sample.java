@@ -1,14 +1,9 @@
-package core.mcmc;
+package core.mcmc.withTries;
 
-import it.unimi.dsi.fastutil.BigArrays;
-import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tries.TrieST;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by ahmetu on 28.09.2016.

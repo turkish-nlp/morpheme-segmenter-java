@@ -1,5 +1,6 @@
-package core.mcmc;
+package core.mcmc.withTries;
 
+import core.mcmc.withTries.Constant;
 import org.canova.api.util.MathUtils;
 
 import java.util.*;

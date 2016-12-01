@@ -1,9 +1,9 @@
 package core.mcmc.oldInference;
 
-import core.mcmc.Constant;
-import core.mcmc.Operations;
-import core.mcmc.Sample;
-import core.mcmc.SerializableModel;
+import core.mcmc.withTries.Constant;
+import core.mcmc.withTries.Operations;
+import core.mcmc.withTries.Sample;
+import core.mcmc.utils.SerializableModel;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
