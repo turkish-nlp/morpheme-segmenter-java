@@ -21,6 +21,7 @@ public class Constant {
     private static HashMap<String, Double> newCorpus = new HashMap<>();
     private static double newCorpusSize = 0;
     private static double laplaceCoefficient = 0.0000001;
+    private static double simUnfound = 0.000001;
     private static double simUnsegmented;
     private static int heristic = 2;
 
@@ -33,6 +34,10 @@ public class Constant {
     private CopyOnWriteArrayList<Sample> sampleList = new CopyOnWriteArrayList<>();
 
     static int baselineBranchNo = 1;
+
+    public static double getSimUnfound() {
+        return simUnfound;
+    }
 
     public static int getHeristic() {
         return heristic;

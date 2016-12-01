@@ -3,6 +3,7 @@ package core.postProcess;
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
+import org.eclipse.jetty.util.ConcurrentHashSet;
 import tries.TrieST;
 
 import java.io.*;
@@ -102,7 +103,6 @@ public class TrieToFiles {
 
     private void fillSimilarityMap() {
 
-
         ArrayList<Set<String>> setsForParallel = new ArrayList<>();
         int count = 0;
         HashSet<String> tmp = new HashSet<>();
@@ -118,6 +118,41 @@ public class TrieToFiles {
             }
         }
         setsForParallel.add(tmp);
+
+        ConcurrentHashSet<String> tokens = new ConcurrentHashSet<>();
+
+        for (Set<String> similarityKeys : setsForParallel) {
+            similarityKeys.parallelStream().forEach((word) -> {
+                for (int i = word.length(); i > 2; i--) {
+                    tokens.add(word.substring(0, i));
+                }
+            });
+        }
+
+        setsForParallel = new ArrayList<>();
+        count = 0;
+        tmp = new HashSet<>();
+        for (String w : tokens) {
+            if (count < 2000) {
+                tmp.add(w);
+                count++;
+            }
+            if (count == 2000) {
+                count = 0;
+                setsForParallel.add(tmp);
+                tmp = new HashSet<>();
+            }
+        }
+        setsForParallel.add(tmp);
+
+/*        for (Set<String> similarityKeys : setsForParallel) {
+            for (String word : similarityKeys) {
+                for (int i = word.length(); i > 2; i--) {
+                    tokens.add(word.substring(0, i));
+                }
+            }
+        }
+*/
 
         for (Set<String> similarityKeys : setsForParallel) {
             similarityKeys.parallelStream().forEach((word) -> {

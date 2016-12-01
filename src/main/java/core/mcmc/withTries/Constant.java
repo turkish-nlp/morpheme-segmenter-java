@@ -23,6 +23,7 @@ public class Constant {
     private static List<TrieST> trieList = new ArrayList<>();
     private static List<String> searchedWordList = new ArrayList<>();
     private static double laplaceCoefficient = 0.0000001;
+    private static double simUnfound = 0.0000001;
     private static double simUnsegmented;
     private static int heristic = 2;
     private Map<TrieST, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
@@ -83,6 +84,10 @@ public class Constant {
 
     public static double getNewCorpusSize() {
         return newCorpusSize;
+    }
+
+    public static double getSimUnfound() {
+        return simUnfound;
     }
 
     public Constant(String triesDir, String vectorDir, String wordListDir, double lambda, int baselineBranchNoArg, double simUnsegmentedArg) throws IOException, ClassNotFoundException {

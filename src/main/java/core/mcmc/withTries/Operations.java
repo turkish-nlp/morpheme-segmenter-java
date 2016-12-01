@@ -13,7 +13,7 @@ public class Operations {
     public static double getCosineScore(String w1, String w2) {
         double smlrty = Constant.getVectors().similarity(w1, w2);
         if (smlrty < 0 || smlrty > 1 || !Constant.getVectors().hasWord(w1) || !Constant.getVectors().hasWord(w2))
-            smlrty = 0.0000000001;    /// a
+            smlrty = Constant.getSimUnfound();    /// a
         return smlrty;
     }
 
