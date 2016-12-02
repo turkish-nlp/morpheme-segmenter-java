@@ -87,18 +87,18 @@ public class Constant {
         return cosineTable;
     }
 
-    public Constant(String nameOfsimilarityScoresFile, String nameOfBranchFactors, String nameOfTrieWords, String wordListDir, double lambda, int baselineBranchNoArg, double simUnsegmentedArg) throws IOException, ClassNotFoundException {
+    public Constant(String mapDir, String wordListDir, double lambda, int baselineBranchNoArg, double simUnsegmentedArg) throws IOException, ClassNotFoundException {
 
         this.lambda = lambda;
         baselineBranchNo = baselineBranchNoArg;
         this.simUnsegmented = simUnsegmentedArg;
         List<String> freqWords = Files.readAllLines(new File(wordListDir).toPath(), Charset.forName("UTF-8"));
 
-        generateTrieList(nameOfsimilarityScoresFile, nameOfBranchFactors, nameOfTrieWords);
+        generateTrieList(mapDir + "//similarityScoresToSerialize", mapDir + "//branchFactors", mapDir + "//trieWords");
 
-        trieTable.keySet().parallelStream().forEach((n) -> {
-            this.calculateFrequencyForMorp(n);
-        });
+                trieTable.keySet().parallelStream().forEach((n) -> {
+                    this.calculateFrequencyForMorp(n);
+                });
 
         for (String str : freqWords) {
             StringTokenizer tokens = new StringTokenizer(str, " ");

@@ -170,7 +170,7 @@ public class Sample {
         if (!segmentation.contains("+"))
             return Constant.getSimUnsegmented();
         else
-            return Operations.getCosineScore(segmentation);
+            return Math.log10(Operations.getCosineScore(segmentation));
     }
 
 /*

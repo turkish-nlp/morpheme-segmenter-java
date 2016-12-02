@@ -42,9 +42,9 @@ public class Gibbs_ForwardBackward_Recursive {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
         long start = System.nanoTime();
-        Gibbs_ForwardBackward_Recursive i = new Gibbs_ForwardBackward_Recursive(args[0], args[1], args[2], args[3], Double.parseDouble(args[4]), Integer.parseInt(args[5]), Double.parseDouble(args[6]),
-                Double.parseDouble(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]), Boolean.valueOf(args[10]), Boolean.valueOf(args[11]),
-                Integer.parseInt(args[12]), Double.parseDouble(args[13]));
+        Gibbs_ForwardBackward_Recursive i = new Gibbs_ForwardBackward_Recursive(args[0], args[1], Double.parseDouble(args[2]), Integer.parseInt(args[3]), Double.parseDouble(args[4]),
+                Double.parseDouble(args[5]), Boolean.valueOf(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]),
+                Integer.parseInt(args[10]), Double.parseDouble(args[11]));
 
         i.featString = i.generateFeatureString();
 
@@ -68,9 +68,9 @@ public class Gibbs_ForwardBackward_Recursive {
 
     }
 
-    public Gibbs_ForwardBackward_Recursive(String nameOfsimilarityScoresFile, String nameOfBranchFactors, String nameOfTrieWords, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma, boolean poisson,
+    public Gibbs_ForwardBackward_Recursive(String outputDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma, boolean poisson,
                                            boolean sim, boolean presence, boolean length, int baselineBranchNoArg, double simUnsegmentedArg) throws IOException, ClassNotFoundException {
-        Constant baseline = new Constant(nameOfsimilarityScoresFile, nameOfBranchFactors, nameOfTrieWords, wordListDir, lambda, baselineBranchNoArg, simUnsegmentedArg);
+        Constant baseline = new Constant(outputDir, wordListDir, lambda, baselineBranchNoArg, simUnsegmentedArg);
         this.baselineBranchNo = baselineBranchNoArg;
         this.noOfIteration = noOfIteration;
         this.noOfIterationCopy = noOfIteration;
