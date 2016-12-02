@@ -100,8 +100,8 @@ public class Gibbs_RecursiveInference {
                 sizeOfTable = sizeOfTable - deleteNo;
                 //     System.out.print("Selected item: " + sample.getSegmentation() + "     ");
                 //         System.out.println("---> Recursive operation started..");
-                System.out.printf("%s%13s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence", "length");
-                  System.out.println();
+                //      System.out.printf("%s%13s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence", "length");
+                //        System.out.println();
 
                 sample.setSegmentation("");
                 recursiveSplit(sample, sample.getWord());
@@ -128,8 +128,8 @@ public class Gibbs_RecursiveInference {
             dpScore = calculateLikelihoodsWithDP(split);
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
 
-             System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
-            System.out.println();
+            //       System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
+            //      System.out.println();
 
             double nonlog_total = Math.pow(10, total);
             forNormalize = forNormalize + nonlog_total;
