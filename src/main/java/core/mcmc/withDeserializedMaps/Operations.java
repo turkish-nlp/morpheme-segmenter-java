@@ -13,7 +13,7 @@ public class Operations {
     public static double getCosineScore(String segmentation) {
         double smlrty = Constant.getCosineTable().get(segmentation);
         if (smlrty == -1)
-            smlrty = 0.1;
+            smlrty = Constant.getSimUnfound();
         return smlrty;
     }
 

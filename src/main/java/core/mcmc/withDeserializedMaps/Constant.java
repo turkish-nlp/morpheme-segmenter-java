@@ -21,7 +21,7 @@ public class Constant {
     private static HashMap<String, Double> newCorpus = new HashMap<>();
     private static double newCorpusSize = 0;
     private static double laplaceCoefficient = 0.0000001;
-    private static double simUnfound = 0.000001;
+    private static double simUnfound = 0.1;
     private static double simUnsegmented;
     private static int heristic = 2;
 
@@ -87,11 +87,12 @@ public class Constant {
         return cosineTable;
     }
 
-    public Constant(String mapDir, String wordListDir, double lambda, int baselineBranchNoArg, double simUnsegmentedArg) throws IOException, ClassNotFoundException {
+    public Constant(String mapDir, String wordListDir, double lambda, int baselineBranchNoArg, double simUnsegmentedArg, double simUnfound) throws IOException, ClassNotFoundException {
 
         this.lambda = lambda;
         baselineBranchNo = baselineBranchNoArg;
         this.simUnsegmented = simUnsegmentedArg;
+        this.simUnfound = simUnfound;
         List<String> freqWords = Files.readAllLines(new File(wordListDir).toPath(), Charset.forName("UTF-8"));
 
         generateTrieList(mapDir + "//similarityScoresToSerialize", mapDir + "//branchFactors", mapDir + "//trieWords");

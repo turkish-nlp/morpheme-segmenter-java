@@ -46,7 +46,7 @@ public class Gibbs_RecursiveInference {
 
         Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], Double.parseDouble(args[2]), Integer.parseInt(args[3]), Double.parseDouble(args[4]),
                 Double.parseDouble(args[5]), Boolean.valueOf(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]),
-                Integer.parseInt(args[10]), Double.parseDouble(args[11]));
+                Integer.parseInt(args[10]), Double.parseDouble(args[11]), Double.parseDouble(args[12]));
 
         i.featString = i.generateFeatureString();
 
@@ -67,9 +67,9 @@ public class Gibbs_RecursiveInference {
 
     public Gibbs_RecursiveInference(String outputDir, String wordListDir, double lambda,
                                     int noOfIteration, double alpha, double gamma, boolean poisson,
-                                    boolean sim, boolean presence, boolean length, int baselineBranchNoArg, double simUnsegmentedArg) throws IOException, ClassNotFoundException {
+                                    boolean sim, boolean presence, boolean length, int baselineBranchNoArg, double simUnsegmentedArg, double simUnfoundArg) throws IOException, ClassNotFoundException {
 
-        Constant baseline = new Constant(outputDir, wordListDir, lambda, baselineBranchNoArg, simUnsegmentedArg);
+        Constant baseline = new Constant(outputDir, wordListDir, lambda, baselineBranchNoArg, simUnsegmentedArg, simUnfoundArg);
         this.baselineBranchNo = baselineBranchNoArg;
         this.simUnsegmented = simUnsegmentedArg;
         this.noOfIteration = noOfIteration;
