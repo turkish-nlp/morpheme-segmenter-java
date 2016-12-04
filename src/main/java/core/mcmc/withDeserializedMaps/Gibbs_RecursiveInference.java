@@ -1,6 +1,5 @@
 package core.mcmc.withDeserializedMaps;
 
-import core.mcmc.withDeserializedMaps.Operations;
 import core.mcmc.utils.SerializableModel;
 import org.apache.commons.io.FileUtils;
 
@@ -24,7 +23,7 @@ public class Gibbs_RecursiveInference {
     private double gamma;
     private static boolean[] featuresBooleanList = new boolean[4]; //0:poisson, 1:similarity, 2:presence, 3: length
     private String featString = "";
-    private int baselineBranchNo;
+    private int heuristic;
     private double simUnsegmented;
 
 
@@ -67,10 +66,10 @@ public class Gibbs_RecursiveInference {
 
     public Gibbs_RecursiveInference(String outputDir, String wordListDir, double lambda,
                                     int noOfIteration, double alpha, double gamma, boolean poisson,
-                                    boolean sim, boolean presence, boolean length, int baselineBranchNoArg, double simUnsegmentedArg, double simUnfoundArg) throws IOException, ClassNotFoundException {
+                                    boolean sim, boolean presence, boolean length, int heuristic, double simUnsegmentedArg, double simUnfoundArg) throws IOException, ClassNotFoundException {
 
-        Constant baseline = new Constant(outputDir, wordListDir, lambda, baselineBranchNoArg, simUnsegmentedArg, simUnfoundArg);
-        this.baselineBranchNo = baselineBranchNoArg;
+        Constant baseline = new Constant(outputDir, wordListDir, lambda, heuristic, simUnsegmentedArg, simUnfoundArg);
+        this.heuristic = heuristic;
         this.simUnsegmented = simUnsegmentedArg;
         this.noOfIteration = noOfIteration;
         this.noOfIterationCopy = noOfIteration;
@@ -118,7 +117,7 @@ public class Gibbs_RecursiveInference {
 
     private String recursiveSplit(Sample sample, String word) {
 
-        ArrayList<String> possibleSplits = Operations.getPossibleBinarySplits(word, Constant.getHeristic());
+        ArrayList<String> possibleSplits = Operations.getPossibleBinarySplits(word, Constant.getHeuristic());
         ArrayList<Double> scores = new ArrayList<>();
 
         double forNormalize = 0.0;
@@ -293,7 +292,7 @@ public class Gibbs_RecursiveInference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("gibbsMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha + "-G_" + gamma + "-Feat" + featString + "-base_" + baselineBranchNo + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("finalMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha + "-G_" + gamma + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
     }
 
 }

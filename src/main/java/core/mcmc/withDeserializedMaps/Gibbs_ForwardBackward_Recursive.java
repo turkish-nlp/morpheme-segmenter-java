@@ -1,6 +1,5 @@
 package core.mcmc.withDeserializedMaps;
 
-import core.mcmc.withDeserializedMaps.Operations;
 import core.mcmc.utils.SerializableModel;
 import org.apache.commons.io.FileUtils;
 
@@ -24,7 +23,7 @@ public class Gibbs_ForwardBackward_Recursive {
     private double gamma;
     private static boolean[] featuresBooleanList = new boolean[4]; //0:poisson, 1:similarity, 2:presence, 3: length
     private String featString = "";
-    private int baselineBranchNo;
+    private int heuristic;
 
     public String generateFeatureString() {
         if (featuresBooleanList[0] == true)
@@ -41,7 +40,6 @@ public class Gibbs_ForwardBackward_Recursive {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        long start = System.nanoTime();
         Gibbs_ForwardBackward_Recursive i = new Gibbs_ForwardBackward_Recursive(args[0], args[1], Double.parseDouble(args[2]), Integer.parseInt(args[3]), Double.parseDouble(args[4]),
                 Double.parseDouble(args[5]), Boolean.valueOf(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]),
                 Integer.parseInt(args[10]), Double.parseDouble(args[11]),Double.parseDouble(args[12]));
@@ -61,17 +59,14 @@ public class Gibbs_ForwardBackward_Recursive {
         for (Sample s : i.samples) {
             System.out.println(s.getWord() + "--> " + s.getSegmentation());
         }
-        long end = System.nanoTime();
-        long elapsedTime = end - start;
-        double seconds = (double)elapsedTime / 1000000000.0;
-        System.out.println(seconds + "sec");
+
 
     }
 
     public Gibbs_ForwardBackward_Recursive(String outputDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma, boolean poisson,
-                                           boolean sim, boolean presence, boolean length, int baselineBranchNoArg, double simUnsegmentedArg, double simUnfound) throws IOException, ClassNotFoundException {
-        Constant baseline = new Constant(outputDir, wordListDir, lambda, baselineBranchNoArg, simUnsegmentedArg, simUnfound);
-        this.baselineBranchNo = baselineBranchNoArg;
+                                           boolean sim, boolean presence, boolean length, int heuristic, double simUnsegmentedArg, double simUnfound) throws IOException, ClassNotFoundException {
+        Constant baseline = new Constant(outputDir, wordListDir, lambda, heuristic, simUnsegmentedArg, simUnfound);
+        this.heuristic = heuristic;
         this.noOfIteration = noOfIteration;
         this.noOfIterationCopy = noOfIteration;
         this.frequencyTable = new ConcurrentHashMap<>(baseline.getMorphemeFreq());
@@ -90,7 +85,6 @@ public class Gibbs_ForwardBackward_Recursive {
     public void doSampling() throws IOException {
 
         while (noOfIteration > 0) {
-            long start = System.nanoTime();
             System.out.print("Iter: " + noOfIteration);
             Collections.shuffle(samples);
             for (Sample sample : samples) {
@@ -108,10 +102,7 @@ public class Gibbs_ForwardBackward_Recursive {
 
             //  System.out.println("Selected segmentation: " + sample.getSegmentation());
             }
-            long end = System.nanoTime();
-            long elapsedTime = end - start;
-            double seconds = (double)elapsedTime / 1000000000.0;
-            System.out.println(" --> Elapsed time: " + seconds);
+
             noOfIteration--;
 
         }
@@ -120,7 +111,7 @@ public class Gibbs_ForwardBackward_Recursive {
 
     private String recursiveSplit(Sample sample, String word) {
 
-        ArrayList<String> possibleSplits = Operations.getPossibleBinarySplits(word, Constant.getHeristic());
+        ArrayList<String> possibleSplits = Operations.getPossibleBinarySplits(word, Constant.getHeuristic());
         ArrayList<Double> scores = new ArrayList<>();
 
         double forNormalize = 0.0;
@@ -138,7 +129,7 @@ public class Gibbs_ForwardBackward_Recursive {
             double nonlog_total = Math.pow(10, total);
 
             StringTokenizer stringTokenizer = new StringTokenizer(split, "+");
-            nonlog_total = nonlog_total * leftRecursion(sample, stringTokenizer.nextToken(), Constant.getHeristic(), this.frequencyTable);
+            nonlog_total = nonlog_total * leftRecursion(sample, stringTokenizer.nextToken(), Constant.getHeuristic(), this.frequencyTable);
 
             //   System.out.printf("%s%13f%13f%13f%13f", split, dpScore , priors.get(0), priors.get(1),  priors.get(2));
             //      System.out.println();
@@ -390,7 +381,7 @@ public class Gibbs_ForwardBackward_Recursive {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("gibbsMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha + "-G_" + gamma + "-Feat" + featString + "-base_" + baselineBranchNo + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("gibbsMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha + "-G_" + gamma + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
     }
 
 }

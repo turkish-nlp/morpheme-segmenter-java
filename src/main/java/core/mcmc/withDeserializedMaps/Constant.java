@@ -1,10 +1,5 @@
 package core.mcmc.withDeserializedMaps;
 
-import core.mcmc.withDeserializedMaps.Sample;
-import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
-import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
-import tries.TrieST;
-
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -23,7 +18,7 @@ public class Constant {
     private static double laplaceCoefficient = 0.0000001;
     private static double simUnfound = 0.1;
     private static double simUnsegmented;
-    private static int heristic = 2;
+    private static int heuristic = 2;
 
     private static HashMap<String, Double> cosineTable;
     private static HashMap<String, HashMap<String, Integer>> branchTable;
@@ -33,14 +28,13 @@ public class Constant {
     private Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
     private CopyOnWriteArrayList<Sample> sampleList = new CopyOnWriteArrayList<>();
 
-    static int baselineBranchNo = 1;
 
     public static double getSimUnfound() {
         return simUnfound;
     }
 
-    public static int getHeristic() {
-        return heristic;
+    public static int getHeuristic() {
+        return heuristic;
     }
 
     public static double getLaplaceCoefficient() {
@@ -87,10 +81,10 @@ public class Constant {
         return cosineTable;
     }
 
-    public Constant(String mapDir, String wordListDir, double lambda, int baselineBranchNoArg, double simUnsegmentedArg, double simUnfound) throws IOException, ClassNotFoundException {
+    public Constant(String mapDir, String wordListDir, double lambda, int heuristic, double simUnsegmentedArg, double simUnfound) throws IOException, ClassNotFoundException {
 
         this.lambda = lambda;
-        baselineBranchNo = baselineBranchNoArg;
+        this.heuristic = heuristic;
         this.simUnsegmented = simUnsegmentedArg;
         this.simUnfound = simUnfound;
         List<String> freqWords = Files.readAllLines(new File(wordListDir).toPath(), Charset.forName("UTF-8"));
@@ -152,7 +146,7 @@ public class Constant {
 
         trieTable = (HashMap<String, TreeSet<String>>) o;
 
-        generateBoundaryListforBaseline(baselineBranchNo);
+        generateBoundaryListforBaseline(3); /// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 
 /*

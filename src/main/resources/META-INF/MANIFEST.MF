@@ -1,3 +1,4 @@
 Manifest-Version: 1.0
-Main-Class: core.mcmc.withDeserializedMaps.Gibbs_RecursiveInference
+Main-Class: core.mcmc.withDeserializedMaps.Gibbs_ForwardBackward_Recur
+ sive
 

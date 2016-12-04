@@ -11,6 +11,7 @@ import java.util.*;
 public class Operations {
 
     public static double getCosineScore(String segmentation) {
+
         double smlrty = Constant.getCosineTable().get(segmentation);
         if (smlrty == -1)
             smlrty = Constant.getSimUnfound();
@@ -26,7 +27,6 @@ public class Operations {
             segment = segment + tokenizer.nextToken();
             segments.add(segment);
         }
-
         return segments;
     }
 
