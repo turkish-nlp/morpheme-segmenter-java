@@ -74,6 +74,8 @@ public class SegmentationGenerator {
 
     public void doSplit(String word, Set<String> affixes) throws FileNotFoundException {
         ArrayList<String> results = getPossibleSplits(word, affixes);
+        if(results.contains(word))  /// MURATHAN
+           results.remove(word);    /// MURATHAN
         if (!results.isEmpty()) {
             String segMax = "";
             double maxScore = Double.NEGATIVE_INFINITY;
@@ -83,7 +85,6 @@ public class SegmentationGenerator {
                 while (st.hasMoreTokens()) {
                     tmp = tmp + Math.log10(morphemeProb.get(st.nextToken()));
                 }
-
                 if (tmp > maxScore) {
                     maxScore = tmp;
                     segMax = str;
@@ -139,10 +140,10 @@ public class SegmentationGenerator {
 
         for (int i = 1; i < word.length() + 1; i++) {
             String stem = word.substring(0, i);
-            String remaning = word.substring(i);
+            String remaining = word.substring(i);
 
             if (affixes.contains(stem)) {
-                getPossibleAffixSequence(affixes, stem, remaning, segmentations);
+                getPossibleAffixSequence(affixes, stem, remaining, segmentations);
             }
         }
 
