@@ -1,15 +1,13 @@
 package core.preModel;
 
+import jdk.nashorn.internal.objects.NativeRegExp;
 import org.apache.commons.io.FileUtils;
 import tries.TrieST;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
@@ -29,8 +27,7 @@ public class trieFromCluster {
                 System.out.println(str);
                 buildTries(str);
             }
-        }
-        else {
+        } else {
             System.out.println("single_trie");
             List<String> wordsSingle = Files.readAllLines(new File(file).toPath(), charset);
             buildSingleTrie(wordsSingle);
@@ -50,8 +47,12 @@ public class trieFromCluster {
         if (!all_words.isEmpty()) {
             st.put(word + "$");
             for (String w : all_words) {
-                st.put(w + "$");
-               // System.out.println(w);
+                StringTokenizer token = new StringTokenizer(w);
+                token.nextToken();
+                String x = token.nextToken();
+                System.out.println(x);
+                st.put(x + "$");
+                // System.out.println(w);
             }
         }
         serializeToFile(st, word);

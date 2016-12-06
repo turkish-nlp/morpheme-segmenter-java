@@ -1,13 +1,20 @@
 package core.preModel;
 
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
+import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tries.TrieST;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * Created by Murathan on 22-Nov-16.
+ * <p>
+ * !!!! INVOLVES SOME TEST FUNCTIONS
  */
 public class trieReader {
 
@@ -21,7 +28,29 @@ public class trieReader {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        trieReader tr = new trieReader("trieData");
+        //  trieReader tr = new trieReader("trieData");
+
+        Charset charset = Charset.forName("UTF-8");
+        WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File("C:\\Users\\Murathan\\github\\vectors.txt"));
+        List<String> all_words = Files.readAllLines(new File("wordlist_tur.txt").toPath(), charset);
+        PrintWriter writer = new PrintWriter("completeWordListWithWordsExistinVectors.txt", "UTF-8");
+
+        int count = 0;
+        if (!all_words.isEmpty()) {
+            for (String w : all_words) {
+                StringTokenizer token = new StringTokenizer(w);
+                token.nextToken();
+                String x = token.nextToken();
+                if (vectors.hasWord(x)) {
+                    count++;
+                    writer.println(x);
+                }
+            }
+        }
+        writer.close();
+        System.out.println(count);
+        System.out.println((double) count / all_words.size());
+
 
     }
 
