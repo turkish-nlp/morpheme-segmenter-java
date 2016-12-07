@@ -55,8 +55,50 @@ public class trieFromCluster {
                 // System.out.println(w);
             }
         }
-        serializeToFile(st, word);
+        //serializeToFile(st, word);
 
+        fillBranchFactorMap(st, "tek_trie");
+    }
+
+    private HashMap<String, HashMap<String, Integer>> fillBranchFactorMap(TrieST trie, String trieName) {
+
+        HashMap<String, HashMap<String, Integer>> branchFactors = new HashMap<>();
+
+        for (String word : trie.getWordList().keySet()) {
+            if (!word.endsWith("$")) {
+                if (branchFactors.containsKey(trieName)) {
+                    branchFactors.get(trieName).put(word, trie.getWordList().get(word));
+                } else {
+                    HashMap<String, Integer> branches = new HashMap<>();
+                    branches.put(word, trie.getWordList().get(word));
+                    branchFactors.put(trieName, branches);
+                }
+            } /*else {
+
+                similarityKeys.add(word.substring(0, word.length() - 1));
+
+                if (trieWords.containsKey(searchedWordList.get(trieList.indexOf(trie)))) {
+                    trieWords.get(searchedWordList.get(trieList.indexOf(trie))).add(word);
+                } else {
+                    TreeSet<String> words = new TreeSet<>();
+                    words.add(word);
+                    trieWords.put(searchedWordList.get(trieList.indexOf(trie)), words);
+                }
+            }*/
+        }
+        return branchFactors;
+    }
+
+    private void writeToFile(TrieST trie, String fileName) throws IOException {
+
+        FileOutputStream fos = new FileOutputStream(new File(fileName));
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
+
+        for (String word : trie.getWordList().keySet()) {
+            if (!word.endsWith("$")) {
+                bw.write(word + "#" + trie.getWordList().get(word));
+            }
+        }
     }
 
     public void buildTries(String line) throws IOException {
