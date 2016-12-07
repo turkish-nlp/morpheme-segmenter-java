@@ -17,7 +17,7 @@ public class SegmentationGenerator {
     private Map<String, Double> morphemeProb;
     private Map<String, String> finalSegmentation;
     private Map<String, CopyOnWriteArrayList<String>> serializedSegmentations;
-
+    private int threshold = 9;
     static Charset charset = Charset.forName("UTF-8");
 
     public SegmentationGenerator(String file, String inputFile, String mode) throws IOException, ClassNotFoundException {
@@ -38,15 +38,26 @@ public class SegmentationGenerator {
         printFinalSegmentations();
     }
 
+    PrintWriter pw = new PrintWriter("FQs");
+
+    PrintWriter pw2 = new PrintWriter("Ps");
+
     public void calculateProb() {
         int totalMorp = 0;
-        for (String str : morphemeFreq.keySet())
+        for (String str : morphemeFreq.keySet()) {
             totalMorp = totalMorp + morphemeFreq.get(str);
+            pw.println(str + " : " + morphemeFreq.get(str));
+        }
+        pw.close();
 
         for (String str : morphemeFreq.keySet()) {
             // System.out.println(str + "-->" + (double) morphemeFreq.get(str) / totalMorp);
-            morphemeProb.put(str, (double) morphemeFreq.get(str) / totalMorp);
+            double prob = (double) morphemeFreq.get(str) / totalMorp;
+            morphemeProb.put(str, prob);
+
+            pw2.println(str + " : " + prob);
         }
+        pw2.close();
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
@@ -74,8 +85,10 @@ public class SegmentationGenerator {
 
     public void doSplit(String word, Set<String> affixes) throws FileNotFoundException {
         ArrayList<String> results = getPossibleSplits(word, affixes);
-        if(results.contains(word))  /// MURATHAN
-           results.remove(word);    /// MURATHAN
+
+        if (results.contains(word))
+            results.remove(word);
+
         if (!results.isEmpty()) {
             String segMax = "";
             double maxScore = Double.NEGATIVE_INFINITY;
@@ -108,7 +121,7 @@ public class SegmentationGenerator {
 
         model.getSerializedFrequencyTable().keySet().parallelStream().forEach((s) -> {
             int freq = model.getSerializedFrequencyTable().get(s);
-            if (freq != 0)
+            if (freq > threshold)   // CHANGED!!!!!!
                 morphemeFreq.put(s, freq);
         });
 
@@ -130,7 +143,7 @@ public class SegmentationGenerator {
 
             int freq = Integer.parseInt(st.nextToken());
             String word = st.nextToken();
-            finalSegmentation.put(word, "err");
+            finalSegmentation.put(word, word);
         }
     }
 
@@ -142,9 +155,9 @@ public class SegmentationGenerator {
             String stem = word.substring(0, i);
             String remaining = word.substring(i);
 
-            if (affixes.contains(stem)) {
+            //     if (affixes.contains(stem)) {
                 getPossibleAffixSequence(affixes, stem, remaining, segmentations);
-            }
+            //       }
         }
 
         return segmentations;
@@ -154,23 +167,23 @@ public class SegmentationGenerator {
         if (tail.length() == 0) {
             segmentations.add(head);
         } else if (tail.length() == 1) {
-            if (affixes.contains(tail)) {
+      //      if (affixes.contains(tail)) {
                 segmentations.add(head + "+" + tail);
-            }
+      //      }
         } else {
             for (int i = 1; i < tail.length() + 1; i++) {
                 String morpheme = tail.substring(0, i);
 
                 if (morpheme.length() == tail.length()) {
-                    if (affixes.contains(morpheme)) {
+             //       if (affixes.contains(morpheme)) {
                         segmentations.add(head + "+" + morpheme);
-                    }
+              //      }
                 } else {
                     String tailMorph = tail.substring(i);
-                    if (affixes.contains(morpheme)) {
+                //    if (affixes.contains(morpheme)) {
                         String headMorph = head + "+" + morpheme;
                         getPossibleAffixSequence(affixes, headMorph, tailMorph, segmentations);
-                    }
+                  //  }
                 }
             }
         }
