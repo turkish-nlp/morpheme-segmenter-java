@@ -1,6 +1,8 @@
 package core.mcmc.utils;
 
 import core.blockSampling.Segmenter;
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
+import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -17,19 +19,21 @@ public class SegmentationGenerator {
     private Map<String, Double> morphemeProb;
     private Map<String, String> finalSegmentation;
     private Map<String, CopyOnWriteArrayList<String>> serializedSegmentations;
-    private int threshold = 9;
+    private int threshold = 4;
     static Charset charset = Charset.forName("UTF-8");
     private double alpha = 0.1;
     private double gamma = 0.1;
     private double totalSize;
+    private WordVectors vectors;
 
 
-    public SegmentationGenerator(String file, String inputFile, String mode) throws IOException, ClassNotFoundException {
+    public SegmentationGenerator(String vectorsDir, String file, String inputFile, String mode) throws IOException, ClassNotFoundException {
 
         this.morphemeFreq = new ConcurrentHashMap<>();
         this.morphemeProb = new ConcurrentHashMap<>();
         this.finalSegmentation = new ConcurrentHashMap<>();
         this.serializedSegmentations = new ConcurrentHashMap<>();
+        this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorsDir));
 
         deSerialize(file);
         readWords(inputFile);
@@ -67,7 +71,7 @@ public class SegmentationGenerator {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        SegmentationGenerator s = new SegmentationGenerator(args[0], args[1], args[2]);
+        SegmentationGenerator s = new SegmentationGenerator(args[0], args[1], args[2],args[3]);
 
     }
 
@@ -99,13 +103,22 @@ public class SegmentationGenerator {
             double maxScore = Double.NEGATIVE_INFINITY;
             for (String str : results) {
                 double tmp = 0;
-                StringTokenizer st = new StringTokenizer(str, "+");
-                while (st.hasMoreTokens()) {
-                    String m = st.nextToken();
-                    if (morphemeFreq.containsKey(m))
-                        tmp = tmp + Math.log10(morphemeFreq.get(m) / (totalSize + alpha));
+            //    StringTokenizer st = new StringTokenizer(str, "+");
+                String morphemes[] = str.split("//+");
+                String forSim = morphemes[0];
+                double SimScore = 0;
+                for(int i =0; i< morphemes.length-1;i++) {
+                    String m = morphemes[i];
+                    if(i+1 < morphemes.length) {
+                        forSim = forSim + morphemes[i + 1];
+                        SimScore = Math.log10(vectors.similarity(m, forSim));
+                    }
                     else
-                        tmp = tmp + Math.log10(alpha * Math.pow(gamma,  m.length() + 1) / (totalSize + alpha));
+                        SimScore = 0;
+                    if (morphemeFreq.containsKey(m))
+                        tmp = tmp + Math.log10(morphemeFreq.get(m) / (totalSize + alpha)) + SimScore;
+                    else
+                        tmp = tmp + Math.log10(alpha * Math.pow(gamma,  m.length() + 1) / (totalSize + alpha)) + SimScore;
                 }
                 if (tmp > maxScore) {
                     maxScore = tmp;
