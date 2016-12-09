@@ -19,6 +19,10 @@ public class SegmentationGenerator {
     private Map<String, CopyOnWriteArrayList<String>> serializedSegmentations;
     private int threshold = 9;
     static Charset charset = Charset.forName("UTF-8");
+    private double alpha = 0.1;
+    private double gamma = 0.1;
+    private double totalSize;
+
 
     public SegmentationGenerator(String file, String inputFile, String mode) throws IOException, ClassNotFoundException {
 
@@ -57,6 +61,7 @@ public class SegmentationGenerator {
 
             pw2.println(str + " : " + prob);
         }
+        totalSize = totalMorp;
         pw2.close();
     }
 
@@ -96,7 +101,11 @@ public class SegmentationGenerator {
                 double tmp = 0;
                 StringTokenizer st = new StringTokenizer(str, "+");
                 while (st.hasMoreTokens()) {
-                    tmp = tmp + Math.log10(morphemeProb.get(st.nextToken()));
+                    String m = st.nextToken();
+                    if (morphemeFreq.containsKey(m))
+                        tmp = tmp + Math.log10(morphemeFreq.get(m) / (totalSize + alpha));
+                    else
+                        tmp = tmp + Math.log10(alpha * Math.pow(gamma,  m.length() + 1) / (totalSize + alpha));
                 }
                 if (tmp > maxScore) {
                     maxScore = tmp;
@@ -156,7 +165,7 @@ public class SegmentationGenerator {
             String remaining = word.substring(i);
 
             //     if (affixes.contains(stem)) {
-                getPossibleAffixSequence(affixes, stem, remaining, segmentations);
+            getPossibleAffixSequence(affixes, stem, remaining, segmentations);
             //       }
         }
 
@@ -167,23 +176,23 @@ public class SegmentationGenerator {
         if (tail.length() == 0) {
             segmentations.add(head);
         } else if (tail.length() == 1) {
-      //      if (affixes.contains(tail)) {
-                segmentations.add(head + "+" + tail);
-      //      }
+            //      if (affixes.contains(tail)) {
+            segmentations.add(head + "+" + tail);
+            //      }
         } else {
             for (int i = 1; i < tail.length() + 1; i++) {
                 String morpheme = tail.substring(0, i);
 
                 if (morpheme.length() == tail.length()) {
-             //       if (affixes.contains(morpheme)) {
-                        segmentations.add(head + "+" + morpheme);
-              //      }
+                    //       if (affixes.contains(morpheme)) {
+                    segmentations.add(head + "+" + morpheme);
+                    //      }
                 } else {
                     String tailMorph = tail.substring(i);
-                //    if (affixes.contains(morpheme)) {
-                        String headMorph = head + "+" + morpheme;
-                        getPossibleAffixSequence(affixes, headMorph, tailMorph, segmentations);
-                  //  }
+                    //    if (affixes.contains(morpheme)) {
+                    String headMorph = head + "+" + morpheme;
+                    getPossibleAffixSequence(affixes, headMorph, tailMorph, segmentations);
+                    //  }
                 }
             }
         }
