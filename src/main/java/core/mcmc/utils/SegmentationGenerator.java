@@ -24,16 +24,16 @@ public class SegmentationGenerator {
     private double alpha = 0.1;
     private double gamma = 0.1;
     private double totalSize;
-    private WordVectors vectors;
+    private static WordVectors vectors;
 
 
-    public SegmentationGenerator(String vectorsDir, String file, String inputFile, String mode) throws IOException, ClassNotFoundException {
+    public SegmentationGenerator(String vectorDir, String file, String inputFile, String mode) throws IOException, ClassNotFoundException {
 
+        this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
         this.morphemeFreq = new ConcurrentHashMap<>();
         this.morphemeProb = new ConcurrentHashMap<>();
         this.finalSegmentation = new ConcurrentHashMap<>();
         this.serializedSegmentations = new ConcurrentHashMap<>();
-        this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorsDir));
 
         deSerialize(file);
         readWords(inputFile);
@@ -71,7 +71,7 @@ public class SegmentationGenerator {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        SegmentationGenerator s = new SegmentationGenerator(args[0], args[1], args[2],args[3]);
+        SegmentationGenerator s = new SegmentationGenerator(args[0], args[1], args[2], args[3]);
 
     }
 
@@ -95,37 +95,45 @@ public class SegmentationGenerator {
     public void doSplit(String word, Set<String> affixes) throws FileNotFoundException {
         ArrayList<String> results = getPossibleSplits(word, affixes);
 
-        if (results.contains(word))
-            results.remove(word);
+       // if (results.contains(word))
+       //     results.remove(word);
 
         if (!results.isEmpty()) {
             String segMax = "";
             double maxScore = Double.NEGATIVE_INFINITY;
             for (String str : results) {
                 double tmp = 0;
-            //    StringTokenizer st = new StringTokenizer(str, "+");
+                StringTokenizer st = new StringTokenizer(str, "+");
+
+                // similarity
                 String morphemes[] = str.split("//+");
-                String forSim = morphemes[0];
-                double SimScore = 0;
-                for(int i =0; i< morphemes.length-1;i++) {
-                    String m = morphemes[i];
-                    if(i+1 < morphemes.length) {
-                        forSim = forSim + morphemes[i + 1];
-                        SimScore = Math.log10(vectors.similarity(m, forSim));
+                double simScoreOfCurrent = 0;
+                String cur = "";
+                String next = morphemes[0];
+                for (int i = 0; i < morphemes.length - 1; i++) {
+                    if (i + 1 < morphemes.length) {
+                        cur = next;
+                        next = next + morphemes[i + 1];
                     }
-                    else
-                        SimScore = 0;
-                    if (morphemeFreq.containsKey(m))
-                        tmp = tmp + Math.log10(morphemeFreq.get(m) / (totalSize + alpha)) + SimScore;
-                    else
-                        tmp = tmp + Math.log10(alpha * Math.pow(gamma,  m.length() + 1) / (totalSize + alpha)) + SimScore;
+                    simScoreOfCurrent = simScoreOfCurrent + Math.log10(vectors.similarity(cur, next));
                 }
+                // end of similarity
+
+                while (st.hasMoreTokens()) {
+                    String m = st.nextToken();
+                    if (morphemeFreq.containsKey(m))
+                        tmp = tmp + Math.log10(morphemeFreq.get(m) / (totalSize + alpha));
+                    else
+                        tmp = tmp + Math.log10(alpha * Math.pow(gamma, m.length() + 1) / (totalSize + alpha));
+                }
+                tmp = tmp + simScoreOfCurrent;
                 if (tmp > maxScore) {
                     maxScore = tmp;
                     segMax = str;
                 }
             }
             finalSegmentation.put(word, segMax);
+           // System.out.println(segMax);
         }
     }
 

@@ -1,5 +1,7 @@
 package core.preModel;
 
+import core.mcmc.utils.SerializableModel;
+import core.mcmc.withDeserializedMaps.Constant;
 import jdk.nashorn.internal.objects.NativeRegExp;
 import org.apache.commons.io.FileUtils;
 import tries.TrieST;
@@ -57,7 +59,29 @@ public class trieFromCluster {
         }
         //serializeToFile(st, word);
 
-        fillBranchFactorMap(st, "tek_trie");
+        HashMap<String, HashMap<String, Integer>> singleTrie = fillBranchFactorMap(st, "tek_trie");
+        serializeSingleTrie(singleTrie, dir);
+    }
+
+    private void serializeSingleTrie(HashMap<String, HashMap<String, Integer>> singleTrie, String dir) throws IOException {
+
+
+        SerializableModel model = new SerializableModel(singleTrie);
+
+        // toByteArray
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutput out = null;
+        byte[] yourBytes = null;
+        out = new ObjectOutputStream(bos);
+        out.writeObject(model);
+        yourBytes = bos.toByteArray();
+
+        bos.close();
+        out.close();
+
+        FileUtils.writeByteArrayToFile(new File(dir+"/singleTrie"), yourBytes);
+
+
     }
 
     private HashMap<String, HashMap<String, Integer>> fillBranchFactorMap(TrieST trie, String trieName) {

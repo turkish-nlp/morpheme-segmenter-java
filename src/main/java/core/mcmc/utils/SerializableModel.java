@@ -14,6 +14,8 @@ public class SerializableModel implements Serializable {
     private Map<String, Integer> serializedFrequencyTable;
     private Map<String, ArrayList<String>> serializedSegmentations;
 
+    HashMap<String, HashMap<String, Integer>> singleTrie;
+
     private static final long serialVersionUID = -2557088637718891877L;
 
     public Map<String, Integer> getSerializedFrequencyTable() {
@@ -30,5 +32,10 @@ public class SerializableModel implements Serializable {
 
         serializedFrequencyTable.putAll(frequencyTable);
         serializedSegmentations.putAll(segmentations);
+    }
+
+    public SerializableModel(HashMap<String, HashMap<String, Integer>> singleTrieArg) {
+        singleTrie = new HashMap<>();
+        singleTrie.putAll(singleTrieArg);
     }
 }
