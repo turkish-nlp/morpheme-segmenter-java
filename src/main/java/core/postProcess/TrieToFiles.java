@@ -160,7 +160,7 @@ public class TrieToFiles {
 
         for (Set<String> similarityKeys : setsForParallel) {
             similarityKeys.parallelStream().forEach((word) -> {
-                for (int i = 2; i < word.length(); i++) {
+                for (int i = 1; i < word.length(); i++) {
                     String key = word.substring(0, i);
                     String keyCopy = word.substring(0, i);
                     keyCopy = keyCopy + "+" + word.substring(i);
