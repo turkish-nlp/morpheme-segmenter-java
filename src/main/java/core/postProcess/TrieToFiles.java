@@ -101,6 +101,10 @@ public class TrieToFiles {
         System.out.println();
     }
 
+    public void generateMapsFromFile(String dir) {
+
+    }
+
     private void fillSimilarityMap() {
 
         ArrayList<Set<String>> setsForParallel = new ArrayList<>();
