@@ -123,7 +123,7 @@ public class TrieToFiles {
 
         for (Set<String> similarityKeys : setsForParallel) {
             similarityKeys.parallelStream().forEach((word) -> {
-                for (int i = word.length(); i > 2; i--) {
+                for (int i = word.length(); i > 1; i--) {
                     tokens.add(word.substring(0, i));
                 }
             });

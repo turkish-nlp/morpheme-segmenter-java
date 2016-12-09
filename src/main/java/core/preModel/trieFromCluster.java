@@ -59,8 +59,10 @@ public class trieFromCluster {
         }
         //serializeToFile(st, word);
 
-        HashMap<String, HashMap<String, Integer>> singleTrie = fillBranchFactorMap(st, "tek_trie");
-        serializeSingleTrie(singleTrie, dir);
+        //HashMap<String, HashMap<String, Integer>> singleTrie = fillBranchFactorMap(st, "tek_trie");
+        //serializeSingleTrie(singleTrie, dir);
+
+        writeToFile(st, "singleTrie");
     }
 
     private void serializeSingleTrie(HashMap<String, HashMap<String, Integer>> singleTrie, String dir) throws IOException {
@@ -121,7 +123,9 @@ public class trieFromCluster {
         for (String word : trie.getWordList().keySet()) {
             if (!word.endsWith("$")) {
                 bw.write(word + "#" + trie.getWordList().get(word));
-            }
+            } else {
+
+            } bw.write("$" + word.substring(0, word.length() - 1) + "#" + trie.getWordList().get(word));
         }
     }
 
