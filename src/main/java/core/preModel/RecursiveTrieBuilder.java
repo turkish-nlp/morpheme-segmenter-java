@@ -28,8 +28,7 @@ public class RecursiveTrieBuilder {
         return trieList;
     }
 
-    public RecursiveTrieBuilder(String fileVectorInput, String fileSegmentationInput, String path, boolean load) throws FileNotFoundException {
-        if (load)
+    public RecursiveTrieBuilder(String fileVectorInput, String fileSegmentationInput, String path) throws FileNotFoundException {
             vectors = WordVectorSerializer.loadTxtVectors(new File(fileVectorInput));
         this.fileSegmentationInput = fileSegmentationInput;
         dir = path;
@@ -180,7 +179,7 @@ public class RecursiveTrieBuilder {
         * Vector dosyasını main methoda argüman olarak verilecek şekilde değiştiriyorum.
         *
          */
-        RecursiveTrieBuilder rtb = new RecursiveTrieBuilder(args[0], args[1], args[2], false);
+        RecursiveTrieBuilder rtb = new RecursiveTrieBuilder(args[0], args[1], args[2]);
         rtb.deSerializeTriesToDebug();
         for (String s : rtb.trieList.keySet()) {
             TrieST st = rtb.trieList.get(s);

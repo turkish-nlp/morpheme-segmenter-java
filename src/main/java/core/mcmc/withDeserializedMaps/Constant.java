@@ -2,6 +2,7 @@ package core.mcmc.withDeserializedMaps;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -87,8 +88,16 @@ public class Constant {
         this.heuristic = heuristic;
         this.simUnsegmented = simUnsegmentedArg;
         this.simUnfound = simUnfound;
-        List<String> freqWords = Files.readAllLines(new File(wordListDir).toPath(), Charset.forName("UTF-8"));
+        List<String> freqWords = null;
+        try {
+            freqWords = Files.readAllLines(new File(wordListDir).toPath(), Charset.forName("UTF-8"));
+        }
+        catch(MalformedInputException e)
 
+        {
+            System.out.println(e.getMessage());
+            freqWords = Files.readAllLines(new File(wordListDir).toPath() , Charset.forName("ISO-8859-9"));
+        }
         generateTrieList(mapDir + "//similarityScoresToSerialize", mapDir + "//branchFactors", mapDir + "//trieWords");
 
                 trieTable.keySet().parallelStream().forEach((n) -> {
