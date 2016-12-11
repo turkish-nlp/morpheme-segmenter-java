@@ -10,6 +10,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static java.lang.Integer.parseInt;
+
 /**
  * Created by Murathan on 26-Jun-16.
  */
@@ -19,31 +21,46 @@ public class SegmentationGenerator {
     private Map<String, Double> morphemeProb;
     private Map<String, String> finalSegmentation;
     private Map<String, CopyOnWriteArrayList<String>> serializedSegmentations;
-    private int threshold = 4;
+    private int threshold;
     static Charset charset = Charset.forName("UTF-8");
     private double alpha = 0.1;
     private double gamma = 0.1;
     private double totalSize;
+    private String file;
+    private String mode;
     private static WordVectors vectors;
+    private boolean sim = false;
 
 
-    public SegmentationGenerator(String vectorDir, String file, String inputFile, String mode) throws IOException, ClassNotFoundException {
+    public SegmentationGenerator(String vectorDir, String file, String inputFile, String mode, int threshold) throws IOException, ClassNotFoundException {
 
-        this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
+       // this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
+        this.threshold = threshold;
         this.morphemeFreq = new ConcurrentHashMap<>();
         this.morphemeProb = new ConcurrentHashMap<>();
         this.finalSegmentation = new ConcurrentHashMap<>();
         this.serializedSegmentations = new ConcurrentHashMap<>();
+        this.mode = mode;
+        File folder = new File(file);
+        File[] listOfFiles = folder.listFiles();
+        for (File x : listOfFiles) {
+            System.out.println(x.getPath().contains("MODEL") + "    " + x.getPath());
 
-        deSerialize(file);
-        readWords(inputFile);
-        calculateProb();
-        if (mode.equals("uni"))
-            parallelSplit();
-        else
-            findCorrectSegmentation(inputFile);
+            if (x.getPath().contains("MODEL")) {
+                System.out.println(x.getPath() + " is started!");
+                this.file = x.getPath();
+                deSerialize(x.getAbsolutePath());
+                readWords(inputFile);
+                calculateProb();
+                if (mode.equals("uni"))
+                    parallelSplit();
+                else
+                    findCorrectSegmentation(inputFile);
 
-        printFinalSegmentations();
+                printFinalSegmentations();
+                System.out.println(x + " is done!");
+            }
+        }
     }
 
     PrintWriter pw = new PrintWriter("FQs");
@@ -71,7 +88,7 @@ public class SegmentationGenerator {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        SegmentationGenerator s = new SegmentationGenerator(args[0], args[1], args[2], args[3]);
+        SegmentationGenerator s = new SegmentationGenerator(args[0], args[1], args[2], args[3], Integer.parseInt(args[4]));
 
     }
 
@@ -85,18 +102,24 @@ public class SegmentationGenerator {
         });
     }
 
-    public void printFinalSegmentations() {
-        for (String str : finalSegmentation.keySet())
-            System.out.println(str.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
+    public void printFinalSegmentations() throws FileNotFoundException {
+
+        PrintWriter writer = new PrintWriter("NOUNS_OLD_results_" +  "_th_" + threshold + "_" + mode.toUpperCase() + "_" + file.substring(file.indexOf("/") + 1) );
+        for (String str : finalSegmentation.keySet()) {
+            writer.println(str.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
                     + "\t" + finalSegmentation.get(str).replaceAll("\\+", " ").replaceAll("ö", "O").
                     replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S"));
+
+
+        }
+        writer.close();
     }
 
     public void doSplit(String word, Set<String> affixes) throws FileNotFoundException {
         ArrayList<String> results = getPossibleSplits(word, affixes);
 
-       // if (results.contains(word))
-       //     results.remove(word);
+        if (results.contains(word))
+             results.remove(word);
 
         if (!results.isEmpty()) {
             String segMax = "";
@@ -105,17 +128,20 @@ public class SegmentationGenerator {
                 double tmp = 0;
                 StringTokenizer st = new StringTokenizer(str, "+");
 
+           /*     double simScoreOfCurrent = 0;
                 // similarity
-                String morphemes[] = str.split("//+");
-                double simScoreOfCurrent = 0;
-                String cur = "";
-                String next = morphemes[0];
-                for (int i = 0; i < morphemes.length - 1; i++) {
-                    if (i + 1 < morphemes.length) {
-                        cur = next;
-                        next = next + morphemes[i + 1];
+                if(sim) {
+                    String morphemes[] = str.split("//+");
+                    simScoreOfCurrent = 0;
+                    String cur = "";
+                    String next = morphemes[0];
+                    for (int i = 0; i < morphemes.length - 1; i++) {
+                        if (i + 1 < morphemes.length) {
+                            cur = next;
+                            next = next + morphemes[i + 1];
+                        }
+                        simScoreOfCurrent = simScoreOfCurrent + Math.log10(vectors.similarity(cur, next));
                     }
-                    simScoreOfCurrent = simScoreOfCurrent + Math.log10(vectors.similarity(cur, next));
                 }
                 // end of similarity
 
@@ -125,15 +151,19 @@ public class SegmentationGenerator {
                         tmp = tmp + Math.log10(morphemeFreq.get(m) / (totalSize + alpha));
                     else
                         tmp = tmp + Math.log10(alpha * Math.pow(gamma, m.length() + 1) / (totalSize + alpha));
+                }*/
+
+                while (st.hasMoreTokens()) {
+                    tmp = tmp + Math.log10(morphemeProb.get(st.nextToken()));
                 }
-                tmp = tmp + simScoreOfCurrent;
+           //     tmp = tmp + simScoreOfCurrent;
                 if (tmp > maxScore) {
                     maxScore = tmp;
                     segMax = str;
                 }
             }
             finalSegmentation.put(word, segMax);
-           // System.out.println(segMax);
+            // System.out.println(segMax);
         }
     }
 
@@ -171,7 +201,7 @@ public class SegmentationGenerator {
             String separator = " ";
             StringTokenizer st = new StringTokenizer(line, separator);
 
-            int freq = Integer.parseInt(st.nextToken());
+            int freq = parseInt(st.nextToken());
             String word = st.nextToken();
             finalSegmentation.put(word, word);
         }
@@ -185,9 +215,9 @@ public class SegmentationGenerator {
             String stem = word.substring(0, i);
             String remaining = word.substring(i);
 
-            //     if (affixes.contains(stem)) {
+            if (affixes.contains(stem)) {
             getPossibleAffixSequence(affixes, stem, remaining, segmentations);
-            //       }
+            }
         }
 
         return segmentations;
@@ -197,23 +227,23 @@ public class SegmentationGenerator {
         if (tail.length() == 0) {
             segmentations.add(head);
         } else if (tail.length() == 1) {
-            //      if (affixes.contains(tail)) {
+                  if (affixes.contains(tail)) {
             segmentations.add(head + "+" + tail);
-            //      }
+                  }
         } else {
             for (int i = 1; i < tail.length() + 1; i++) {
                 String morpheme = tail.substring(0, i);
 
                 if (morpheme.length() == tail.length()) {
-                    //       if (affixes.contains(morpheme)) {
+                        if (affixes.contains(morpheme)) {
                     segmentations.add(head + "+" + morpheme);
-                    //      }
+                          }
                 } else {
                     String tailMorph = tail.substring(i);
-                    //    if (affixes.contains(morpheme)) {
+                        if (affixes.contains(morpheme)) {
                     String headMorph = head + "+" + morpheme;
                     getPossibleAffixSequence(affixes, headMorph, tailMorph, segmentations);
-                    //  }
+                      }
                 }
             }
         }
