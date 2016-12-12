@@ -180,8 +180,9 @@ public class RecursiveTrieBuilder {
         *
          */
         RecursiveTrieBuilder rtb = new RecursiveTrieBuilder(args[0], args[1], args[2]);
-        rtb.deSerializeTriesToDebug();
-        for (String s : rtb.trieList.keySet()) {
+        rtb.readInputFile();
+        //rtb.deSerializeTriesToDebug();
+    /*    for (String s : rtb.trieList.keySet()) {
             TrieST st = rtb.trieList.get(s);
             System.out.println("");
             System.out.println("--------------------------------->" + s + "<---------------------------------");
@@ -189,7 +190,7 @@ public class RecursiveTrieBuilder {
                 if (k.endsWith("$"))
                     System.out.println(k);
             }
-        }
+        } */
     }
 
 }

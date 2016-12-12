@@ -279,8 +279,8 @@ public class Gibbs_ForwardBackward_Recursive {
                 total = total + calculateTotalScoreForOneSplit(sample, left, inscopeLocalFrequencyTable);
             }
             */
-
             //for other split
+
             for (int i = 1; i < k; i++) {
                 String split = left.substring(0, left.length() - i) + "+" + left.substring(left.length() - i);
 

@@ -1,6 +1,7 @@
 package core.mcmc.utils;
 
 import core.blockSampling.Segmenter;
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
 import java.io.*;
@@ -28,12 +29,12 @@ public class SegmentationGenerator {
     private String file;
     private String mode;
     private static WordVectors vectors;
-    private boolean sim = false;
+    private boolean sim = true;
     private boolean NoUnseg = true;
 
     public SegmentationGenerator(String vectorDir, String file, String inputFile, String mode, int thresholdArg) throws IOException, ClassNotFoundException {
 
-        // this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
+        this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
         this.morphemeFreq = new ConcurrentHashMap<>();
         this.morphemeProb = new ConcurrentHashMap<>();
         this.finalSegmentation = new ConcurrentHashMap<>();
@@ -87,13 +88,12 @@ public class SegmentationGenerator {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        int[] thresholdSet = {0,1,4,9,25};
+        int[] thresholdSet = {0, 1, 4, 9, 25};
 
-        for(int i: thresholdSet) {
+        for (int i : thresholdSet) {
             System.out.println("THRESHOLD: " + i);
             SegmentationGenerator s = new SegmentationGenerator(args[0], args[1], args[2], args[3], i);
         }
-
     }
 
     public void parallelSplit() {
@@ -108,7 +108,7 @@ public class SegmentationGenerator {
 
     public void printFinalSegmentations() throws FileNotFoundException, UnsupportedEncodingException {
 
-        PrintWriter writer = new PrintWriter("UTF8_OLD_" + "NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("\\") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
+        PrintWriter writer = new PrintWriter("SIM_UTF8_OLD_" + "NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("\\") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
         for (String str : finalSegmentation.keySet()) {
             writer.println(str.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
                     + "\t" + finalSegmentation.get(str).replaceAll("\\+", " ").replaceAll("ö", "O").
@@ -131,9 +131,9 @@ public class SegmentationGenerator {
                 double tmp = 0;
                 StringTokenizer st = new StringTokenizer(str, "+");
 
-           /*     double simScoreOfCurrent = 0;
+                double simScoreOfCurrent = 0;
                 // similarity
-                if(sim) {
+                if (sim) {
                     String morphemes[] = str.split("//+");
                     simScoreOfCurrent = 0;
                     String cur = "";
@@ -146,7 +146,7 @@ public class SegmentationGenerator {
                         simScoreOfCurrent = simScoreOfCurrent + Math.log10(vectors.similarity(cur, next));
                     }
                 }
-                // end of similarity
+             /*      // end of similarity
 
                 while (st.hasMoreTokens()) {
                     String m = st.nextToken();
@@ -159,7 +159,7 @@ public class SegmentationGenerator {
                 while (st.hasMoreTokens()) {
                     tmp = tmp + Math.log10(morphemeProb.get(st.nextToken()));
                 }
-                //     tmp = tmp + simScoreOfCurrent;
+                tmp = tmp + simScoreOfCurrent;
                 if (tmp > maxScore) {
                     maxScore = tmp;
                     segMax = str;
@@ -279,7 +279,6 @@ public class SegmentationGenerator {
                 segMax = searchWord;
             //    System.out.println("result: " + segMax);
             finalSegmentation.put(searchWord, segMax);
-
         }
     }
 

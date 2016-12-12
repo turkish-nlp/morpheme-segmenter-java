@@ -7,9 +7,7 @@ import tries.TrieST;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * Created by Murathan on 22-Nov-16.
@@ -28,36 +26,43 @@ public class trieReader {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        //  trieReader tr = new trieReader("trieData");
-
+       trieReader tr = new trieReader("trieData");
+/*
         Charset charset = Charset.forName("UTF-8");
-        WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File("C:\\Users\\Murathan\\github\\vectors.txt"));
+        //    WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File("C:\\Users\\Murathan\\github\\vectors.txt"));
         List<String> all_words = Files.readAllLines(new File("wordlist_tur.txt").toPath(), charset);
-        PrintWriter writer = new PrintWriter("completeWordListWithWordsExistinVectors.txt", "UTF-8");
+     //   PrintWriter writer = new PrintWriter("wordlistTur_200K.txt", "UTF-8");
 
+        ArrayList<String> selectedWords = new ArrayList<>();
+        Random r = new Random(10);
         int count = 0;
         if (!all_words.isEmpty()) {
             for (String w : all_words) {
                 StringTokenizer token = new StringTokenizer(w);
-                token.nextToken();
+                int freq = Integer.parseInt(token.nextToken());
                 String x = token.nextToken();
-                if (vectors.hasWord(x)) {
+                if (freq > 2) {
+                    selectedWords.add(freq + " " + x);
                     count++;
-                    writer.println(x);
                 }
+
             }
         }
-        writer.close();
+        Collections.shuffle(selectedWords);
+     //   for(int i =0; i< 200000; i++)
+      //      writer.println(selectedWords.get(i));
+        // writer.close();
+
         System.out.println(count);
         System.out.println((double) count / all_words.size());
 
-
+*/
     }
 
     public void generateTrieList(String dir) throws IOException, ClassNotFoundException {
 
         File[] files = new File(dir + "/").listFiles();
-        PrintWriter writer = new PrintWriter("printed.txt", "UTF-8");
+        PrintWriter writer = new PrintWriter("english.txt", "UTF-8");
         for (File f : files) {
             FileInputStream fis = new FileInputStream(f);
             ObjectInput in = null;
