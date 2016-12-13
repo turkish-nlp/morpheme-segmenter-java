@@ -20,13 +20,13 @@ public class trieReader {
     private static List<String> searchedWordList = new ArrayList<>();
 
 
-    public trieReader(String dir) throws IOException, ClassNotFoundException {
-        this.generateTrieList(dir);
+    public trieReader(String trieDir, String outputFile) throws IOException, ClassNotFoundException {
+        this.generateTrieList(trieDir, outputFile);
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-       trieReader tr = new trieReader("trieData");
+       trieReader tr = new trieReader(args[0], args[1]);
 /*
         Charset charset = Charset.forName("UTF-8");
         //    WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File("C:\\Users\\Murathan\\github\\vectors.txt"));
@@ -59,10 +59,10 @@ public class trieReader {
 */
     }
 
-    public void generateTrieList(String dir) throws IOException, ClassNotFoundException {
+    public void generateTrieList(String dir,String outputFile) throws IOException, ClassNotFoundException {
 
         File[] files = new File(dir + "/").listFiles();
-        PrintWriter writer = new PrintWriter("english.txt", "UTF-8");
+        PrintWriter writer = new PrintWriter(outputFile, "UTF-8");
         for (File f : files) {
             FileInputStream fis = new FileInputStream(f);
             ObjectInput in = null;
@@ -74,19 +74,17 @@ public class trieReader {
 
             TrieST trie = (TrieST) o;
 
-            writer.println(f.toString() + "  ");
+           // writer.println(f.toString() + "  ");
             int c = 0;
             for (String str : trie.getWordList().keySet())
                 if (str.contains("$")) {
                     //   System.out.println(str);
-                    writer.println(str);
+                    writer.println(str.substring(0, str.length()- 1));
                     c++;
                 }
-            writer.print(c);
             System.out.println(f.toString() + "  " + c);
             trieList.add(trie);
             searchedWordList.add(f.getName());
-
         }
         writer.close();
 
