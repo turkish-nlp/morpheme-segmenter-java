@@ -1,10 +1,7 @@
 package core.preModel;
 
 import core.mcmc.utils.SerializableModel;
-import core.mcmc.withDeserializedMaps.Constant;
-import jdk.nashorn.internal.objects.NativeRegExp;
 import org.apache.commons.io.FileUtils;
-import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import org.eclipse.jetty.util.ConcurrentHashSet;
 import tries.TrieST;
@@ -38,7 +35,7 @@ public class trieFromCluster {
 
     public trieFromCluster(String file, String path, String singleTrie, String vectorFile) throws IOException {
 
-        this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorFile));
+        this.vectors = null;//WordVectorSerializer.loadTxtVectors(new File(vectorFile));
 
         dir = path;
         if (!singleTrie.equalsIgnoreCase("true")) {

@@ -1,13 +1,9 @@
 package core.preModel;
 
-import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
-import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import tries.TrieST;
 
 import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
 
 /**
  * Created by Murathan on 22-Nov-16.
@@ -16,17 +12,39 @@ import java.util.*;
  */
 public class trieReader {
 
-    private static List<TrieST> trieList = new ArrayList<>();
-    private static List<String> searchedWordList = new ArrayList<>();
-
+    ArrayList<File> shuffleList = new ArrayList<>();
 
     public trieReader(String trieDir, String outputFile) throws IOException, ClassNotFoundException {
         this.generateTrieList(trieDir, outputFile);
     }
 
+    public void moveTrie(String dir) throws IOException {
+        InputStream input = null;
+        OutputStream output = null;
+        for(File f: shuffleList) {
+            try {
+
+                input = new FileInputStream(f);
+                output = new FileOutputStream("shuffled/" + f.getName());
+                byte[] buf = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = input.read(buf)) > 0) {
+                    output.write(buf, 0, bytesRead);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                input.close();
+                output.close();
+            }
+        }
+
+    }
+
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-       trieReader tr = new trieReader(args[0], args[1]);
+        trieReader tr = new trieReader(args[0], args[1]);
+        tr.moveTrie(args[0]);
 /*
         Charset charset = Charset.forName("UTF-8");
         //    WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File("C:\\Users\\Murathan\\github\\vectors.txt"));
@@ -59,7 +77,7 @@ public class trieReader {
 */
     }
 
-    public void generateTrieList(String dir,String outputFile) throws IOException, ClassNotFoundException {
+    public void generateTrieList(String dir, String outputFile) throws IOException, ClassNotFoundException {
 
         File[] files = new File(dir + "/").listFiles();
         PrintWriter writer = new PrintWriter(outputFile, "UTF-8");
@@ -74,33 +92,24 @@ public class trieReader {
 
             TrieST trie = (TrieST) o;
 
-           // writer.println(f.toString() + "  ");
+            // writer.println(f.toString() + "  ");
             int c = 0;
             for (String str : trie.getWordList().keySet())
                 if (str.contains("$")) {
                     //   System.out.println(str);
-                    writer.println(str.substring(0, str.length()- 1));
+                    writer.println(str.substring(0, str.length() - 1));
                     c++;
                 }
+
             System.out.println(f.toString() + "  " + c);
-            trieList.add(trie);
-            searchedWordList.add(f.getName());
+            if (c > 40)
+                shuffleList.add(f);
+
         }
         writer.close();
 
         System.out.println("done");
     }
 
-    public void printTries() {
-        for (TrieST st : trieList) {
-            System.out.println(st.toString());
-            for (String str : st.getWordList().keySet())
-                if (str.contains("$"))
-                    System.out.println(str);
-
-        }
-
-
-    }
 
 }
