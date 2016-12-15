@@ -44,7 +44,6 @@ public class trieReader {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
         trieReader tr = new trieReader(args[0], args[1]);
-        tr.moveTrie(args[0]);
 /*
         Charset charset = Charset.forName("UTF-8");
         //    WordVectors vectors = WordVectorSerializer.loadTxtVectors(new File("C:\\Users\\Murathan\\github\\vectors.txt"));
@@ -102,12 +101,11 @@ public class trieReader {
                 }
 
             System.out.println(f.toString() + "  " + c);
-            if (c > 40)
-                shuffleList.add(f);
+          //  if (c > 40)
+            //       shuffleList.add(f);
 
         }
         writer.close();
-
         System.out.println("done");
     }
 

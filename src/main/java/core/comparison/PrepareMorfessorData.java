@@ -12,8 +12,10 @@ public class PrepareMorfessorData {
 
     public static void main(String[] args) throws IOException {
         HashMap<String, Integer> wordlist = new HashMap<>();
+        String trieFile = "wordlist_german_recursive.txt";
+        String mcFile = "mc_wordlist-2010_ger.txt";
 
-        BufferedReader reader = new BufferedReader(new FileReader(new File(args[0])));
+        BufferedReader reader = new BufferedReader(new FileReader(new File(mcFile)));
         String line = null;
         while ((line = reader.readLine()) != null) {
             StringTokenizer st = new StringTokenizer(line, " ");
@@ -28,7 +30,7 @@ public class PrepareMorfessorData {
 
         HashMap<String, Integer> train = new HashMap<>();
 
-        reader = new BufferedReader(new FileReader(new File(args[1])));
+        reader = new BufferedReader(new FileReader(new File(trieFile)));
         while ((line = reader.readLine()) != null) {
 
             if (wordlist.containsKey(line)) {
@@ -38,12 +40,11 @@ public class PrepareMorfessorData {
             }
         }
 
-        BufferedWriter writer = new BufferedWriter(new FileWriter(new File(args[1] + "_prepared")));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(new File(trieFile + "_prepared")));
 
         for (String word : train.keySet()) {
             writer.write(train.get(word)+ " " + word + "\n");
         }
-
         writer.close();
     }
 
