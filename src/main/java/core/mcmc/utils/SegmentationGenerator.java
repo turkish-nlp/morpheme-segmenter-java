@@ -29,42 +29,33 @@ public class SegmentationGenerator {
     private String file;
     private String mode;
     private static WordVectors vectors;
-    private boolean sim = true;
-    private boolean NoUnseg = true;
+    private boolean sim = false;
+    private boolean NoUnseg = false;
 
     public SegmentationGenerator(String vectorDir, String file, String inputFile, String mode, int thresholdArg) throws IOException, ClassNotFoundException {
 
-        this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
+        if (sim)
+            this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
         this.morphemeFreq = new ConcurrentHashMap<>();
         this.morphemeProb = new ConcurrentHashMap<>();
         this.finalSegmentation = new ConcurrentHashMap<>();
         this.serializedSegmentations = new ConcurrentHashMap<>();
         this.mode = mode;
         this.threshold = thresholdArg;
+        this.file = file;
+        deSerialize(file);
+        readWords(inputFile);
+        calculateProb();
+        if (mode.equals("uni"))
+            parallelSplit();
+        else
+            findCorrectSegmentation(inputFile);
 
-        File folder = new File(file);
-        File[] listOfFiles = folder.listFiles();
-        for (File x : listOfFiles) {
-            if (x.getPath().contains("MODEL")) {
-                System.out.println(x.getPath() + " is started!");
-                this.file = x.getPath();
-                deSerialize(x.getAbsolutePath());
-                readWords(inputFile);
-                calculateProb();
-                if (mode.equals("uni"))
-                    parallelSplit();
-                else
-                    findCorrectSegmentation(inputFile);
-
-                printFinalSegmentations();
-                System.out.println(x + " is done!");
-            }
-        }
-
+        printFinalSegmentations();
+        System.out.println(file + " is done!");
     }
 
     PrintWriter pw = new PrintWriter("FQs");
-
     PrintWriter pw2 = new PrintWriter("Ps");
 
     public void calculateProb() {
@@ -86,13 +77,20 @@ public class SegmentationGenerator {
         pw2.close();
     }
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
 
         int[] thresholdSet = {0, 1, 4, 9, 25};
 
         for (int i : thresholdSet) {
             System.out.println("THRESHOLD: " + i);
-            SegmentationGenerator s = new SegmentationGenerator(args[0], args[1], args[2], args[3], i);
+            File folder = new File(args[1]);
+            File[] listOfFiles = folder.listFiles();
+            for (File x : listOfFiles) {
+                if (x.getPath().contains("MODEL")) {
+                    SegmentationGenerator s = new SegmentationGenerator(args[0], x.getPath(), args[2], args[3], i);
+                    Thread.sleep(100);
+                }
+            }
         }
     }
 
@@ -108,7 +106,7 @@ public class SegmentationGenerator {
 
     public void printFinalSegmentations() throws FileNotFoundException, UnsupportedEncodingException {
 
-        PrintWriter writer = new PrintWriter("SIM_UTF8_OLD_" + "NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("\\") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
+        PrintWriter writer = new PrintWriter("turResults\\UTF8_OLD_SIM_" + sim + "_NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("\\") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
         for (String str : finalSegmentation.keySet()) {
             writer.println(str.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
                     + "\t" + finalSegmentation.get(str).replaceAll("\\+", " ").replaceAll("ö", "O").
