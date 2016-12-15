@@ -79,7 +79,7 @@ public class SegmentationGenerator {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
 
-        int[] thresholdSet = {0, 1, 4, 9, 25};
+        int[] thresholdSet = {0, 1, 4, 9, 10, 15, 25};
 
         for (int i : thresholdSet) {
             System.out.println("THRESHOLD: " + i);
@@ -106,7 +106,7 @@ public class SegmentationGenerator {
 
     public void printFinalSegmentations() throws FileNotFoundException, UnsupportedEncodingException {
 
-        PrintWriter writer = new PrintWriter("turResults\\UTF8_OLD_SIM_" + sim + "_NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("\\") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
+        PrintWriter writer = new PrintWriter("engResults//UTF8_OLD_SIM_" + sim + "_NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("\\") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
         for (String str : finalSegmentation.keySet()) {
             writer.println(str.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
                     + "\t" + finalSegmentation.get(str).replaceAll("\\+", " ").replaceAll("ö", "O").
