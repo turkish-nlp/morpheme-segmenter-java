@@ -104,13 +104,27 @@ public class SegmentationGenerator {
         });
     }
     public void printFinalSegmentations() throws FileNotFoundException, UnsupportedEncodingException {
-        PrintWriter writer = new PrintWriter("gerResults//UTF8_OLD_SIM_" + sim + "_NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("\\") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
-        for (String str : finalSegmentation.keySet()) {
-            writer.println(str.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
-                    + "\t" + finalSegmentation.get(str).replaceAll("\\+", " ").replaceAll("ö", "O").
-                    replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S"));
+        PrintWriter writer = new PrintWriter("results_ger/UTF8_OLD_SIM_" + sim + "_NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("/") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
+        if(file.contains("ger")) {
+            System.out.println("!!!!!GERMAN FILE");
+            for (String str : finalSegmentation.keySet()) {
+                str = str.toLowerCase();
+                writer.println(str.replaceAll("ä", "ae").replaceAll("ö", "oe").replaceAll("ü", "ue").replaceAll("ß", "ss")
+                        + "\t" + finalSegmentation.get(str).toLowerCase().replaceAll("\\+", " ").replaceAll("ö", "O").
+                        replaceAll("ä", "ae").replaceAll("ö", "oe").replaceAll("ü", "ue").replaceAll("ß", "ss") );
+            }
+            writer.close();
         }
-        writer.close();
+        else
+        {
+            for (String str : finalSegmentation.keySet()) {
+                str = str.toLowerCase();
+                writer.println(str.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
+                        + "\t" + finalSegmentation.get(str).toLowerCase().replaceAll("\\+", " ").replaceAll("ö", "O").
+                        replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S"));
+            }
+            writer.close();
+        }
     }
 
     public void doSplit(String word, Set<String> affixes) throws FileNotFoundException {
