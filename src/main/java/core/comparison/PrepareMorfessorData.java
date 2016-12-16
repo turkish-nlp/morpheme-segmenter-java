@@ -16,7 +16,7 @@ public class PrepareMorfessorData {
 
     public static void main(String[] args) throws IOException {
         HashMap<String, Integer> wordlist = new HashMap<>();
-        String trieFile = "wordlist_turkish_recursive.txt";
+        String trieFile = "wordlist_turkish_50.txt";
         String mcFile = "mc_wordlist-2010_tur.txt";
 
         BufferedReader reader = new BufferedReader(new FileReader(new File(mcFile)));
@@ -28,6 +28,7 @@ public class PrepareMorfessorData {
             int freq = Integer.parseInt(st.nextToken());
             String word = st.nextToken();
 
+          //  wordlist.put(word.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S"), freq);
             wordlist.put(word, freq);
         }
 
@@ -37,10 +38,10 @@ public class PrepareMorfessorData {
 
         reader = new BufferedReader(new FileReader(new File(trieFile)));
         while ((line = reader.readLine()) != null) {
-            line = line.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S");
+          //  line = line.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S");
             if (wordlist.containsKey(line)) {
                 if(trieFile.contains("tur"))
-                    train.put(line.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S"), wordlist.get(line));
+                    train.put(line, wordlist.get(line));
                 else
                     train.put(line, wordlist.get(line));
             } else {
@@ -48,8 +49,7 @@ public class PrepareMorfessorData {
             }
         }
 
-        PrintWriter writer = new PrintWriter(new File(trieFile + "_prepared"), "ASCII");
-
+        PrintWriter writer = new PrintWriter(new File(trieFile + "_mchain"), "UTF-8");
         for (String word : train.keySet()) {
             writer.write(train.get(word)+ " " + word + "\n");
         }

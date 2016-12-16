@@ -79,7 +79,7 @@ public class SegmentationGenerator {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
 
-        int[] thresholdSet = {0, 1, 4, 9, 10, 15, 25};
+        int[] thresholdSet = {25};
 
         for (int i : thresholdSet) {
             System.out.println("THRESHOLD: " + i);
@@ -104,7 +104,7 @@ public class SegmentationGenerator {
         });
     }
     public void printFinalSegmentations() throws FileNotFoundException, UnsupportedEncodingException {
-        PrintWriter writer = new PrintWriter("results_ger/UTF8_OLD_SIM_" + sim + "_NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("/") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
+        PrintWriter writer = new PrintWriter("results_best\\UTF8_OLD_SIM_" + sim + "_NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("\\") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
         if(file.contains("ger")) {
             System.out.println("!!!!!GERMAN FILE");
             for (String str : finalSegmentation.keySet()) {
