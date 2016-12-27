@@ -32,6 +32,14 @@ public class SegmentationGenerator {
     private boolean sim = false;
     private boolean NoUnseg = false;
 
+
+    public Map<String, CopyOnWriteArrayList<String>> getSerializedSegmentations() {
+        return serializedSegmentations;
+    }
+    public Map<String, String> getFinalSegmentation() {
+        return finalSegmentation;
+    }
+
     public SegmentationGenerator(String vectorDir, String file, String inputFile, String mode, int thresholdArg) throws IOException, ClassNotFoundException {
 
         if (sim)
@@ -126,6 +134,8 @@ public class SegmentationGenerator {
             writer.close();
         }
     }
+
+
 
     public void doSplit(String word, Set<String> affixes) throws FileNotFoundException {
         ArrayList<String> results = getPossibleSplits(word, affixes);
