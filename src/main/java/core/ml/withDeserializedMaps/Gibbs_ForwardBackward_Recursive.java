@@ -65,7 +65,7 @@ public class Gibbs_ForwardBackward_Recursive {
 
     public Gibbs_ForwardBackward_Recursive(String outputDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma, boolean poisson,
                                            boolean sim, boolean presence, boolean length, int heuristic, double simUnsegmentedArg, double simUnfound) throws IOException, ClassNotFoundException {
-        Constant baseline = new Constant(outputDir, wordListDir, lambda, heuristic, simUnsegmentedArg, simUnfound);
+        Constant baseline = null;//new Constant(outputDir, wordListDir, lambda, heuristic, simUnsegmentedArg, simUnfound);
         this.heuristic = heuristic;
         this.noOfIteration = noOfIteration;
         this.noOfIterationCopy = noOfIteration;

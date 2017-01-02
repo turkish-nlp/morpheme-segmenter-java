@@ -1,6 +1,5 @@
-package core.ml.withDeserializedMaps;
+package core.mcmc.allomorph;
 
-import core.mcmc.utils.SerializableModel;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -68,13 +67,13 @@ public class Gibbs_RecursiveInference {
                                     int noOfIteration, double alpha, double gamma, boolean poisson,
                                     boolean sim, boolean presence, boolean length, int heuristic, double simUnsegmentedArg, double simUnfoundArg) throws IOException, ClassNotFoundException {
 
-        Constant baseline = null;//new Constant(outputDir, wordListDir, lambda, heuristic, simUnsegmentedArg, simUnfoundArg);
+        Constant baseline = new Constant(outputDir, wordListDir, lambda, heuristic, simUnsegmentedArg, simUnfoundArg);
         this.heuristic = heuristic;
         this.simUnsegmented = simUnsegmentedArg;
         this.noOfIteration = noOfIteration;
         this.noOfIterationCopy = noOfIteration;
         this.frequencyTable = new ConcurrentHashMap<>(baseline.getMorphemeFreq());
-        this.samples = new CopyOnWriteArrayList<>(baseline.getSampleList());
+        this.samples = new CopyOnWriteArrayList<Sample>(baseline.getSampleList());
         this.alpha = alpha;
         this.gamma = gamma;
         for (String str : frequencyTable.keySet()) {
@@ -306,7 +305,7 @@ public class Gibbs_RecursiveInference {
                 segmentationsList.put(s.getWord(), segmentationsOfsample);
             }
         }
-        SerializableModel model = new SerializableModel(frequencyTable, segmentationsList);
+        SerializableModel model = new SerializableModel(frequencyTable, segmentationsList, samples);
 
         // toByteArray
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -319,7 +318,7 @@ public class Gibbs_RecursiveInference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("finalMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha + "-G_" + gamma + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("Allomorph_finalMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha + "-G_" + gamma + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
     }
 
 }
