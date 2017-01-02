@@ -1,4 +1,4 @@
-package core.mcmc.withDeserializedMaps;
+package core.ml.withDeserializedMaps;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -21,6 +21,7 @@ public class Constant {
     private static double simUnsegmented;
     private static int heuristic = 2;
     private static double smoothingCoefficient = 0.01;
+    private static int frequencyThreshold;
 
     private static HashMap<String, Double> cosineTable;
     private static HashMap<String, HashMap<String, Integer>> branchTable;
@@ -87,12 +88,13 @@ public class Constant {
         return cosineTable;
     }
 
-    public Constant(String mapDir, String wordListDir, double lambda, int heuristic, double simUnsegmentedArg, double simUnfound) throws IOException, ClassNotFoundException {
+    public Constant(String mapDir, String wordListDir, double lambda, int heuristic, double simUnsegmentedArg, double simUnfound, int frequencyThreshold) throws IOException, ClassNotFoundException {
 
         this.lambda = lambda;
         this.heuristic = heuristic;
         this.simUnsegmented = simUnsegmentedArg;
         this.simUnfound = simUnfound;
+        this.frequencyThreshold = frequencyThreshold;
         List<String> freqWords = null;
         try {
             freqWords = Files.readAllLines(new File(wordListDir).toPath(), Charset.forName("UTF-8"));

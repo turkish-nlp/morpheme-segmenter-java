@@ -1,4 +1,4 @@
-package core.mcmc.withDeserializedMaps;
+package core.ml.withDeserializedMaps;
 
 import core.mcmc.utils.SerializableModel;
 import org.apache.commons.io.FileUtils;

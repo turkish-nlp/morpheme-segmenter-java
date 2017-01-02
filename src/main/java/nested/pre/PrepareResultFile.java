@@ -50,11 +50,11 @@ public class PrepareResultFile {
     }
 
     public static void prepareFile() throws IOException {
-        String input = "morfessorresults\\tur_rec_segmentation.final";
+        String input = "C:\\Users\\Murathan\\Desktop\\totalresults_35_non_prior";
         BufferedReader reader = null;
         reader = new BufferedReader(new FileReader(input));
 
-        PrintWriter writer = new PrintWriter(input + "_readyLast", "UTF-8");
+        PrintWriter writer = new PrintWriter(input + "_ready", "UTF-8");
 
         String line;
         while ((line = reader.readLine()) != null) {
@@ -64,6 +64,7 @@ public class PrepareResultFile {
             st.nextToken();
             String word = st.nextToken();
             String base_line = word.replaceAll("\\+", "") + "\t" + word.replaceAll("\\+", " ");
+
             writer.println(base_line);
         }
 
