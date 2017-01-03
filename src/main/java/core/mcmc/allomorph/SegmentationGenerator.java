@@ -21,6 +21,8 @@ public class SegmentationGenerator {
     private Map<String, Double> morphemeProb;
     private Map<String, String> finalSegmentation;
     private Map<String, CopyOnWriteArrayList<String>> serializedSegmentations;
+    private Map<String, ArrayList<String>> trieWords;
+
     private CopyOnWriteArrayList<Sample> serializedSamples;
     private int threshold;
     static Charset charset = Charset.forName("UTF-8");
@@ -31,13 +33,8 @@ public class SegmentationGenerator {
     private boolean sim = false;
     private boolean NoUnseg = false;
 
-
-    public Map<String, CopyOnWriteArrayList<String>> getSerializedSegmentations() {
-        return serializedSegmentations;
-    }
-    public Map<String, String> getFinalSegmentation() {
-        return finalSegmentation;
-    }
+    PrintWriter pw = new PrintWriter("FQs");
+    PrintWriter pw2 = new PrintWriter("Ps");
 
     public SegmentationGenerator(String vectorDir, String file, String inputFile, String mode, int thresholdArg) throws IOException, ClassNotFoundException {
 
@@ -52,10 +49,19 @@ public class SegmentationGenerator {
         this.threshold = thresholdArg;
         this.file = file;
         deSerialize(file);
+        trieWords = new HashMap<>();
 
-        for(Sample s: serializedSamples)
-            System.out.println(s.getInTrie() + "-> " + s.getSegmentation());
-        /*
+        for (Sample s : serializedSamples) {
+            if (trieWords.containsKey(s.getInTrie())) {
+                ArrayList<String> tmp = trieWords.get(s.getInTrie());
+                tmp.add(s.getWord());
+                trieWords.put(s.getInTrie(), tmp);
+            } else {
+                ArrayList<String> tmp = new ArrayList<>();
+                tmp.add(s.getWord());
+                trieWords.put(s.getInTrie(), tmp);
+            }
+        }
         readWords(inputFile);
         calculateProb();
         if (mode.equals("uni"))
@@ -63,12 +69,52 @@ public class SegmentationGenerator {
         else
             findCorrectSegmentation(inputFile);
 
-        printFinalSegmentations();
-        System.out.println(file + " is done!");*/
+        for (String trie : trieWords.keySet()) {
+            PrintWriter trieSegWriter = new PrintWriter("trieBasedSegmentations/" + trie + ".txt");
+
+            for (String word : trieWords.get(trie)) {
+
+                String seg = finalSegmentation.get(word);
+                int lastIndex = seg.lastIndexOf("+");
+                if(lastIndex > 0)
+                    seg = seg.substring(0, lastIndex).replaceAll("\\+", "") +" "+ seg.substring(lastIndex+1);
+                trieSegWriter.print( seg+ "_");
+            }
+            trieSegWriter.close();
+        }
+        //printFinalSegmentations();
+        System.out.println(file + " is done!");/**/
     }
 
-    PrintWriter pw = new PrintWriter("FQs");
-    PrintWriter pw2 = new PrintWriter("Ps");
+    public void deSerialize(String file) throws IOException, ClassNotFoundException {
+
+        FileInputStream fis = new FileInputStream(new File(file));
+        ObjectInput in = null;
+        Object o = null;
+        in = new ObjectInputStream(fis);
+        o = in.readObject();
+        fis.close();
+        in.close();
+
+        core.mcmc.allomorph.SerializableModel model = (SerializableModel) o;
+
+        model.getSerializedFrequencyTable().keySet().parallelStream().forEach((s) -> {
+            int freq = model.getSerializedFrequencyTable().get(s);
+            if (freq > threshold)   // CHANGED!!!!!!
+                morphemeFreq.put(s, freq);
+        });
+
+        model.getSerializedSamples().parallelStream().forEach((s) -> {
+            serializedSamples.add(s);
+        });
+
+
+        model.getSerializedSegmentations().keySet().parallelStream().forEach((n) -> {
+            CopyOnWriteArrayList<String> segmentations = new CopyOnWriteArrayList<String>();
+            segmentations.addAll(model.getSerializedSegmentations().get(n));
+            serializedSegmentations.put(n, segmentations);
+        });
+    }
 
     public void calculateProb() {
         int totalMorp = 0;
@@ -115,20 +161,19 @@ public class SegmentationGenerator {
             }
         });
     }
+
     public void printFinalSegmentations() throws FileNotFoundException, UnsupportedEncodingException {
         PrintWriter writer = new PrintWriter("results_th50\\UTF8_OLD_SIM_" + sim + "_NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("\\") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
-        if(file.contains("ger")) {
+        if (file.contains("ger")) {
             System.out.println("!!!!!GERMAN FILE");
             for (String str : finalSegmentation.keySet()) {
                 str = str.toLowerCase();
                 writer.println(str.replaceAll("ä", "ae").replaceAll("ö", "oe").replaceAll("ü", "ue").replaceAll("ß", "ss")
                         + "\t" + finalSegmentation.get(str).toLowerCase().replaceAll("\\+", " ").replaceAll("ö", "O").
-                        replaceAll("ä", "ae").replaceAll("ö", "oe").replaceAll("ü", "ue").replaceAll("ß", "ss") );
+                        replaceAll("ä", "ae").replaceAll("ö", "oe").replaceAll("ü", "ue").replaceAll("ß", "ss"));
             }
             writer.close();
-        }
-        else
-        {
+        } else {
             for (String str : finalSegmentation.keySet()) {
                 str = str.toLowerCase();
                 writer.println(str.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
@@ -138,8 +183,6 @@ public class SegmentationGenerator {
             writer.close();
         }
     }
-
-
 
     public void doSplit(String word, Set<String> affixes) throws FileNotFoundException {
         ArrayList<String> results = getPossibleSplits(word, affixes);
@@ -192,38 +235,6 @@ public class SegmentationGenerator {
             finalSegmentation.put(word, segMax);
             // System.out.println(segMax);
         }
-    }
-
-    public void deSerialize(String file) throws IOException, ClassNotFoundException {
-
-        FileInputStream fis = new FileInputStream(new File(file));
-        ObjectInput in = null;
-        Object o = null;
-        in = new ObjectInputStream(fis);
-        o = in.readObject();
-        fis.close();
-        in.close();
-
-        core.mcmc.allomorph.SerializableModel model = (SerializableModel) o;
-
-        model.getSerializedFrequencyTable().keySet().parallelStream().forEach((s) -> {
-            int freq = model.getSerializedFrequencyTable().get(s);
-            if (freq > threshold)   // CHANGED!!!!!!
-                morphemeFreq.put(s, freq);
-        });
-
-        model.getSerializedSamples().parallelStream().forEach((s) -> {
-            serializedSamples.add(s);
-        });
-
-
-
-
-        model.getSerializedSegmentations().keySet().parallelStream().forEach((n) -> {
-            CopyOnWriteArrayList<String> segmentations = new CopyOnWriteArrayList<String>();
-            segmentations.addAll(model.getSerializedSegmentations().get(n));
-            serializedSegmentations.put(n, segmentations);
-        });
     }
 
     public void readWords(String inputFile) throws IOException {
@@ -334,31 +345,11 @@ public class SegmentationGenerator {
         return segMax;
     }
 
+    public Map<String, CopyOnWriteArrayList<String>> getSerializedSegmentations() {
+        return serializedSegmentations;
+    }
+
+    public Map<String, String> getFinalSegmentation() {
+        return finalSegmentation;
+    }
 }
-
-
- /*  Set<String> affixes = new HashSet<>();
-        affixes.add("ki");
-        affixes.add("tap");
-        affixes.add("k");
-        affixes.add("i");
-        affixes.add("in");
-        affixes.add("ap");
-        //affixes.put("n", 1d);
-        affixes.add("t");
-        affixes.add("itap");
-        affixes.add("da");
-        affixes.add("n");
-        affixes.add("dan");
-
-
-        ArrayList<String> results = getPossibleSplits("kitapdan", affixes);
-
-        for (String s : results) {
-            System.out.println(s);
-        }
-
-        System.out.println(s.morphemeFreq.size());
-        for (String str : s.morphemeFreq.keySet()) {
-                System.out.println(str + "-->" + s.morphemeFreq.get(str));
-        }*/
