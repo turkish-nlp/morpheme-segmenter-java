@@ -69,20 +69,24 @@ public class Operations {
     }
 
     public static String randomSplitB(String word) {
-        String segmentation = "";
-        Random rand = new Random();
+        if(word.length() > 1) {
+            String segmentation = "";
+            Random rand = new Random();
 
-        int counter = 0;
-        String subString = word;
-        while (counter < word.length() - 1) {
-            int splitPoint = Math.abs(rand.nextInt()) % subString.length();
-            String segment = subString.substring(0, splitPoint);
-            subString = subString.substring(splitPoint);
-            if (segment.length() != 0)
-                segmentation = segmentation + "+" + segment;
-            counter = counter + splitPoint;
+            int counter = 0;
+            String subString = word;
+            while (counter < word.length() - 1) {
+                int splitPoint = Math.abs(rand.nextInt()) % subString.length();
+                String segment = subString.substring(0, splitPoint);
+                subString = subString.substring(splitPoint);
+                if (segment.length() != 0)
+                    segmentation = segmentation + "+" + segment;
+                counter = counter + splitPoint;
+            }
+            return (subString.length() == 0) ? segmentation.substring(1) : (segmentation.substring(1) + "+" + subString);
         }
-        return (subString.length() == 0) ? segmentation.substring(1) : (segmentation.substring(1) + "+" + subString);
+        else
+            return word;
     }
 
     public static String randomSplit(String word) {

@@ -227,16 +227,16 @@ public class Gibbs_RecursiveInference {
                 String morpheme = newSegments.nextToken();
                 if (frequencyTable.containsKey(morpheme)) {
                     if (frequencyTable.get(morpheme) > 0) {
-                        newLikelihood = newLikelihood + Math.log10(frequencyTable.get(morpheme) / (size));
+                        newLikelihood = newLikelihood + Math.log10((double) frequencyTable.get(morpheme) / (size));
                         frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
                         size++;
                     } else {
-                        newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / (size));
+                        newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / (size));
                         frequencyTable.put(morpheme, 1);
                         size++;
                     }
                 } else {
-                    newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / (size));
+                    newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / (size));
                     frequencyTable.put(morpheme, 1);
                     size++;
                 }
