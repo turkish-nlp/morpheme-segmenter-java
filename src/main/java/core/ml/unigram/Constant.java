@@ -1,4 +1,6 @@
-package core.ml.withDeserializedMaps;
+package core.ml.unigram;
+
+import core.ml.common.Operations;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -13,24 +15,18 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class Constant {
 
-    private static double lambda;
-    private static HashMap<String, Double> newCorpus = new HashMap<>();
-    private static double newCorpusSize = 0;
     private static double laplaceCoefficient = 0.0000001;
     private static double simUnfound = 0.1;
     private static double simUnsegmented;
     private static int heuristic = 2;
     private static double smoothingCoefficient = 0.01;
     private static int frequencyThreshold;
-
     private static HashMap<String, Double> cosineTable;
-    private static HashMap<String, HashMap<String, Integer>> branchTable;
-    private static HashMap<String, TreeSet<String>> trieTable;
+    private boolean includeFrequencies = true;
 
-    private Map<String, Set<String>> baselineBoundaries = new ConcurrentHashMap<>();
+    private int numberOfUnsegmentedWord;
     private Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
     private CopyOnWriteArrayList<Sample> sampleList = new CopyOnWriteArrayList<>();
-
 
     public static double getSimUnfound() {
         return simUnfound;
@@ -44,16 +40,20 @@ public class Constant {
         return heuristic;
     }
 
+    public int getNumberOfUnsegmentedWord() {
+        return numberOfUnsegmentedWord;
+    }
+
+    public static int getFrequencyThreshold() {
+        return frequencyThreshold;
+    }
+
     public static double getLaplaceCoefficient() {
         return laplaceCoefficient;
     }
 
     public static double getSimUnsegmented() {
         return Math.log10(simUnsegmented);
-    }
-
-    public Map<String, Set<String>> getBaselineBoundaries() {
-        return baselineBoundaries;
     }
 
     public CopyOnWriteArrayList<Sample> getSampleList() {
@@ -64,72 +64,66 @@ public class Constant {
         return morphemeFreq;
     }
 
-    public static double getLambda() {
-        return lambda;
-    }
-
-    public static HashMap<String, Double> getNewCorpus() {
-        return newCorpus;
-    }
-
-    public static double getNewCorpusSize() {
-        return newCorpusSize;
-    }
-
-    public static HashMap<String, TreeSet<String>> getTrieTable() {
-        return trieTable;
-    }
-
-    public static HashMap<String, HashMap<String, Integer>> getBranchTable() {
-        return branchTable;
-    }
-
     public static HashMap<String, Double> getCosineTable() {
         return cosineTable;
     }
 
-    public Constant(String mapDir, String wordListDir, double lambda, int heuristic, double simUnsegmentedArg, double simUnfound, int frequencyThreshold) throws IOException, ClassNotFoundException {
+    public Constant(String mapDir, String wordListDir, int heuristic, double simUnsegmentedArg, double simUnfound, int frequencyThreshold, boolean includeFrequencies) throws IOException, ClassNotFoundException {
 
-        this.lambda = lambda;
         this.heuristic = heuristic;
         this.simUnsegmented = simUnsegmentedArg;
         this.simUnfound = simUnfound;
         this.frequencyThreshold = frequencyThreshold;
+        this.includeFrequencies = includeFrequencies;
         List<String> freqWords = null;
         try {
             freqWords = Files.readAllLines(new File(wordListDir).toPath(), Charset.forName("UTF-8"));
-        } catch (MalformedInputException e)
-
-        {
+        } catch (MalformedInputException e) {
             System.out.println(e.getMessage());
             freqWords = Files.readAllLines(new File(wordListDir).toPath(), Charset.forName("ISO-8859-9"));
         }
-        generateTrieList(mapDir + "//similarityScoresToSerialize", mapDir + "//branchFactors", mapDir + "//trieWords");
+        generateCosineTable(mapDir + "//similarityScoresToSerialize");
 
-        trieTable.keySet().parallelStream().forEach((n) -> {
-            this.calculateFrequencyForMorp(n);
-        });
-
+        int numberOfProcessedWord = 0;
         for (String str : freqWords) {
             StringTokenizer tokens = new StringTokenizer(str, " ");
             String f = tokens.nextToken();
             String w = tokens.nextToken();
-            newCorpus.put(w, Double.parseDouble(f));
-        }
 
-        for (String str : newCorpus.keySet()) {
-            newCorpusSize = newCorpusSize + newCorpus.get(str);
+            if (Integer.parseInt(f) >= frequencyThreshold) {
+                constructLists(w, Integer.parseInt(f));
+                numberOfProcessedWord++;
+            }
         }
-
-        //createSmoothCorpus(corpus);
-        //corpus.clear();
+        System.out.println(">>>>>>>>> Number of Processed Word: " + numberOfProcessedWord);
     }
 
-    public void generateTrieList(String nameOfsimilarityScoresFile, String nameOfBranchFactors, String nameOfTrieWords) throws IOException, ClassNotFoundException {
+    private void constructLists(String w, int f) {
+        String randomSegmentation = Operations.randomSplitB(w);
+        sampleList.add(new Sample(w, randomSegmentation));
+
+        StringTokenizer tokenizer = new StringTokenizer(randomSegmentation, "+");
+        while (tokenizer.hasMoreTokens()) {
+            String morpheme = tokenizer.nextToken();
+            if (includeFrequencies) {
+                if (morphemeFreq.containsKey(morpheme)) {
+                    morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + f);
+                } else {
+                    morphemeFreq.put(morpheme, f);
+                }
+            } else {
+                if (morphemeFreq.containsKey(morpheme)) {
+                    morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + 1);
+                } else {
+                    morphemeFreq.put(morpheme, 1);
+                }
+            }
+        }
+    }
+
+    public void generateCosineTable(String nameOfsimilarityScoresFile) throws IOException, ClassNotFoundException {
 
         File filesOfsimilarityScoresFile = new File(nameOfsimilarityScoresFile);
-        File filesOfBranchFactors = new File(nameOfBranchFactors);
-        File filesOfTrieWords = new File(nameOfTrieWords);
 
         FileInputStream fis = new FileInputStream(filesOfsimilarityScoresFile);
         ObjectInput in = null;
@@ -140,28 +134,6 @@ public class Constant {
         in.close();
 
         cosineTable = (HashMap<String, Double>) o;
-
-        fis = new FileInputStream(filesOfBranchFactors);
-        in = null;
-        o = null;
-        in = new ObjectInputStream(fis);
-        o = in.readObject();
-        fis.close();
-        in.close();
-
-        branchTable = (HashMap<String, HashMap<String, Integer>>) o;
-
-        fis = new FileInputStream(filesOfTrieWords);
-        in = null;
-        o = null;
-        in = new ObjectInputStream(fis);
-        o = in.readObject();
-        fis.close();
-        in.close();
-
-        trieTable = (HashMap<String, TreeSet<String>>) o;
-
-        generateBoundaryListforBaseline(3); /// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 
 /*
@@ -187,7 +159,7 @@ public class Constant {
     }
 */
 
-    public void generateBoundaryListforBaseline(int childLimit) {
+/*    public void generateBoundaryListforBaseline(int childLimit) {
 
         for (String trie : branchTable.keySet()) {
             Set<String> boundaryList = new TreeSet<>();
@@ -199,9 +171,9 @@ public class Constant {
             }
             baselineBoundaries.put(trie, boundaryList);
         }
-    }
+    }*/
 
-    private void calculateFrequencyForMorp(String trie) {
+/*    private void calculateFrequencyForMorp(String trie) {
 
         Set<String> boundaries = baselineBoundaries.get(trie);
 
@@ -242,9 +214,9 @@ public class Constant {
                 morphemeFreq.put(morpheme, 1);
             }
         }
-    }
+    }*/
 
-    private void doSegmentation(String node, Set<String> boundaries, Stack<String> morphmeStack) {
+/*    private void doSegmentation(String node, Set<String> boundaries, Stack<String> morphmeStack) {
 
         if (!node.equals("")) {
             String current = "";
@@ -262,14 +234,14 @@ public class Constant {
 
             doSegmentation(word, boundaries, morphmeStack);
         }
-    }
+    }*/
 
-    public ArrayList<String> tokenSegmentation(String segmentation) {
+/*    public ArrayList<String> tokenSegmentation(String segmentation) {
         ArrayList<String> segments = new ArrayList<String>();
         StringTokenizer tokens = new StringTokenizer(segmentation, "+");
         while (tokens.hasMoreTokens()) {
             segments.add(tokens.nextToken());
         }
         return segments;
-    }
+    }*/
 }

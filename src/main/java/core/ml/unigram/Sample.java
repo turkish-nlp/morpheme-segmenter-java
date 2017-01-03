@@ -1,14 +1,14 @@
-package core.ml.withDeserializedMaps;
+package core.ml.unigram;
+
+import core.ml.common.Operations;
 
 import java.util.ArrayList;
-import java.util.StringTokenizer;
 
 /**
  * Created by ahmetu on 28.09.2016.
  */
 public class Sample {
 
-    private String inTrie;
     private double similarityScore;
     private double poissonScore;
     private String word;
@@ -35,14 +35,6 @@ public class Sample {
 
     public void setPresenceScore(double presenceScore) {
         this.presenceScore = presenceScore;
-    }
-
-    public String getInTrie() {
-        return inTrie;
-    }
-
-    public void setInTrie(String inTrie) {
-        this.inTrie = inTrie;
     }
 
     public double getSimilarityScore() {
@@ -89,10 +81,9 @@ public class Sample {
         this.lenghtPrior = lenghtPrior;
     }
 
-    public Sample(String word, String segmentation, String inTrie) {
+    public Sample(String word, String segmentation) {
         this.word = word;
         this.segmentation = segmentation;
-        this.inTrie = inTrie;
         this.isCalculated = false;
 
         /*
@@ -118,20 +109,20 @@ public class Sample {
             segmentsForRecursive.remove(segmentsForRecursive.size() - 1);
 
         double poissonScore = 0;
-        if (poisson)
-            poissonScore = calculatePoisson(segmentsForRecursive);
+/*        if (poisson)
+            poissonScore = calculatePoisson(segmentsForRecursive);*/
 
         double similarityScore = 0;
         if (sim)
             similarityScore = calculateSimilarityWithHashMap(segmentation);
 
         double presenceScore = 0;
-        if (presence)
-            presenceScore = calculatePresenceScore(segmentsForRecursive);
+        /*if (presence)
+            presenceScore = calculatePresenceScore(segmentsForRecursive);*/
 
         double lengthScore = 0;
-        if (length)
-            lengthScore = calculateLenghtScore(segmentation);
+/*        if (length)
+            lengthScore = calculateLenghtScore(segmentation);*/
 
         scores.add(poissonScore);
         scores.add(similarityScore);
@@ -140,7 +131,7 @@ public class Sample {
         return scores;
     }
 
-    private double calculateLenghtScore(String segmentation) {
+/*    private double calculateLenghtScore(String segmentation) {
         double lenghtScore = 0;
         StringTokenizer tokenizer = new StringTokenizer(segmentation, "+");
         int length = 0;
@@ -152,16 +143,15 @@ public class Sample {
         lenghtScore = Math.pow(0.037, length / c);
 
         return Math.log10(lenghtScore);
+    }*/
 
-    }
-
-    private double calculatePoisson(ArrayList<String> segments) {
+    /*private double calculatePoisson(ArrayList<String> segments) {
         double totalPoisson = 0;
         for (String s : segments) {
             totalPoisson = totalPoisson + Math.log10(Operations.getPoissonScore(Constant.getBranchTable().get(inTrie).get(s), Constant.getLambda()));
         }
         return totalPoisson;
-    }
+    }*/
 
     private double calculateSimilarityWithHashMap(String segmentation) {
 
@@ -193,7 +183,7 @@ public class Sample {
 */
 
 
-    private double calculatePresenceScore(ArrayList<String> segments) {
+    /*private double calculatePresenceScore(ArrayList<String> segments) {
 
         double presenceScore = 0;
 
@@ -208,5 +198,5 @@ public class Sample {
         }
 
         return presenceScore;
-    }
+    }*/
 }

@@ -1,6 +1,7 @@
-package core.ml.withDeserializedMaps;
+package core.ml.unigram;
 
 import core.mcmc.utils.SerializableModel;
+import core.ml.common.Operations;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -11,7 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Created by Murathan on 29-Sep-16.
  */
-public class Gibbs_ForwardBackward_Recursive {
+public class Gibbs_RecursiveInference {
 
     private Map<String, Integer> frequencyTable = new ConcurrentHashMap<>();
     private CopyOnWriteArrayList<Sample> samples = new CopyOnWriteArrayList<>();
@@ -19,11 +20,10 @@ public class Gibbs_ForwardBackward_Recursive {
     private int noOfIterationCopy;
 
     private int sizeOfTable = 0;
-    private double alpha;
-    private double gamma;
     private static boolean[] featuresBooleanList = new boolean[4]; //0:poisson, 1:similarity, 2:presence, 3: length
     private String featString = "";
     private int heuristic;
+    private int noOfUnsegmented;
 
     public String generateFeatureString() {
         if (featuresBooleanList[0] == true)
@@ -40,9 +40,10 @@ public class Gibbs_ForwardBackward_Recursive {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-        Gibbs_ForwardBackward_Recursive i = new Gibbs_ForwardBackward_Recursive(args[0], args[1], Double.parseDouble(args[2]), Integer.parseInt(args[3]), Double.parseDouble(args[4]),
-                Double.parseDouble(args[5]), Boolean.valueOf(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]),
-                Integer.parseInt(args[10]), Double.parseDouble(args[11]),Double.parseDouble(args[12]));
+        // <outputDir> <wordListDir> <>
+        Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),
+                Boolean.valueOf(args[4]), Boolean.valueOf(args[5]), Boolean.valueOf(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]),
+                Integer.parseInt(args[9]), Double.parseDouble(args[10]), Double.parseDouble(args[11]));
 
         i.featString = i.generateFeatureString();
 
@@ -59,20 +60,19 @@ public class Gibbs_ForwardBackward_Recursive {
         for (Sample s : i.samples) {
             System.out.println(s.getWord() + "--> " + s.getSegmentation());
         }
-
-
     }
 
-    public Gibbs_ForwardBackward_Recursive(String outputDir, String wordListDir, double lambda, int noOfIteration, double alpha, double gamma, boolean poisson,
-                                           boolean sim, boolean presence, boolean length, int heuristic, double simUnsegmentedArg, double simUnfound) throws IOException, ClassNotFoundException {
-        Constant baseline = null;//new Constant(outputDir, wordListDir, lambda, heuristic, simUnsegmentedArg, simUnfound);
+    public Gibbs_RecursiveInference(String outputDir, String wordListDir,
+                                    int noOfIteration, int freqThreshold, boolean includeFreq, boolean poisson,
+                                    boolean sim, boolean presence, boolean length, int heuristic, double simUnsegmentedArg, double simUnfoundArg) throws IOException, ClassNotFoundException {
+
+        Constant baseline = new Constant(outputDir, wordListDir, heuristic, simUnsegmentedArg, simUnfoundArg, freqThreshold, includeFreq);
         this.heuristic = heuristic;
         this.noOfIteration = noOfIteration;
         this.noOfIterationCopy = noOfIteration;
         this.frequencyTable = new ConcurrentHashMap<>(baseline.getMorphemeFreq());
         this.samples = new CopyOnWriteArrayList<>(baseline.getSampleList());
-        this.alpha = alpha;
-        this.gamma = gamma;
+        this.noOfUnsegmented = baseline.getNumberOfUnsegmentedWord();
         for (String str : frequencyTable.keySet()) {
             sizeOfTable = sizeOfTable + frequencyTable.get(str);
         }
@@ -85,29 +85,39 @@ public class Gibbs_ForwardBackward_Recursive {
     public void doSampling() throws IOException {
 
         while (noOfIteration > 0) {
-            System.out.print("Iter: " + noOfIteration);
+
+            System.out.println("Iter: " + noOfIteration);
+
             Collections.shuffle(samples);
             for (Sample sample : samples) {
 
                 int deleteNo = deleteFromTable(sample.getSegmentation());
                 sizeOfTable = sizeOfTable - deleteNo;
 
-             //   System.out.print("Selected item: " + sample.getSegmentation() + "     ");
-                //            System.out.println("---> Recursive operation started..");
-                //     System.out.printf("%s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence");
-                //       System.out.println();
+                if (!sample.getSegmentation().contains("+")) {
+                    noOfUnsegmented--;
+                }
+                //     System.out.print("Selected item: " + sample.getSegmentation() + "     ");
+                //         System.out.println("---> Recursive operation started..");
+                //      System.out.printf("%s%13s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence", "length");
+                //        System.out.println();
 
                 sample.setSegmentation("");
                 recursiveSplit(sample, sample.getWord());
 
-            //  System.out.println("Selected segmentation: " + sample.getSegmentation());
-            }
+                if (!sample.getSegmentation().contains("+")) {
+                    noOfIteration++;
+                }
 
+                //         System.out.println("Selected segmentation: " + sample.getSegmentation());
+            }
             noOfIteration--;
 
         }
         saveModel();
+        //  saveSimiliarityValues();
     }
+
 
     private String recursiveSplit(Sample sample, String word) {
 
@@ -118,31 +128,24 @@ public class Gibbs_ForwardBackward_Recursive {
         double dpScore = 0.0;
         for (String split : possibleSplits) {
             ArrayList<Double> priors = sample.calculateScores(split, featuresBooleanList);  // //0:poisson, 1:similarity, 2:presence, 3: length
-            /// add $ to unsegmented words ????
-            // if (!split.contains("+")) {
-            //  split = split + "+$";
-            //  dpScore = calculateLikelihoodsWithDP(split);
-            // } else
-            dpScore = calculateLikelihoodsWithDP(split);
-            double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2);
+            dpScore = calculateUnigramLikelihoods(split);
+            double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
 
-            double nonlog_total = Math.pow(10, total);
-
-            StringTokenizer stringTokenizer = new StringTokenizer(split, "+");
-            nonlog_total = nonlog_total * leftRecursion(sample, stringTokenizer.nextToken(), Constant.getHeuristic(), this.frequencyTable);
-
-            //   System.out.printf("%s%13f%13f%13f%13f", split, dpScore , priors.get(0), priors.get(1),  priors.get(2));
+            //       System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
             //      System.out.println();
 
+            double nonlog_total = Math.pow(10, total);
             forNormalize = forNormalize + nonlog_total;
+            //       System.out.println("nonlog_total: " + nonlog_total);
             scores.add(nonlog_total);
         }
-        //      System.out.println("-------------");
-
+        //  System.out.println("-------------");
+        //     System.out.println("forNormalize: " + forNormalize);
         ArrayList<Double> sortedScores = new ArrayList<>(scores);
         Collections.sort(sortedScores);
 
         double normalizationConst = 1 / forNormalize;
+        //    System.out.println("normalizationConst: " + normalizationConst);
 
         Random rand = new Random();
         double rndSample = rand.nextDouble();
@@ -156,7 +159,7 @@ public class Gibbs_ForwardBackward_Recursive {
                 break;
             }
         }
-
+        //   System.out.println("s_value: " + s_value);
         String selected = possibleSplits.get(scores.indexOf(s_value));
 
 
@@ -195,118 +198,53 @@ public class Gibbs_ForwardBackward_Recursive {
         }
     }
 
-    private Double calculateLikelihoodsWithDP(String newSegmentation) {
+    private Double calculateUnigramLikelihoods(String newSegmentation) {
         int size = sizeOfTable;
         double newLikelihood = 0;
-        StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
-        while (newSegments.hasMoreTokens()) {
-            String morpheme = newSegments.nextToken();
+
+        if (!newSegmentation.contains("+")) {
+            String morpheme = newSegmentation;
             if (frequencyTable.containsKey(morpheme)) {
                 if (frequencyTable.get(morpheme) > 0) {
-                    newLikelihood = newLikelihood + Math.log10(frequencyTable.get(morpheme) / (size + alpha));
+                    newLikelihood = newLikelihood + Math.log10(frequencyTable.get(morpheme) / (size));
                     frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
                     size++;
                 } else {
-                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
+                    newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / (size));
                     frequencyTable.put(morpheme, 1);
                     size++;
                 }
             } else {
-                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
+                newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / (size));
                 frequencyTable.put(morpheme, 1);
                 size++;
             }
-        }
-        deleteFromTable(newSegmentation);
 
-        return newLikelihood;
-    }
-
-    private Double calculateLikelihoodsWithDPForOneSplit(String newSegmentation, Map<String, Integer> frequencyTable) {
-
-        int size = 0;
-
-        for (String str : frequencyTable.keySet()) {
-            size = size + frequencyTable.get(str);
-        }
-
-        double newLikelihood = 0;
-        StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
-        while (newSegments.hasMoreTokens()) {
-            String morpheme = newSegments.nextToken();
-            if (frequencyTable.containsKey(morpheme)) {
-                if (frequencyTable.get(morpheme) > 0) {
-                    newLikelihood = newLikelihood + Math.log10(frequencyTable.get(morpheme) / (size + alpha));
-                    frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
-                    size++;
-                } else {
-                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
-                    frequencyTable.put(morpheme, 1);
-                    size++;
-                }
-            } else {
-                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
-                frequencyTable.put(morpheme, 1);
-                size++;
-            }
-        }
-        deleteFromTable(newSegmentation);
-
-        return newLikelihood;
-    }
-
-    private double leftRecursion(Sample sample, String left, int heuristic, Map<String, Integer> localFrequencyTable) {
-        double total = 0;
-        if (left.length() == heuristic) {
-            total = 1;
-            return total;
+            newLikelihood = newLikelihood + Math.log10((noOfUnsegmented != 0 ? noOfUnsegmented : Constant.getSmoothingCoefficient()) / (size));
         } else {
-            int k = 0;
-            if (left.length() >= heuristic + 4) {
-                k = 5;
-            } else if (left.length() > heuristic - 1) {
-                k = left.length() - heuristic + 1;
-            } else {
-                k = left.length();
-            }
-
-            Map<String, Integer> inscopeLocalFrequencyTable;
-
-            // for unsegmented
-            /*
-            if (first) {
-                inscopeLocalFrequencyTable = localFrequencyTable;
-                total = total + calculateTotalScoreForOneSplit(sample, left, inscopeLocalFrequencyTable);
-            }
-            */
-            //for other split
-
-            for (int i = 1; i < k; i++) {
-                String split = left.substring(0, left.length() - i) + "+" + left.substring(left.length() - i);
-
-                inscopeLocalFrequencyTable = localFrequencyTable;
-                double localValue = calculateTotalScoreForOneSplit(sample, split, inscopeLocalFrequencyTable);
-
-                if (inscopeLocalFrequencyTable.containsKey(left.substring(left.length() - i)))
-                    inscopeLocalFrequencyTable.put(left.substring(left.length() - i), inscopeLocalFrequencyTable.get(left.substring(left.length() - i)) + 1);
-                else
-                    inscopeLocalFrequencyTable.put(left.substring(left.length() - i), 1);
-
-                double innerValue = leftRecursion(sample, left.substring(0, left.length() - i), heuristic, inscopeLocalFrequencyTable);
-                total = total + localValue * innerValue;
+            StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
+            while (newSegments.hasMoreTokens()) {
+                String morpheme = newSegments.nextToken();
+                if (frequencyTable.containsKey(morpheme)) {
+                    if (frequencyTable.get(morpheme) > 0) {
+                        newLikelihood = newLikelihood + Math.log10(frequencyTable.get(morpheme) / (size));
+                        frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
+                        size++;
+                    } else {
+                        newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / (size));
+                        frequencyTable.put(morpheme, 1);
+                        size++;
+                    }
+                } else {
+                    newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / (size));
+                    frequencyTable.put(morpheme, 1);
+                    size++;
+                }
             }
         }
-        return total;
-    }
+        deleteFromTable(newSegmentation);
 
-    private double calculateTotalScoreForOneSplit(Sample sample, String split, Map<String, Integer> localFrequencyTable) {
-
-        ArrayList<Double> priors = sample.calculateScores(split, featuresBooleanList);   // //0:poisson, 1:similarity, 2:presence, 3: length
-        double dpScore = calculateLikelihoodsWithDPForOneSplit(split, localFrequencyTable);
-        double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2);
-
-        return Math.pow(10, total);
-        //return total;
+        return newLikelihood;
     }
 
     private boolean isAccepted(double newJointProbability, double oldJointProbability) {
@@ -367,7 +305,6 @@ public class Gibbs_ForwardBackward_Recursive {
                 segmentationsList.put(s.getWord(), segmentationsOfsample);
             }
         }
-
         SerializableModel model = new SerializableModel(frequencyTable, segmentationsList);
 
         // toByteArray
@@ -381,7 +318,7 @@ public class Gibbs_ForwardBackward_Recursive {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("gibbsMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha + "-G_" + gamma + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("finalMODEL-NOI_" + noOfIterationCopy + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
     }
 
 }

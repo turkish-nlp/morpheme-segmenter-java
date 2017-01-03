@@ -1,6 +1,7 @@
-package core.ml.withDeserializedMaps;
+package core.ml.bigram;
 
 import core.mcmc.utils.SerializableModel;
+import core.ml.common.Operations;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -19,13 +20,10 @@ public class Gibbs_RecursiveInference {
     private int noOfIterationCopy;
 
     private int sizeOfTable = 0;
-    private double alpha;
-    private double gamma;
     private static boolean[] featuresBooleanList = new boolean[4]; //0:poisson, 1:similarity, 2:presence, 3: length
     private String featString = "";
     private int heuristic;
-    private double simUnsegmented;
-
+    private int noOfUnsegmented;
 
     public String generateFeatureString() {
         if (featuresBooleanList[0] == true)
@@ -42,10 +40,10 @@ public class Gibbs_RecursiveInference {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
-
-        Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], Double.parseDouble(args[2]), Integer.parseInt(args[3]), Double.parseDouble(args[4]),
-                Double.parseDouble(args[5]), Boolean.valueOf(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]),
-                Integer.parseInt(args[10]), Double.parseDouble(args[11]), Double.parseDouble(args[12]));
+        // <outputDir> <wordListDir> <>
+        Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),
+                Boolean.valueOf(args[4]), Boolean.valueOf(args[5]), Boolean.valueOf(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]),
+                Integer.parseInt(args[9]), Double.parseDouble(args[10]), Double.parseDouble(args[11]));
 
         i.featString = i.generateFeatureString();
 
@@ -64,19 +62,17 @@ public class Gibbs_RecursiveInference {
         }
     }
 
-    public Gibbs_RecursiveInference(String outputDir, String wordListDir, double lambda,
-                                    int noOfIteration, double alpha, double gamma, boolean poisson,
+    public Gibbs_RecursiveInference(String outputDir, String wordListDir,
+                                    int noOfIteration, int freqThreshold, boolean includeFreq, boolean poisson,
                                     boolean sim, boolean presence, boolean length, int heuristic, double simUnsegmentedArg, double simUnfoundArg) throws IOException, ClassNotFoundException {
 
-        Constant baseline = null;//new Constant(outputDir, wordListDir, lambda, heuristic, simUnsegmentedArg, simUnfoundArg);
+        Constant baseline = new Constant(outputDir, wordListDir, heuristic, simUnsegmentedArg, simUnfoundArg, freqThreshold, includeFreq);
         this.heuristic = heuristic;
-        this.simUnsegmented = simUnsegmentedArg;
         this.noOfIteration = noOfIteration;
         this.noOfIterationCopy = noOfIteration;
         this.frequencyTable = new ConcurrentHashMap<>(baseline.getMorphemeFreq());
         this.samples = new CopyOnWriteArrayList<>(baseline.getSampleList());
-        this.alpha = alpha;
-        this.gamma = gamma;
+        this.noOfUnsegmented = baseline.getNumberOfUnsegmentedWord();
         for (String str : frequencyTable.keySet()) {
             sizeOfTable = sizeOfTable + frequencyTable.get(str);
         }
@@ -97,6 +93,10 @@ public class Gibbs_RecursiveInference {
 
                 int deleteNo = deleteFromTable(sample.getSegmentation());
                 sizeOfTable = sizeOfTable - deleteNo;
+
+                if (!sample.getSegmentation().contains("+")) {
+                    noOfUnsegmented--;
+                }
                 //     System.out.print("Selected item: " + sample.getSegmentation() + "     ");
                 //         System.out.println("---> Recursive operation started..");
                 //      System.out.printf("%s%13s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence", "length");
@@ -104,6 +104,10 @@ public class Gibbs_RecursiveInference {
 
                 sample.setSegmentation("");
                 recursiveSplit(sample, sample.getWord());
+
+                if (!sample.getSegmentation().contains("+")) {
+                    noOfIteration++;
+                }
 
                 //         System.out.println("Selected segmentation: " + sample.getSegmentation());
             }
@@ -124,7 +128,7 @@ public class Gibbs_RecursiveInference {
         double dpScore = 0.0;
         for (String split : possibleSplits) {
             ArrayList<Double> priors = sample.calculateScores(split, featuresBooleanList);  // //0:poisson, 1:similarity, 2:presence, 3: length
-            dpScore = calculateLikelihoodsWithDP(split);
+            dpScore = calculateBigramLikelihoods(split);
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
 
             //       System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
@@ -157,7 +161,6 @@ public class Gibbs_RecursiveInference {
         }
         //   System.out.println("s_value: " + s_value);
         String selected = possibleSplits.get(scores.indexOf(s_value));
-
 
         if (!selected.equals(word)) {
 
@@ -194,39 +197,12 @@ public class Gibbs_RecursiveInference {
         }
     }
 
-    private Double calculateLikelihoodsWithDP(String newSegmentation) {
+    private Double calculateBigramLikelihoods(String newSegmentation) {
         int size = sizeOfTable;
         double newLikelihood = 0;
-        StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
-        while (newSegments.hasMoreTokens()) {
-            String morpheme = newSegments.nextToken();
-            if (frequencyTable.containsKey(morpheme)) {
-                if (frequencyTable.get(morpheme) > 0) {
-                    newLikelihood = newLikelihood + Math.log10(frequencyTable.get(morpheme) / (size + alpha));
-                    frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
-                    size++;
-                } else {
-                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
-                    frequencyTable.put(morpheme, 1);
-                    size++;
-                }
-            } else {
-                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / (size + alpha));
-                frequencyTable.put(morpheme, 1);
-                size++;
-            }
-        }
-        deleteFromTable(newSegmentation);
 
-        return newLikelihood;
-    }
-
-    private Double calculateBasicLikelihoods(String newSegmentation) {
-        int size = sizeOfTable;
-        double newLikelihood = 0;
-        StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
-        while (newSegments.hasMoreTokens()) {
-            String morpheme = newSegments.nextToken();
+        if (!newSegmentation.contains("+")) {
+            String morpheme = newSegmentation;
             if (frequencyTable.containsKey(morpheme)) {
                 if (frequencyTable.get(morpheme) > 0) {
                     newLikelihood = newLikelihood + Math.log10(frequencyTable.get(morpheme) / (size));
@@ -241,6 +217,28 @@ public class Gibbs_RecursiveInference {
                 newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / (size));
                 frequencyTable.put(morpheme, 1);
                 size++;
+            }
+
+            newLikelihood = newLikelihood + Math.log10((noOfUnsegmented != 0 ? noOfUnsegmented : Constant.getSmoothingCoefficient()) / (size));
+        } else {
+            StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
+            while (newSegments.hasMoreTokens()) {
+                String morpheme = newSegments.nextToken();
+                if (frequencyTable.containsKey(morpheme)) {
+                    if (frequencyTable.get(morpheme) > 0) {
+                        newLikelihood = newLikelihood + Math.log10(frequencyTable.get(morpheme) / (size));
+                        frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
+                        size++;
+                    } else {
+                        newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / (size));
+                        frequencyTable.put(morpheme, 1);
+                        size++;
+                    }
+                } else {
+                    newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / (size));
+                    frequencyTable.put(morpheme, 1);
+                    size++;
+                }
             }
         }
         deleteFromTable(newSegmentation);
@@ -319,7 +317,7 @@ public class Gibbs_RecursiveInference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("finalMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha + "-G_" + gamma + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("finalMODEL-NOI_" + noOfIterationCopy + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
     }
 
 }

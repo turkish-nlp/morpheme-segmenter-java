@@ -1,5 +1,6 @@
-package core.ml.withDeserializedMaps;
+package core.ml.common;
 
+import core.ml.unigram.Constant;
 import org.canova.api.util.MathUtils;
 
 import java.util.*;
