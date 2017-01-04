@@ -1,7 +1,6 @@
 package core.ml.unigram;
 
 import core.mcmc.utils.SerializableModel;
-import core.ml.common.Operations;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -106,7 +105,7 @@ public class Gibbs_RecursiveInference {
                 recursiveSplit(sample, sample.getWord());
 
                 if (!sample.getSegmentation().contains("+")) {
-                    noOfIteration++;
+                    noOfUnsegmented++;
                 }
 
                 //         System.out.println("Selected segmentation: " + sample.getSegmentation());
@@ -160,7 +159,12 @@ public class Gibbs_RecursiveInference {
             }
         }
         //   System.out.println("s_value: " + s_value);
-        String selected = possibleSplits.get(scores.indexOf(s_value));
+        String selected = null;
+        try {
+            selected = possibleSplits.get(scores.indexOf(s_value));
+        } catch (Exception e) {
+            System.out.println();
+        }
 
 
         if (!selected.equals(word)) {
@@ -206,21 +210,21 @@ public class Gibbs_RecursiveInference {
             String morpheme = newSegmentation;
             if (frequencyTable.containsKey(morpheme)) {
                 if (frequencyTable.get(morpheme) > 0) {
-                    newLikelihood = newLikelihood + Math.log10(frequencyTable.get(morpheme) / (size));
+                    newLikelihood = newLikelihood + Math.log10((double) frequencyTable.get(morpheme) / (size));
                     frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
                     size++;
                 } else {
-                    newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / (size));
+                    newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / (size));
                     frequencyTable.put(morpheme, 1);
                     size++;
                 }
             } else {
-                newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / (size));
+                newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / (size));
                 frequencyTable.put(morpheme, 1);
                 size++;
             }
 
-            newLikelihood = newLikelihood + Math.log10((noOfUnsegmented != 0 ? noOfUnsegmented : Constant.getSmoothingCoefficient()) / (size));
+            newLikelihood = newLikelihood + Math.log10((double) (noOfUnsegmented != 0 ? noOfUnsegmented : Constant.getSmoothingCoefficient()) / (size));
         } else {
             StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
             while (newSegments.hasMoreTokens()) {

@@ -1,6 +1,6 @@
 package core.ml.bigram;
 
-import core.ml.common.Operations;
+import core.ml.bigram.Operations;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -27,7 +27,6 @@ public class Constant {
     private static HashMap<String, Double> cosineTable;
     private boolean includeFrequencies = true;
 
-    private int numberOfUnsegmentedWord;
     private Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
     private Map<String, HashMap<String, Integer>> bigramFreq = new HashMap<>();
     private CopyOnWriteArrayList<Sample> sampleList = new CopyOnWriteArrayList<>();
@@ -42,10 +41,6 @@ public class Constant {
 
     public static int getHeuristic() {
         return heuristic;
-    }
-
-    public int getNumberOfUnsegmentedWord() {
-        return numberOfUnsegmentedWord;
     }
 
     public static int getFrequencyThreshold() {
@@ -98,7 +93,7 @@ public class Constant {
             String f = tokens.nextToken();
             String w = tokens.nextToken();
 
-            if (Integer.parseInt(f) >= frequencyThreshold) {
+            if ((Integer.parseInt(f) >= frequencyThreshold) && (w.length() > 1)) {
                 constructLists(w, Integer.parseInt(f));
                 numberOfProcessedWord++;
             }
@@ -115,72 +110,67 @@ public class Constant {
             frequency = f;
         }
 
-        String mStart = "$";
-        String mEnd = "€";
+        String uSymbol = "$";
 
-        StringTokenizer tokenizer = new StringTokenizer(randomSegmentation, "+");
-
-        String stem = tokenizer.nextToken();
-        if (morphemeFreq.containsKey(stem)) {
-            morphemeFreq.put(stem, morphemeFreq.get(stem) + frequency);
-        } else {
-            morphemeFreq.put(stem, frequency);
-        }
-
-        String curr = mStart;
-        String next = null;
-        while (tokenizer.hasMoreTokens()) {
-
-            if (morphemeFreq.containsKey(curr)) {
-                morphemeFreq.put(curr, morphemeFreq.get(curr) + frequency);
+        if (!randomSegmentation.contains("+")) {
+            String stem = randomSegmentation;
+            if (morphemeFreq.containsKey(stem)) {
+                morphemeFreq.put(stem, morphemeFreq.get(stem) + frequency);
             } else {
-                morphemeFreq.put(curr, frequency);
+                morphemeFreq.put(stem, frequency);
             }
 
-            next = tokenizer.nextToken();
-
             HashMap<String, Integer> transitions;
-            if (bigramFreq.containsKey(curr)) {
-                transitions = bigramFreq.get(curr);
-                if (transitions.containsKey(next)) {
-                    transitions.put(next, transitions.get(next) + frequency);
+            if (bigramFreq.containsKey(stem)) {
+                transitions = bigramFreq.get(stem);
+                if (transitions.containsKey(uSymbol)) {
+                    transitions.put(uSymbol, transitions.get(uSymbol) + frequency);
                 } else {
-                    transitions.put(next, frequency);
+                    transitions.put(uSymbol, frequency);
                 }
             } else {
                 transitions = new HashMap<>();
-                transitions.put(next, frequency);
+                transitions.put(uSymbol, frequency);
             }
-            bigramFreq.put(curr, transitions);
-            curr = next;
-        }
-        next = mEnd;
+            bigramFreq.put(stem, transitions);
 
-        if (morphemeFreq.containsKey(curr)) {
-            morphemeFreq.put(curr, morphemeFreq.get(curr) + frequency);
         } else {
-            morphemeFreq.put(curr, frequency);
-        }
-
-        if (morphemeFreq.containsKey(next)) {
-            morphemeFreq.put(next, morphemeFreq.get(next) + frequency);
-        } else {
-            morphemeFreq.put(next, frequency);
-        }
-
-        HashMap<String, Integer> transitions;
-        if (bigramFreq.containsKey(curr)) {
-            transitions = bigramFreq.get(curr);
-            if (transitions.containsKey(next)) {
-                transitions.put(next, transitions.get(next) + frequency);
+            StringTokenizer tokenizer = new StringTokenizer(randomSegmentation, "+");
+            String stem = tokenizer.nextToken();
+            if (morphemeFreq.containsKey(stem)) {
+                morphemeFreq.put(stem, morphemeFreq.get(stem) + frequency);
             } else {
-                transitions.put(next, frequency);
+                morphemeFreq.put(stem, frequency);
             }
-        } else {
-            transitions = new HashMap<>();
-            transitions.put(next, frequency);
+
+            String curr = stem;
+            String next = null;
+            while (tokenizer.hasMoreTokens()) {
+
+                next = tokenizer.nextToken();
+
+                if (morphemeFreq.containsKey(next)) {
+                    morphemeFreq.put(next, morphemeFreq.get(next) + frequency);
+                } else {
+                    morphemeFreq.put(next, frequency);
+                }
+
+                HashMap<String, Integer> transitions;
+                if (bigramFreq.containsKey(curr)) {
+                    transitions = bigramFreq.get(curr);
+                    if (transitions.containsKey(next)) {
+                        transitions.put(next, transitions.get(next) + frequency);
+                    } else {
+                        transitions.put(next, frequency);
+                    }
+                } else {
+                    transitions = new HashMap<>();
+                    transitions.put(next, frequency);
+                }
+                bigramFreq.put(curr, transitions);
+                curr = next;
+            }
         }
-        bigramFreq.put(curr, transitions);
     }
 
     public void generateCosineTable(String nameOfsimilarityScoresFile) throws IOException, ClassNotFoundException {

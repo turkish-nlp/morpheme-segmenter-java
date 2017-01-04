@@ -1,7 +1,5 @@
 package core.ml.unigram;
 
-import core.ml.common.Operations;
-
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.MalformedInputException;
@@ -90,7 +88,7 @@ public class Constant {
             String f = tokens.nextToken();
             String w = tokens.nextToken();
 
-            if (Integer.parseInt(f) >= frequencyThreshold) {
+            if ((Integer.parseInt(f) >= frequencyThreshold) && (w.length() > 1)) {
                 constructLists(w, Integer.parseInt(f));
                 numberOfProcessedWord++;
             }

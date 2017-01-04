@@ -1,7 +1,5 @@
 package core.ml.unigram;
 
-import core.ml.common.Operations;
-
 import java.util.ArrayList;
 
 /**

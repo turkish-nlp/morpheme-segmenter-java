@@ -1,6 +1,6 @@
 package core.ml.bigram;
 
-import core.ml.common.Operations;
+import core.ml.bigram.Operations;
 
 import java.util.ArrayList;
 

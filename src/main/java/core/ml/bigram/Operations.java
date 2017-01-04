@@ -1,6 +1,6 @@
-package core.ml.common;
+package core.ml.bigram;
 
-import core.ml.unigram.Constant;
+import core.ml.bigram.Constant;
 import org.canova.api.util.MathUtils;
 
 import java.util.*;
