@@ -1,6 +1,6 @@
 package core.ml.unigram;
 
-import core.mcmc.utils.SerializableModel;
+import core.ml.SerializableModel;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -23,6 +23,8 @@ public class Gibbs_RecursiveInference {
     private String featString = "";
     private int heuristic;
     private int noOfUnsegmented;
+    private double alpha = 0.000001;
+    private double gamma = 0.037;
 
     public String generateFeatureString() {
         if (featuresBooleanList[0] == true)
@@ -127,7 +129,7 @@ public class Gibbs_RecursiveInference {
         double dpScore = 0.0;
         for (String split : possibleSplits) {
             ArrayList<Double> priors = sample.calculateScores(split, featuresBooleanList);  // //0:poisson, 1:similarity, 2:presence, 3: length
-            dpScore = calculateUnigramLikelihoods(split);
+            dpScore = calculateUnigramLikelihoodsWithDP(split);
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
 
             //       System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
@@ -251,6 +253,55 @@ public class Gibbs_RecursiveInference {
         return newLikelihood;
     }
 
+    private Double calculateUnigramLikelihoodsWithDP (String newSegmentation) {
+        int size = sizeOfTable;
+        double newLikelihood = 0;
+
+        if (!newSegmentation.contains("+")) {
+            String morpheme = newSegmentation;
+            if (frequencyTable.containsKey(morpheme)) {
+                if (frequencyTable.get(morpheme) > 0) {
+                    newLikelihood = newLikelihood + Math.log10((double) frequencyTable.get(morpheme) / (size + alpha));
+                    frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
+                    size++;
+                } else {
+                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / ((double) size + alpha));
+                    frequencyTable.put(morpheme, 1);
+                    size++;
+                }
+            } else {
+                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / ((double) size + alpha));
+                frequencyTable.put(morpheme, 1);
+                size++;
+            }
+
+            newLikelihood = newLikelihood + Math.log10((double) (noOfUnsegmented != 0 ? noOfUnsegmented : alpha * Math.pow(gamma, 1)) / (size + alpha));
+        } else {
+            StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
+            while (newSegments.hasMoreTokens()) {
+                String morpheme = newSegments.nextToken();
+                if (frequencyTable.containsKey(morpheme)) {
+                    if (frequencyTable.get(morpheme) > 0) {
+                        newLikelihood = newLikelihood + Math.log10((double) frequencyTable.get(morpheme) / (size + alpha));
+                        frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
+                        size++;
+                    } else {
+                        newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / ((double) size + alpha));
+                        frequencyTable.put(morpheme, 1);
+                        size++;
+                    }
+                } else {
+                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / ((double) size + alpha));
+                    frequencyTable.put(morpheme, 1);
+                    size++;
+                }
+            }
+        }
+        deleteFromTable(newSegmentation);
+
+        return newLikelihood;
+    }
+
     private boolean isAccepted(double newJointProbability, double oldJointProbability) {
         boolean accept = false;
         if (Double.isNaN(newJointProbability)) {
@@ -309,7 +360,7 @@ public class Gibbs_RecursiveInference {
                 segmentationsList.put(s.getWord(), segmentationsOfsample);
             }
         }
-        SerializableModel model = new SerializableModel(frequencyTable, segmentationsList);
+        SerializableModel model = new SerializableModel(frequencyTable, segmentationsList, null);
 
         // toByteArray
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -322,7 +373,7 @@ public class Gibbs_RecursiveInference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("finalMODEL-NOI_" + noOfIterationCopy + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("unigram-NOI_" + noOfIterationCopy + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
     }
 
 }
