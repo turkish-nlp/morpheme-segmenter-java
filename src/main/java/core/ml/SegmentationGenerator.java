@@ -36,6 +36,7 @@ public class SegmentationGenerator {
     public Map<String, CopyOnWriteArrayList<String>> getSerializedSegmentations() {
         return serializedSegmentations;
     }
+
     public Map<String, String> getFinalSegmentation() {
         return finalSegmentation;
     }
@@ -87,7 +88,7 @@ public class SegmentationGenerator {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
 
-        int[] thresholdSet = {50};
+/*        int[] thresholdSet = {50};
 
         for (int i : thresholdSet) {
             System.out.println("THRESHOLD: " + i);
@@ -99,7 +100,9 @@ public class SegmentationGenerator {
                     Thread.sleep(100);
                 }
             }
-        }
+        }*/
+
+        SegmentationGenerator s = new SegmentationGenerator(args[0], args[1], args[2], args[3], Integer.parseInt(args[4]));
     }
 
     public void parallelSplit() {
@@ -111,20 +114,20 @@ public class SegmentationGenerator {
             }
         });
     }
+
     public void printFinalSegmentations() throws FileNotFoundException, UnsupportedEncodingException {
-        PrintWriter writer = new PrintWriter("results_th50\\UTF8_OLD_SIM_" + sim + "_NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("\\") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
-        if(file.contains("ger")) {
+        //PrintWriter writer = new PrintWriter("results_th50\\UTF8_OLD_SIM_" + sim + "_NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("\\") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
+        PrintWriter writer = new PrintWriter(file + "_result_" + threshold);
+        if (file.contains("ger")) {
             System.out.println("!!!!!GERMAN FILE");
             for (String str : finalSegmentation.keySet()) {
                 str = str.toLowerCase();
                 writer.println(str.replaceAll("ä", "ae").replaceAll("ö", "oe").replaceAll("ü", "ue").replaceAll("ß", "ss")
                         + "\t" + finalSegmentation.get(str).toLowerCase().replaceAll("\\+", " ").replaceAll("ö", "O").
-                        replaceAll("ä", "ae").replaceAll("ö", "oe").replaceAll("ü", "ue").replaceAll("ß", "ss") );
+                        replaceAll("ä", "ae").replaceAll("ö", "oe").replaceAll("ü", "ue").replaceAll("ß", "ss"));
             }
             writer.close();
-        }
-        else
-        {
+        } else {
             for (String str : finalSegmentation.keySet()) {
                 str = str.toLowerCase();
                 writer.println(str.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
@@ -136,9 +139,9 @@ public class SegmentationGenerator {
     }
 
 
-
     public void doSplit(String word, Set<String> affixes) throws FileNotFoundException {
         ArrayList<String> results = getPossibleSplits(word, affixes);
+        String uSymbol = "$";
 
         if (NoUnseg) {
             if (results.contains(word))
@@ -149,10 +152,9 @@ public class SegmentationGenerator {
             double maxScore = Double.NEGATIVE_INFINITY;
             for (String str : results) {
                 double tmp = 0;
-                StringTokenizer st = new StringTokenizer(str, "+");
 
                 double simScoreOfCurrent = 0;
-                // similarity
+                // similarity ---> not appropriate for journal work
                 if (sim) {
                     String morphemes[] = str.split("//+");
                     simScoreOfCurrent = 0;
@@ -176,8 +178,13 @@ public class SegmentationGenerator {
                         tmp = tmp + Math.log10(alpha * Math.pow(gamma, m.length() + 1) / (totalSize + alpha));
                 }*/
 
-                while (st.hasMoreTokens()) {
-                    tmp = tmp + Math.log10(morphemeProb.get(st.nextToken()));
+                if (!str.contains("+")) {
+                    tmp = tmp + Math.log10(morphemeProb.get(str)) + Math.log10(morphemeProb.get(uSymbol));
+                } else {
+                    StringTokenizer st = new StringTokenizer(str, "+");
+                    while (st.hasMoreTokens()) {
+                        tmp = tmp + Math.log10(morphemeProb.get(st.nextToken()));
+                    }
                 }
                 tmp = tmp + simScoreOfCurrent;
                 if (tmp > maxScore) {

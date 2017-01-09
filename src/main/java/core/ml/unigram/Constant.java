@@ -100,20 +100,24 @@ public class Constant {
         String randomSegmentation = Operations.randomSplitB(w);
         sampleList.add(new Sample(w, randomSegmentation));
 
-        StringTokenizer tokenizer = new StringTokenizer(randomSegmentation, "+");
-        while (tokenizer.hasMoreTokens()) {
-            String morpheme = tokenizer.nextToken();
-            if (includeFrequencies) {
-                if (morphemeFreq.containsKey(morpheme)) {
-                    morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + f);
+        if (!randomSegmentation.contains("+")) {
+            numberOfUnsegmentedWord++;
+        } else {
+            StringTokenizer tokenizer = new StringTokenizer(randomSegmentation, "+");
+            while (tokenizer.hasMoreTokens()) {
+                String morpheme = tokenizer.nextToken();
+                if (includeFrequencies) {
+                    if (morphemeFreq.containsKey(morpheme)) {
+                        morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + f);
+                    } else {
+                        morphemeFreq.put(morpheme, f);
+                    }
                 } else {
-                    morphemeFreq.put(morpheme, f);
-                }
-            } else {
-                if (morphemeFreq.containsKey(morpheme)) {
-                    morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + 1);
-                } else {
-                    morphemeFreq.put(morpheme, 1);
+                    if (morphemeFreq.containsKey(morpheme)) {
+                        morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + 1);
+                    } else {
+                        morphemeFreq.put(morpheme, 1);
+                    }
                 }
             }
         }

@@ -1,6 +1,7 @@
-package core.mcmc.utils;
+package core.ml;
 
 import core.blockSampling.Segmenter;
+import core.ml.bigram.Constant;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
@@ -15,11 +16,13 @@ import static java.lang.Integer.parseInt;
 /**
  * Created by Murathan on 26-Jun-16.
  */
-public class SegmentationGenerator {
+public class SegmentationGenerator_bigram {
 
     private Map<String, Integer> morphemeFreq;
     private Map<String, Double> morphemeProb;
     private Map<String, String> finalSegmentation;
+    private Map<String, HashMap<String, Integer>> bigramFreq;
+    private Map<String, HashMap<String, Double>> bigramProb;
     private Map<String, CopyOnWriteArrayList<String>> serializedSegmentations;
     private int threshold;
     static Charset charset = Charset.forName("UTF-8");
@@ -36,11 +39,12 @@ public class SegmentationGenerator {
     public Map<String, CopyOnWriteArrayList<String>> getSerializedSegmentations() {
         return serializedSegmentations;
     }
+
     public Map<String, String> getFinalSegmentation() {
         return finalSegmentation;
     }
 
-    public SegmentationGenerator(String vectorDir, String file, String inputFile, String mode, int thresholdArg) throws IOException, ClassNotFoundException {
+    public SegmentationGenerator_bigram(String vectorDir, String file, String inputFile, String mode, int thresholdArg) throws IOException, ClassNotFoundException {
 
         if (sim)
             this.vectors = WordVectorSerializer.loadTxtVectors(new File(vectorDir));
@@ -48,6 +52,8 @@ public class SegmentationGenerator {
         this.morphemeProb = new ConcurrentHashMap<>();
         this.finalSegmentation = new ConcurrentHashMap<>();
         this.serializedSegmentations = new ConcurrentHashMap<>();
+        this.bigramFreq = new ConcurrentHashMap<>();
+        this.bigramProb = new ConcurrentHashMap<>();
         this.mode = mode;
         this.threshold = thresholdArg;
         this.file = file;
@@ -71,6 +77,19 @@ public class SegmentationGenerator {
         for (String str : morphemeFreq.keySet()) {
             totalMorp = totalMorp + morphemeFreq.get(str);
             pw.println(str + " : " + morphemeFreq.get(str));
+        }
+
+        for (String first : bigramFreq.keySet()) {
+            HashMap<String, Integer> map = bigramFreq.get(first);
+            HashMap<String, Double> tmpMap = new HashMap<>();
+            for (String second : map.keySet()) {
+                double freq = (double) map.get(second);
+                if (freq > 0) {
+                    double prop = freq / morphemeFreq.get(first);
+                    tmpMap.put(second, prop);
+                }
+            }
+            bigramProb.put(first, tmpMap);
         }
         pw.close();
 
@@ -100,7 +119,8 @@ public class SegmentationGenerator {
                 }
             }
         }*/
-        SegmentationGenerator s = new SegmentationGenerator(args[0], args[1], args[2], args[3], Integer.parseInt(args[4]));
+
+        SegmentationGenerator_bigram s = new SegmentationGenerator_bigram(args[0], args[1], args[2], args[3], Integer.parseInt(args[4]));
     }
 
     public void parallelSplit() {
@@ -112,21 +132,20 @@ public class SegmentationGenerator {
             }
         });
     }
+
     public void printFinalSegmentations() throws FileNotFoundException, UnsupportedEncodingException {
         //PrintWriter writer = new PrintWriter("results_th50\\UTF8_OLD_SIM_" + sim + "_NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("\\") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
         PrintWriter writer = new PrintWriter(file + "_result_" + threshold);
-        if(file.contains("ger")) {
+        if (file.contains("ger")) {
             System.out.println("!!!!!GERMAN FILE");
             for (String str : finalSegmentation.keySet()) {
                 str = str.toLowerCase();
                 writer.println(str.replaceAll("ä", "ae").replaceAll("ö", "oe").replaceAll("ü", "ue").replaceAll("ß", "ss")
                         + "\t" + finalSegmentation.get(str).toLowerCase().replaceAll("\\+", " ").replaceAll("ö", "O").
-                        replaceAll("ä", "ae").replaceAll("ö", "oe").replaceAll("ü", "ue").replaceAll("ß", "ss") );
+                        replaceAll("ä", "ae").replaceAll("ö", "oe").replaceAll("ü", "ue").replaceAll("ß", "ss"));
             }
             writer.close();
-        }
-        else
-        {
+        } else {
             for (String str : finalSegmentation.keySet()) {
                 str = str.toLowerCase();
                 writer.println(str.replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
@@ -138,9 +157,9 @@ public class SegmentationGenerator {
     }
 
 
-
     public void doSplit(String word, Set<String> affixes) throws FileNotFoundException {
         ArrayList<String> results = getPossibleSplits(word, affixes);
+        String uSymbol = "$";
 
         if (NoUnseg) {
             if (results.contains(word))
@@ -151,10 +170,9 @@ public class SegmentationGenerator {
             double maxScore = Double.NEGATIVE_INFINITY;
             for (String str : results) {
                 double tmp = 0;
-                StringTokenizer st = new StringTokenizer(str, "+");
 
                 double simScoreOfCurrent = 0;
-                // similarity
+                // similarity ---> not appropriate for journal work
                 if (sim) {
                     String morphemes[] = str.split("//+");
                     simScoreOfCurrent = 0;
@@ -177,10 +195,44 @@ public class SegmentationGenerator {
                     else
                         tmp = tmp + Math.log10(alpha * Math.pow(gamma, m.length() + 1) / (totalSize + alpha));
                 }*/
+                StringTokenizer st = new StringTokenizer(str, "+");
+                String curr = st.nextToken();
+                String next = "";
 
-                while (st.hasMoreTokens()) {
-                    tmp = tmp + Math.log10(morphemeProb.get(st.nextToken()));
+                tmp = tmp + Math.log10(morphemeProb.get(curr));
+
+                if (!st.hasMoreTokens()) {
+                    next = uSymbol;
+
+                    if (bigramProb.containsKey(curr)) {
+                        if (bigramProb.get(curr).containsKey(next)) {
+                            tmp = tmp + Math.log10(bigramProb.get(curr).get(next) / morphemeFreq.get(curr));
+                        } else {
+                            tmp = tmp + Math.log10((double) Constant.getSmoothingCoefficient() / morphemeFreq.get(curr));
+                        }
+                    } else {
+                        tmp = tmp + Math.log10((double) Constant.getSmoothingCoefficient() / morphemeFreq.get(curr));
+                    }
+
+                } else {
+                    while (st.hasMoreTokens()) {
+                        next = st.nextToken();
+
+                        if (bigramProb.containsKey(curr)) {
+                            if (bigramProb.get(curr).containsKey(next)) {
+                                tmp = tmp + Math.log10(bigramProb.get(curr).get(next) / morphemeFreq.get(curr));
+                            } else {
+                                tmp = tmp + Math.log10((double) Constant.getSmoothingCoefficient() / morphemeFreq.get(curr));
+                            }
+                        } else {
+                            tmp = tmp + Math.log10((double) Constant.getSmoothingCoefficient() / morphemeFreq.get(curr));
+                        }
+
+                        curr = next;
+                    }
                 }
+
+
                 tmp = tmp + simScoreOfCurrent;
                 if (tmp > maxScore) {
                     maxScore = tmp;
@@ -202,12 +254,19 @@ public class SegmentationGenerator {
         fis.close();
         in.close();
 
-        SerializableModel model = (SerializableModel) o;
+        SerializableModel_bigram model = (SerializableModel_bigram) o;
 
         model.getSerializedFrequencyTable().keySet().parallelStream().forEach((s) -> {
             int freq = model.getSerializedFrequencyTable().get(s);
             if (freq > threshold)   // CHANGED!!!!!!
                 morphemeFreq.put(s, freq);
+        });
+
+        model.getSerializedBigrams().keySet().parallelStream().forEach((s) -> {
+            HashMap<String, Integer> map = model.getSerializedBigrams().get(s);
+/*            if (freq > threshold)   // CHANGED!!!!!!
+                morphemeFreq.put(s, freq);*/
+            bigramFreq.put(s, map);
         });
 
         model.getSerializedSegmentations().keySet().parallelStream().forEach((n) -> {

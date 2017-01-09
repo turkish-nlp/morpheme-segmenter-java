@@ -1,6 +1,7 @@
 package core.ml.bigram;
 
 import core.ml.SerializableModel;
+import core.ml.SerializableModel_bigram;
 import core.ml.bigram.Operations;
 import org.apache.commons.io.FileUtils;
 
@@ -127,7 +128,7 @@ public class Gibbs_RecursiveInference {
         double dpScore = 0.0;
         for (String split : possibleSplits) {
             ArrayList<Double> priors = sample.calculateScores(split, featuresBooleanList);  // //0:poisson, 1:similarity, 2:presence, 3: length
-            dpScore = calculateBigramLikelihoodsWithDP(split);
+            dpScore = calculateBigramLikelihoods(split);
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
 
             //       System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
@@ -568,7 +569,7 @@ public class Gibbs_RecursiveInference {
                 segmentationsList.put(s.getWord(), segmentationsOfsample);
             }
         }
-        SerializableModel model = new SerializableModel(frequencyTable, segmentationsList, bigramFreq);
+        SerializableModel_bigram model = new SerializableModel_bigram(frequencyTable, segmentationsList, bigramFreq);
 
         // toByteArray
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -581,7 +582,7 @@ public class Gibbs_RecursiveInference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("bigram_DP-NOI_" + noOfIterationCopy + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("bigram_ML-NOI_" + noOfIterationCopy + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
     }
 
 }

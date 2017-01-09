@@ -253,7 +253,7 @@ public class Gibbs_RecursiveInference {
         return newLikelihood;
     }
 
-    private Double calculateUnigramLikelihoodsWithDP (String newSegmentation) {
+    private Double calculateUnigramLikelihoodsWithDP(String newSegmentation) {
         int size = sizeOfTable;
         double newLikelihood = 0;
 
@@ -349,6 +349,8 @@ public class Gibbs_RecursiveInference {
 
     public void saveModel() throws IOException {
 
+        frequencyTable.put("$", noOfUnsegmented);
+
         Map<String, ArrayList<String>> segmentationsList = new HashMap<>();
 
         for (Sample s : this.samples) {
@@ -373,7 +375,7 @@ public class Gibbs_RecursiveInference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("unigram-NOI_" + noOfIterationCopy + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("unigram_DP-NOI_" + noOfIterationCopy + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
     }
 
 }
