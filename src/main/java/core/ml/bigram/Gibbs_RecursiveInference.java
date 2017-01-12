@@ -202,125 +202,44 @@ public class Gibbs_RecursiveInference {
         double newLikelihood = 0;
         String uSymbol = "$";
 
-        if (!newSegmentation.contains("+")) {
-            String morpheme = newSegmentation;
-            if (frequencyTable.containsKey(morpheme)) {
-                if (frequencyTable.get(morpheme) > 0) {
-                    newLikelihood = newLikelihood + Math.log10((double) frequencyTable.get(morpheme) / (size));
-                    frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
-                    size++;
+        StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
+        String stem = newSegments.nextToken();
+        String suffix = (newSegments.hasMoreTokens()) ? newSegments.nextToken() : uSymbol;
 
-                    if (bigramFreq.containsKey(morpheme)) {
-                        HashMap<String, Integer> transitions = bigramFreq.get(morpheme);
-                        if (transitions.containsKey(uSymbol)) {
-                            if (transitions.get(uSymbol) > 0) {
-                                newLikelihood = newLikelihood + Math.log10((double) transitions.get(uSymbol) / frequencyTable.get(morpheme));
-                            } else {
-                                newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / frequencyTable.get(morpheme));
-                            }
-                        } else {
-                            newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / frequencyTable.get(morpheme));
-                        }
-                    }
+        double umCount = (double) getUnigramCount(stem);
+        if (umCount != 0) {
+            newLikelihood = newLikelihood + Math.log10(umCount / size);
+            frequencyTable.put(stem, (int) umCount + 1);
+            size++;
 
-                } else {
-                    newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / (size));
-                    frequencyTable.put(morpheme, 1);
-                    size++;
-                }
+            double beCount = (double) getBigramCount(stem, suffix);
+            if (beCount != 0) {
+                newLikelihood = newLikelihood + Math.log10(beCount / umCount);
             } else {
-                newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / (size));
-                frequencyTable.put(morpheme, 1);
-                size++;
+                double ueCount = (double) getUnigramCount(suffix);
+                if (ueCount != 0) {
+                    newLikelihood = newLikelihood + Math.log10(ueCount / size);
+                    frequencyTable.put(suffix, (int) ueCount + 1);
+                    size++;
+                } else {
+                    newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / size);
+                }
             }
+
         } else {
-            StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
-            String stem = newSegments.nextToken();
-            String suffix = newSegments.nextToken();
-            if (frequencyTable.containsKey(stem)) {
-                if (frequencyTable.get(stem) > 0) {
-                    newLikelihood = newLikelihood + Math.log10((double) frequencyTable.get(stem) / (size));
-                    frequencyTable.put(stem, frequencyTable.get(stem) + 1);
-                    size++;
 
-                    if (bigramFreq.containsKey(stem)) {
-                        HashMap<String, Integer> transitions = bigramFreq.get(stem);
-                        if (transitions.containsKey(suffix)) {
-                            if (transitions.get(suffix) > 0) {
-                                newLikelihood = newLikelihood + Math.log10((double) transitions.get(suffix) / frequencyTable.get(stem));
-                                frequencyTable.put(suffix, (frequencyTable.containsKey(suffix) ? (frequencyTable.get(suffix) + 1) : 1));
-                                size++;
-                            } else {
-                                newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / frequencyTable.get(stem));
-                                frequencyTable.put(suffix, (frequencyTable.containsKey(suffix) ? (frequencyTable.get(suffix) + 1) : 1));
-                                size++;
-                            }
-                        } else {
-                            newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / frequencyTable.get(stem));
-                            frequencyTable.put(suffix, (frequencyTable.containsKey(suffix) ? (frequencyTable.get(suffix) + 1) : 1));
-                            size++;
-                        }
-                    } else {
-                        if (frequencyTable.containsKey(suffix)) {
-                            if (frequencyTable.get(suffix) > 0) {
-                                newLikelihood = newLikelihood + Math.log10((double) frequencyTable.get(suffix) / frequencyTable.get(stem));
-                                frequencyTable.put(suffix, frequencyTable.get(suffix) + 1);
-                                size++;
-                            } else {
-                                newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / frequencyTable.get(stem));
-                                frequencyTable.put(suffix, 1);
-                                size++;
-                            }
-                        } else {
-                            newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / frequencyTable.get(stem));
-                            frequencyTable.put(suffix, 1);
-                            size++;
-                        }
-                    }
-
-                } else {
-                    newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / (size));
-                    frequencyTable.put(stem, 1);
-                    size++;
-
-                    if (frequencyTable.containsKey(suffix)) {
-                        if (frequencyTable.get(suffix) > 0) {
-                            newLikelihood = newLikelihood + Math.log10((double) frequencyTable.get(suffix) / (size));
-                            frequencyTable.put(suffix, frequencyTable.get(suffix) + 1);
-                            size++;
-                        } else {
-                            newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / (size));
-                            frequencyTable.put(suffix, 1);
-                            size++;
-                        }
-                    } else {
-                        newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / (size));
-                        frequencyTable.put(suffix, 1);
-                        size++;
-                    }
-                }
-            } else {
-                newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / (size));
-                frequencyTable.put(stem, 1);
+            newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / size);
+            double ueCount = (double) getUnigramCount(suffix);
+            if (ueCount != 0) {
+                newLikelihood = newLikelihood + Math.log10(ueCount / size);
+                frequencyTable.put(uSymbol, (int) ueCount + 1);
                 size++;
-
-                if (frequencyTable.containsKey(suffix)) {
-                    if (frequencyTable.get(suffix) > 0) {
-                        newLikelihood = newLikelihood + Math.log10((double) frequencyTable.get(suffix) / (size));
-                        frequencyTable.put(suffix, frequencyTable.get(suffix) + 1);
-                        size++;
-                    } else {
-                        newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / (size));
-                        frequencyTable.put(suffix, 1);
-                        size++;
-                    }
-                } else {
-                    newLikelihood = newLikelihood + Math.log10((double) Constant.getSmoothingCoefficient() / (size));
-                    frequencyTable.put(suffix, 1);
-                    size++;
-                }
+            } else {
+                newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / size);
             }
+
         }
+
         deleteFromTable(newSegmentation);
 
         return newLikelihood;
@@ -331,128 +250,68 @@ public class Gibbs_RecursiveInference {
         double newLikelihood = 0;
         String uSymbol = "$";
 
-        if (!newSegmentation.contains("+")) {
-            String morpheme = newSegmentation;
-            if (frequencyTable.containsKey(morpheme)) {
-                if (frequencyTable.get(morpheme) > 0) {
-                    newLikelihood = newLikelihood + Math.log10((double) frequencyTable.get(morpheme) / (size + alpha));
-                    frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
-                    size++;
+        StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
+        String stem = newSegments.nextToken();
+        String suffix = (newSegments.hasMoreTokens()) ? newSegments.nextToken() : uSymbol;
 
-                    if (bigramFreq.containsKey(morpheme)) {
-                        HashMap<String, Integer> transitions = bigramFreq.get(morpheme);
-                        if (transitions.containsKey(uSymbol)) {
-                            if (transitions.get(uSymbol) > 0) {
-                                newLikelihood = newLikelihood + Math.log10((double) transitions.get(uSymbol) / (frequencyTable.get(morpheme) + alpha));
-                            } else {
-                                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, 1) / ((double) frequencyTable.get(morpheme) + alpha));
-                            }
-                        } else {
-                            newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, 1) / ((double) frequencyTable.get(morpheme) + alpha));
-                        }
-                    }
+        double umCount = (double) getUnigramCount(stem);
+        if (umCount != 0) {
+            newLikelihood = newLikelihood + Math.log10(umCount / (size + alpha));
+            frequencyTable.put(stem, (int) umCount + 1);
+            size++;
 
-                } else {
-                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / ((double) size + alpha));
-                    frequencyTable.put(morpheme, 1);
-                    size++;
-                }
+            double beCount = (double) getBigramCount(stem, suffix);
+            if (beCount != 0) {
+                newLikelihood = newLikelihood + Math.log10(beCount / umCount + alpha);
             } else {
-                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / ((double) size + alpha));
-                frequencyTable.put(morpheme, 1);
-                size++;
+                double ueCount = (double) getUnigramCount(suffix);
+                if (ueCount != 0) {
+                    newLikelihood = newLikelihood + Math.log10(ueCount / (size + alpha));
+                    frequencyTable.put(suffix, (int) ueCount + 1);
+                    size++;
+                } else {
+                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, 1) / ((double) size + alpha));
+                }
             }
+
         } else {
-            StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
-            String stem = newSegments.nextToken();
-            String suffix = newSegments.nextToken();
-            if (frequencyTable.containsKey(stem)) {
-                if (frequencyTable.get(stem) > 0) {
-                    newLikelihood = newLikelihood + Math.log10((double) frequencyTable.get(stem) / (size + alpha));
-                    frequencyTable.put(stem, frequencyTable.get(stem) + 1);
-                    size++;
 
-                    if (bigramFreq.containsKey(stem)) {
-                        HashMap<String, Integer> transitions = bigramFreq.get(stem);
-                        if (transitions.containsKey(suffix)) {
-                            if (transitions.get(suffix) > 0) {
-                                newLikelihood = newLikelihood + Math.log10((double) transitions.get(suffix) / (frequencyTable.get(stem) + alpha));
-                                frequencyTable.put(suffix, (frequencyTable.containsKey(suffix) ? (frequencyTable.get(suffix) + 1) : 1));
-                                size++;
-                            } else {
-                                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, suffix.length() + 1) / ((double) frequencyTable.get(stem) + alpha));
-                                frequencyTable.put(suffix, (frequencyTable.containsKey(suffix) ? (frequencyTable.get(suffix) + 1) : 1));
-                                size++;
-                            }
-                        } else {
-                            newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, suffix.length() + 1) / ((double) frequencyTable.get(stem) + alpha));
-                            frequencyTable.put(suffix, (frequencyTable.containsKey(suffix) ? (frequencyTable.get(suffix) + 1) : 1));
-                            size++;
-                        }
-                    } else {
-                        if (frequencyTable.containsKey(suffix)) {
-                            if (frequencyTable.get(suffix) > 0) {
-                                newLikelihood = newLikelihood + Math.log10((double) frequencyTable.get(suffix) / (frequencyTable.get(stem) + alpha));
-                                frequencyTable.put(suffix, frequencyTable.get(suffix) + 1);
-                                size++;
-                            } else {
-                                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, suffix.length() + 1) / ((double) frequencyTable.get(stem) + alpha));
-                                frequencyTable.put(suffix, 1);
-                                size++;
-                            }
-                        } else {
-                            newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, suffix.length() + 1) / ((double) frequencyTable.get(stem) + alpha));
-                            frequencyTable.put(suffix, 1);
-                            size++;
-                        }
-                    }
-
-                } else {
-                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, stem.length() + 1) / ((double) size + alpha));
-                    frequencyTable.put(stem, 1);
-                    size++;
-
-                    if (frequencyTable.containsKey(suffix)) {
-                        if (frequencyTable.get(suffix) > 0) {
-                            newLikelihood = newLikelihood +  Math.log10((double) frequencyTable.get(suffix) / (size + alpha));
-                            frequencyTable.put(suffix, frequencyTable.get(suffix) + 1);
-                            size++;
-                        } else {
-                            newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, suffix.length() + 1) / ((double) size + alpha));
-                            frequencyTable.put(suffix, 1);
-                            size++;
-                        }
-                    } else {
-                        newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, suffix.length() + 1) / ((double) size + alpha));
-                        frequencyTable.put(suffix, 1);
-                        size++;
-                    }
-                }
-            } else {
-                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, stem.length() + 1) / ((double) size + alpha));
-                frequencyTable.put(stem, 1);
+            newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, stem.length() + 1) / ((double) size + alpha));
+            double ueCount = (double) getUnigramCount(suffix);
+            if (ueCount != 0) {
+                newLikelihood = newLikelihood + Math.log10(ueCount / (size + alpha));
+                frequencyTable.put(uSymbol, (int) ueCount + 1);
                 size++;
-
-                if (frequencyTable.containsKey(suffix)) {
-                    if (frequencyTable.get(suffix) > 0) {
-                        newLikelihood = newLikelihood +  Math.log10((double) frequencyTable.get(suffix) / (size + alpha));
-                        frequencyTable.put(suffix, frequencyTable.get(suffix) + 1);
-                        size++;
-                    } else {
-                        newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, suffix.length() + 1) / ((double) size + alpha));
-                        frequencyTable.put(suffix, 1);
-                        size++;
-                    }
-                } else {
-                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, suffix.length() + 1) / ((double) size + alpha));
-                    frequencyTable.put(suffix, 1);
-                    size++;
-                }
+            } else {
+                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, 1) / ((double) size + alpha));
             }
+
         }
+
         deleteFromTable(newSegmentation);
 
         return newLikelihood;
+    }
+
+    private int getBigramCount(String current, String next) {
+        if (bigramFreq.containsKey(current)) {
+            HashMap<String, Integer> transitions = bigramFreq.get(current);
+            if (transitions.containsKey(next)) {
+                return transitions.get(next);
+            } else {
+                return 0;
+            }
+        } else {
+            return 0;
+        }
+    }
+
+    private int getUnigramCount(String morpheme) {
+        if (frequencyTable.containsKey(morpheme)) {
+            return frequencyTable.get(morpheme);
+        } else {
+            return 0;
+        }
     }
 
     private boolean isAccepted(double newJointProbability, double oldJointProbability) {
@@ -476,14 +335,22 @@ public class Gibbs_RecursiveInference {
     }
 
     private int deleteFromTable(String segmentation) {
-        StringTokenizer tokenizer = new StringTokenizer(segmentation, "+");
-        int deletedNo = 0;
-        while (tokenizer.hasMoreTokens()) {
-            String morpheme = tokenizer.nextToken();
-            frequencyTable.put(morpheme, frequencyTable.get(morpheme) - 1);
-            deletedNo++;
+
+        String uSymbol = "$";
+        if (!segmentation.contains("+")) {
+            frequencyTable.put(segmentation, frequencyTable.get(segmentation) - 1);
+            frequencyTable.put(uSymbol, frequencyTable.get(uSymbol) - 1);
+            return 1;
+        } else {
+            StringTokenizer tokenizer = new StringTokenizer(segmentation, "+");
+            int deletedNo = 0;
+            while (tokenizer.hasMoreTokens()) {
+                String morpheme = tokenizer.nextToken();
+                frequencyTable.put(morpheme, frequencyTable.get(morpheme) - 1);
+                deletedNo++;
+            }
+            return deletedNo;
         }
-        return deletedNo;
     }
 
     private void deleteFromBigramMap(String segmentation) {

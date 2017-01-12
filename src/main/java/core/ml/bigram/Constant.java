@@ -101,6 +101,8 @@ public class Constant {
         System.out.println(">>>>>>>>> Number of Processed Word: " + numberOfProcessedWord);
     }
 
+    //test
+
     private void constructLists(String w, int f) {
         String randomSegmentation = Operations.randomSplitB(w);
         sampleList.add(new Sample(w, randomSegmentation));
@@ -118,6 +120,12 @@ public class Constant {
                 morphemeFreq.put(stem, morphemeFreq.get(stem) + frequency);
             } else {
                 morphemeFreq.put(stem, frequency);
+            }
+
+            if (morphemeFreq.containsKey(uSymbol)) {
+                morphemeFreq.put(uSymbol, morphemeFreq.get(uSymbol) + frequency);
+            } else {
+                morphemeFreq.put(uSymbol, frequency);
             }
 
             HashMap<String, Integer> transitions;
