@@ -40,7 +40,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>core.journal.unigram.seperated.Gibbs_RecursiveInference</mainClass>
+                            <mainClass>core.journal.bigram.seperated.Gibbs_RecursiveInference</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

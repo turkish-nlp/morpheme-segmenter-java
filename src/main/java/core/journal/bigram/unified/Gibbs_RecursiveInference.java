@@ -269,11 +269,7 @@ public class Gibbs_RecursiveInference {
                 frequencyTable.put(suffix, (int) ueCount + 1);
                 size++;
 
-            } else {
-                newLikelihood = newLikelihood + Math.log10(Constant.getBigramSmoothingCoefficient() / umCount);
-            }
-
-            /*else if (ueCount != 0) {
+            } else if (ueCount != 0) {
                 newLikelihood = newLikelihood + Math.log10(ueCount / size);
                 frequencyTable.put(suffix, (int) ueCount + 1);
                 size++;
@@ -281,7 +277,7 @@ public class Gibbs_RecursiveInference {
                 newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / size);
                 frequencyTable.put(suffix, 1);
                 size++;
-            }*/
+            }
         } else {
 
             newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / size);
