@@ -177,12 +177,7 @@ public class Gibbs_RecursiveInference {
             }
         }
         //   System.out.println("s_value: " + s_value);
-        String selected = null;
-        try {
-            selected = possibleSplits.get(scores.indexOf(s_value));
-        } catch (Exception e) {
-            System.out.println();
-        }
+        String selected = possibleSplits.get(scores.indexOf(s_value));
 
         if (!selected.equals(word)) {
 
