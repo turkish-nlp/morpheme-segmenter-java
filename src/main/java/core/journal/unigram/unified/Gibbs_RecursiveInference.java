@@ -94,7 +94,9 @@ public class Gibbs_RecursiveInference {
 
         String f = Constant.getIncludeFrequency() ? "f" : "nf";
 
-        PrintWriter results = new PrintWriter(resultsDir + "/" + bayes + "_results_" + f);
+        String sim = featuresBooleanList[1] ? "s" : "ns";
+
+        PrintWriter results = new PrintWriter(resultsDir + "/" + bayes + "_results_" + f + "_" + sim);
 
         for (Sample s : samples) {
             results.println(s.getWord().toLowerCase().replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
@@ -103,7 +105,7 @@ public class Gibbs_RecursiveInference {
         }
         results.close();
 
-        PrintWriter stems = new PrintWriter(resultsDir + "/" + bayes + "_morphemes_" + f);
+        PrintWriter stems = new PrintWriter(resultsDir + "/" + bayes + "_morphemes_" + f + "_" + sim);
         for (String stem : frequencyTable.keySet()) {
             stems.println(stem + ":" + frequencyTable.get(stem));
         }

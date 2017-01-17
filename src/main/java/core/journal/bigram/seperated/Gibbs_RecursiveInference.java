@@ -519,10 +519,12 @@ public class Gibbs_RecursiveInference {
     }
      */
     public void printModel() throws FileNotFoundException {
-        
-        String f = core.journal.unigram.seperated.Constant.getIncludeFrequency() ? "f" : "nf";
 
-        PrintWriter results = new PrintWriter(resultsDir + "/" + bayes + "_results_" + f);
+        String f = Constant.getIncludeFrequency() ? "f" : "nf";
+
+        String sim = featuresBooleanList[1] ? "s" : "ns";
+
+        PrintWriter results = new PrintWriter(resultsDir + "/" + bayes + "_results_" + f + "_" + sim);
 
         for (Sample s : samples) {
             results.println(s.getWord().toLowerCase().replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
@@ -531,19 +533,19 @@ public class Gibbs_RecursiveInference {
         }
         results.close();
 
-        PrintWriter stems = new PrintWriter(resultsDir + "/" + bayes + "_stems_" + f);
+        PrintWriter stems = new PrintWriter(resultsDir + "/" + bayes + "_stems_" + f + "_" + sim);
         for (String stem : stemFrequencyTable.keySet()) {
             stems.println(stem + ":" + stemFrequencyTable.get(stem));
         }
         stems.close();
 
-        PrintWriter suffixes = new PrintWriter(resultsDir + "/" + bayes + "_suffixes_" + f);
+        PrintWriter suffixes = new PrintWriter(resultsDir + "/" + bayes + "_suffixes_" + "_" + sim);
         for (String suffix : suffixFrequencyTable.keySet()) {
             suffixes.println(suffix + ":" + suffixFrequencyTable.get(suffix));
         }
         suffixes.close();
 
-        PrintWriter bigrams = new PrintWriter(resultsDir + "/" + bayes + "_bigrams_" + f);
+        PrintWriter bigrams = new PrintWriter(resultsDir + "/" + bayes + "_bigrams_" + "_" + sim);
         for (String current : bigramFreq.keySet()) {
             HashMap<String, Integer> transition = bigramFreq.get(current);
             for (String next : transition.keySet()) {
