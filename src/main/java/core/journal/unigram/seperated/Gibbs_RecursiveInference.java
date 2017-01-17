@@ -408,7 +408,9 @@ public class Gibbs_RecursiveInference {
      */
     public void printModel() throws FileNotFoundException {
 
-        PrintWriter results = new PrintWriter(resultsDir + "/" + bayes + "_results");
+        String f = Constant.getIncludeFrequency() ? "f" : "nf";
+
+        PrintWriter results = new PrintWriter(resultsDir + "/" + bayes + "_results_" + f);
 
         for (Sample s : samples) {
             results.println(s.getWord().toLowerCase().replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
@@ -417,13 +419,13 @@ public class Gibbs_RecursiveInference {
         }
         results.close();
 
-        PrintWriter stems = new PrintWriter(resultsDir + "/" + bayes + "_stems");
+        PrintWriter stems = new PrintWriter(resultsDir + "/" + bayes + "_stems_" + f);
         for (String stem : stemFrequencyTable.keySet()) {
             stems.println(stem + ":" + stemFrequencyTable.get(stem));
         }
         stems.close();
 
-        PrintWriter suffixes = new PrintWriter(resultsDir + "/" + bayes + "_suffixes");
+        PrintWriter suffixes = new PrintWriter(resultsDir + "/" + bayes + "_suffixes_" + f);
         for (String suffix : suffixFrequencyTable.keySet()) {
             suffixes.println(suffix + ":" + suffixFrequencyTable.get(suffix));
         }

@@ -26,7 +26,7 @@ public class Constant {
     private static double bigramSmoothingCoefficient = 0.001;
     private static int frequencyThreshold;
     private static HashMap<String, Double> cosineTable;
-    private boolean includeFrequencies = true;
+    private static boolean includeFrequencies = true;
 
     private Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
     private Map<String, HashMap<String, Integer>> bigramFreq = new HashMap<>();
@@ -35,8 +35,12 @@ public class Constant {
     public static double getSimUnfound() {
         return simUnfound;
     }
-    
-        public static double getBigramSmoothingCoefficient() {
+
+    public static boolean getIncludeFrequency() {
+        return includeFrequencies;
+    }
+
+    public static double getBigramSmoothingCoefficient() {
         return bigramSmoothingCoefficient;
     }
 
@@ -107,7 +111,6 @@ public class Constant {
     }
 
     //test
-
     private void constructLists(String w, int f) {
         String randomSegmentation = Operations.randomSplitB(w);
         sampleList.add(new Sample(w, randomSegmentation));
@@ -201,7 +204,7 @@ public class Constant {
         cosineTable = (HashMap<String, Double>) o;
     }
 
-/*
+    /*
     private void createSmoothCorpusWithAddition(Map<String, Double> corpus) {
 
         trieList.parallelStream().forEach((n) -> {
@@ -222,9 +225,9 @@ public class Constant {
 
         corpus.clear();
     }
-*/
+     */
 
-/*    public void generateBoundaryListforBaseline(int childLimit) {
+ /*    public void generateBoundaryListforBaseline(int childLimit) {
 
         for (String trie : branchTable.keySet()) {
             Set<String> boundaryList = new TreeSet<>();
@@ -238,7 +241,7 @@ public class Constant {
         }
     }*/
 
-/*    private void calculateFrequencyForMorp(String trie) {
+ /*    private void calculateFrequencyForMorp(String trie) {
 
         Set<String> boundaries = baselineBoundaries.get(trie);
 
@@ -281,7 +284,7 @@ public class Constant {
         }
     }*/
 
-/*    private void doSegmentation(String node, Set<String> boundaries, Stack<String> morphmeStack) {
+ /*    private void doSegmentation(String node, Set<String> boundaries, Stack<String> morphmeStack) {
 
         if (!node.equals("")) {
             String current = "";
@@ -301,7 +304,7 @@ public class Constant {
         }
     }*/
 
-/*    public ArrayList<String> tokenSegmentation(String segmentation) {
+ /*    public ArrayList<String> tokenSegmentation(String segmentation) {
         ArrayList<String> segments = new ArrayList<String>();
         StringTokenizer tokens = new StringTokenizer(segmentation, "+");
         while (tokens.hasMoreTokens()) {

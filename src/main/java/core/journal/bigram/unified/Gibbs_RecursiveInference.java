@@ -27,6 +27,8 @@ public class Gibbs_RecursiveInference {
     private int heuristic;
     private double alpha = 0.01;
     private double gamma = 0.037;
+    private String resultsDir;
+    private String bayes;
 
     public String generateFeatureString() {
         if (featuresBooleanList[0] == true) {
@@ -50,7 +52,7 @@ public class Gibbs_RecursiveInference {
         // <outputDir> <wordListDir> <>
         Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),
                 Boolean.valueOf(args[4]), Boolean.valueOf(args[5]), Boolean.valueOf(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]),
-                Integer.parseInt(args[9]), Double.parseDouble(args[10]), Double.parseDouble(args[11]));
+                Integer.parseInt(args[9]), Double.parseDouble(args[10]), Double.parseDouble(args[11]), args[12], args[13]);
 
         i.featString = i.generateFeatureString();
 
@@ -71,9 +73,11 @@ public class Gibbs_RecursiveInference {
 
     public Gibbs_RecursiveInference(String outputDir, String wordListDir,
             int noOfIteration, int freqThreshold, boolean includeFreq, boolean poisson,
-            boolean sim, boolean presence, boolean length, int heuristic, double simUnsegmentedArg, double simUnfoundArg) throws IOException, ClassNotFoundException {
+            boolean sim, boolean presence, boolean length, int heuristic, double simUnsegmentedArg, double simUnfoundArg, String resultsDir, String bayes) throws IOException, ClassNotFoundException {
 
         Constant baseline = new Constant(outputDir, wordListDir, heuristic, simUnsegmentedArg, simUnfoundArg, freqThreshold, includeFreq);
+        this.resultsDir = resultsDir;
+        this.bayes = bayes;
         this.heuristic = heuristic;
         this.noOfIteration = noOfIteration;
         this.noOfIterationCopy = noOfIteration;
@@ -121,8 +125,38 @@ public class Gibbs_RecursiveInference {
             noOfIteration--;
 
         }
-        saveModel();
+        printModel();
+        //saveModel();
         //  saveSimiliarityValues();
+    }
+
+    public void printModel() throws FileNotFoundException {
+
+        String f = Constant.getIncludeFrequency() ? "f" : "nf";
+
+        PrintWriter results = new PrintWriter(resultsDir + "/" + bayes + "_results_" + f);
+
+        for (Sample s : samples) {
+            results.println(s.getWord().toLowerCase().replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
+                    + "\t" + s.getSegmentation().toLowerCase().replaceAll("\\+", " ").replaceAll("ö", "O").
+                    replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S"));
+        }
+        results.close();
+
+        PrintWriter stems = new PrintWriter(resultsDir + "/" + bayes + "_morpheme_" + f);
+        for (String stem : frequencyTable.keySet()) {
+            stems.println(stem + ":" + frequencyTable.get(stem));
+        }
+        stems.close();
+
+        PrintWriter bigrams = new PrintWriter(resultsDir + "/" + bayes + "_bigrams_" + f);
+        for (String current : bigramFreq.keySet()) {
+            HashMap<String, Integer> transition = bigramFreq.get(current);
+            for (String next : transition.keySet()) {
+                bigrams.println(current + ">" + next + ":" + transition.get(next));
+            }
+        }
+        bigrams.close();
     }
 
     private String recursiveSplit(Sample sample, String word) {
@@ -134,12 +168,10 @@ public class Gibbs_RecursiveInference {
         double dpScore = 0.0;
         for (String split : possibleSplits) {
             ArrayList<Double> priors = sample.calculateScores(split, featuresBooleanList);  // //0:poisson, 1:similarity, 2:presence, 3: length
-            dpScore = calculateBigramLikelihoodsWithDP(split);
-
-            if (Double.isNaN(dpScore)) {
-                calculateBigramLikelihoods(split);
-            } else if (Double.isInfinite(dpScore)) {
-                calculateBigramLikelihoods(split);
+            if (bayes.equalsIgnoreCase("ml")) {
+                dpScore = calculateBigramLikelihoods(split);
+            } else {
+                dpScore = calculateBigramLikelihoodsWithDP(split);
             }
 
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
@@ -239,11 +271,11 @@ public class Gibbs_RecursiveInference {
                 newLikelihood = newLikelihood + Math.log10(beCount / umCount);
                 frequencyTable.put(suffix, (int) ueCount + 1);
                 size++;
-                
+
             } else {
-                newLikelihood = newLikelihood + Math.log10(Constant.getBigramSmoothingCoefficient()/ umCount);
+                newLikelihood = newLikelihood + Math.log10(Constant.getBigramSmoothingCoefficient() / umCount);
             }
-            
+
             /*else if (ueCount != 0) {
                 newLikelihood = newLikelihood + Math.log10(ueCount / size);
                 frequencyTable.put(suffix, (int) ueCount + 1);
@@ -253,7 +285,6 @@ public class Gibbs_RecursiveInference {
                 frequencyTable.put(suffix, 1);
                 size++;
             }*/
-
         } else {
 
             newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / size);

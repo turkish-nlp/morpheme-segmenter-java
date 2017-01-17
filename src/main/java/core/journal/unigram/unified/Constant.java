@@ -20,14 +20,17 @@ public class Constant {
     private static double smoothingCoefficient = 0.01;
     private static int frequencyThreshold;
     private static HashMap<String, Double> cosineTable;
-    private boolean includeFrequencies = true;
+    private static boolean includeFrequencies = true;
 
-    private int numberOfUnsegmentedWord;
     private Map<String, Integer> morphemeFreq = new ConcurrentHashMap<>();
     private CopyOnWriteArrayList<Sample> sampleList = new CopyOnWriteArrayList<>();
 
     public static double getSimUnfound() {
         return simUnfound;
+    }
+
+    public static boolean getIncludeFrequency() {
+        return includeFrequencies;
     }
 
     public static double getSmoothingCoefficient() {
@@ -36,10 +39,6 @@ public class Constant {
 
     public static int getHeuristic() {
         return heuristic;
-    }
-
-    public int getNumberOfUnsegmentedWord() {
-        return numberOfUnsegmentedWord;
     }
 
     public static int getFrequencyThreshold() {
@@ -99,26 +98,37 @@ public class Constant {
     private void constructLists(String w, int f) {
         String randomSegmentation = Operations.randomSplitB(w);
         sampleList.add(new Sample(w, randomSegmentation));
+        String uSymbol = "$";
 
-        if (!randomSegmentation.contains("+")) {
-            numberOfUnsegmentedWord++;
+        int frequency = 1;
+        if (includeFrequencies) {
+            frequency = f;
+        }
+
+        StringTokenizer tokenizer = new StringTokenizer(randomSegmentation, "+");
+
+        if (tokenizer.countTokens() == 1) {
+            String suffix = uSymbol;
+            if (morphemeFreq.containsKey(suffix)) {
+                morphemeFreq.put(suffix, morphemeFreq.get(suffix) + frequency);
+            } else {
+                morphemeFreq.put(suffix, frequency);
+            }
+        }
+
+        String stem = tokenizer.nextToken();
+        if (morphemeFreq.containsKey(stem)) {
+            morphemeFreq.put(stem, morphemeFreq.get(stem) + frequency);
         } else {
-            StringTokenizer tokenizer = new StringTokenizer(randomSegmentation, "+");
-            while (tokenizer.hasMoreTokens()) {
-                String morpheme = tokenizer.nextToken();
-                if (includeFrequencies) {
-                    if (morphemeFreq.containsKey(morpheme)) {
-                        morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + f);
-                    } else {
-                        morphemeFreq.put(morpheme, f);
-                    }
-                } else {
-                    if (morphemeFreq.containsKey(morpheme)) {
-                        morphemeFreq.put(morpheme, morphemeFreq.get(morpheme) + 1);
-                    } else {
-                        morphemeFreq.put(morpheme, 1);
-                    }
-                }
+            morphemeFreq.put(stem, frequency);
+        }
+
+        while (tokenizer.hasMoreTokens()) {
+            String suffix = tokenizer.nextToken();
+            if (morphemeFreq.containsKey(suffix)) {
+                morphemeFreq.put(suffix, morphemeFreq.get(suffix) + frequency);
+            } else {
+                morphemeFreq.put(suffix, frequency);
             }
         }
     }
@@ -138,7 +148,7 @@ public class Constant {
         cosineTable = (HashMap<String, Double>) o;
     }
 
-/*
+    /*
     private void createSmoothCorpusWithAddition(Map<String, Double> corpus) {
 
         trieList.parallelStream().forEach((n) -> {
@@ -159,9 +169,9 @@ public class Constant {
 
         corpus.clear();
     }
-*/
+     */
 
-/*    public void generateBoundaryListforBaseline(int childLimit) {
+ /*    public void generateBoundaryListforBaseline(int childLimit) {
 
         for (String trie : branchTable.keySet()) {
             Set<String> boundaryList = new TreeSet<>();
@@ -175,7 +185,7 @@ public class Constant {
         }
     }*/
 
-/*    private void calculateFrequencyForMorp(String trie) {
+ /*    private void calculateFrequencyForMorp(String trie) {
 
         Set<String> boundaries = baselineBoundaries.get(trie);
 
@@ -218,7 +228,7 @@ public class Constant {
         }
     }*/
 
-/*    private void doSegmentation(String node, Set<String> boundaries, Stack<String> morphmeStack) {
+ /*    private void doSegmentation(String node, Set<String> boundaries, Stack<String> morphmeStack) {
 
         if (!node.equals("")) {
             String current = "";
@@ -238,7 +248,7 @@ public class Constant {
         }
     }*/
 
-/*    public ArrayList<String> tokenSegmentation(String segmentation) {
+ /*    public ArrayList<String> tokenSegmentation(String segmentation) {
         ArrayList<String> segments = new ArrayList<String>();
         StringTokenizer tokens = new StringTokenizer(segmentation, "+");
         while (tokens.hasMoreTokens()) {

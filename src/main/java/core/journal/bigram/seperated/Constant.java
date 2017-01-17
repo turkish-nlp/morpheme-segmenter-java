@@ -24,7 +24,7 @@ public class Constant {
     private static double bigramSmoothingCoefficient = 0.001;
     private static int frequencyThreshold;
     private static HashMap<String, Double> cosineTable;
-    private boolean includeFrequencies = true;
+    private static boolean includeFrequencies = true;
 
     private Map<String, Integer> stemFreq = new ConcurrentHashMap<>();
     private Map<String, Integer> suffixFreq = new ConcurrentHashMap<>();
@@ -33,6 +33,10 @@ public class Constant {
 
     public static double getSimUnfound() {
         return simUnfound;
+    }
+
+    public static boolean getIncludeFrequency() {
+        return includeFrequencies;
     }
 
     public static double getBigramSmoothingCoefficient() {
