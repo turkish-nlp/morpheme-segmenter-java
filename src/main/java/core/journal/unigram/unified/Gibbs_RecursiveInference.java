@@ -135,8 +135,10 @@ public class Gibbs_RecursiveInference {
                     String suffix = "$";
                     if (frequencyTable.containsKey(suffix)) {
                         frequencyTable.put(suffix, frequencyTable.get(suffix) + 1);
+                        sizeOfTable++;
                     } else {
                         frequencyTable.put(suffix, 1);
+                        sizeOfTable++;
                     }
                 }
 

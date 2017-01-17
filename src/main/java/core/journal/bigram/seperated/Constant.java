@@ -168,10 +168,10 @@ public class Constant {
 
                 next = tokenizer.nextToken();
 
-                if (suffixFreq.containsKey(uSymbol)) {
-                    suffixFreq.put(uSymbol, suffixFreq.get(uSymbol) + frequency);
+                if (suffixFreq.containsKey(next)) {
+                    suffixFreq.put(next, suffixFreq.get(next) + frequency);
                 } else {
-                    suffixFreq.put(uSymbol, frequency);
+                    suffixFreq.put(next, frequency);
                 }
 
                 HashMap<String, Integer> transitions;
