@@ -1,4 +1,6 @@
-package core.ml.unigram;
+package core.journal.bigram.unified;
+
+import core.journal.bigram.unified.Operations;
 
 import java.util.ArrayList;
 

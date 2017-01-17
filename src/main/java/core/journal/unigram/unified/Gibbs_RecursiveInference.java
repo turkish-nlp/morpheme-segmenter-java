@@ -1,6 +1,6 @@
-package core.ml.unigram;
+package core.journal.unigram.unified;
 
-import core.ml.SerializableModel;
+import core.journal.SerializableModel;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -23,7 +23,7 @@ public class Gibbs_RecursiveInference {
     private String featString = "";
     private int heuristic;
     private int noOfUnsegmented;
-    private double alpha = 0.000001;
+    private double alpha = 0.01;
     private double gamma = 0.037;
 
     public String generateFeatureString() {
@@ -203,6 +203,14 @@ public class Gibbs_RecursiveInference {
             return word;
         }
     }
+    
+        private int getUnigramCount(String morpheme) {
+        if (frequencyTable.containsKey(morpheme)) {
+            return frequencyTable.get(morpheme);
+        } else {
+            return 0;
+        }
+    }
 
     private Double calculateUnigramLikelihoods(String newSegmentation) {
         int size = sizeOfTable;
@@ -301,6 +309,56 @@ public class Gibbs_RecursiveInference {
 
         return newLikelihood;
     }
+    
+    private Double calculateUnigramLikelihoodsWithPK(String newSegmentation) {
+        int size = sizeOfTable;
+        double newLikelihood = 0;
+
+        if (!newSegmentation.contains("+")) {
+            String morpheme = newSegmentation;
+            if (frequencyTable.containsKey(morpheme)) {
+                if (frequencyTable.get(morpheme) > 0) {
+                    newLikelihood = newLikelihood + Math.log10((double) frequencyTable.get(morpheme) / (size + alpha));
+                    frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
+                    size++;
+                } else {
+                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / ((double) size + alpha));
+                    frequencyTable.put(morpheme, 1);
+                    size++;
+                }
+            } else {
+                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / ((double) size + alpha));
+                frequencyTable.put(morpheme, 1);
+                size++;
+            }
+
+            newLikelihood = newLikelihood + Math.log10((double) (noOfUnsegmented != 0 ? noOfUnsegmented : alpha * Math.pow(gamma, 1)) / (size + alpha));
+        } else {
+            StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
+            while (newSegments.hasMoreTokens()) {
+                String morpheme = newSegments.nextToken();
+                if (frequencyTable.containsKey(morpheme)) {
+                    if (frequencyTable.get(morpheme) > 0) {
+                        newLikelihood = newLikelihood + Math.log10((double) frequencyTable.get(morpheme) / (size + alpha));
+                        frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
+                        size++;
+                    } else {
+                        newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / ((double) size + alpha));
+                        frequencyTable.put(morpheme, 1);
+                        size++;
+                    }
+                } else {
+                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, morpheme.length() + 1) / ((double) size + alpha));
+                    frequencyTable.put(morpheme, 1);
+                    size++;
+                }
+            }
+        }
+        deleteFromTable(newSegmentation);
+
+        return newLikelihood;
+    }
+
 
     private boolean isAccepted(double newJointProbability, double oldJointProbability) {
         boolean accept = false;

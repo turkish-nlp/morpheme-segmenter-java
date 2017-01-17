@@ -1,4 +1,4 @@
-package core.ml;
+package core.journal;
 
 import java.io.Serializable;
 import java.util.ArrayList;

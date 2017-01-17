@@ -1,6 +1,4 @@
-package core.ml.bigram;
-
-import core.ml.bigram.Operations;
+package core.journal.bigram.seperated;
 
 import java.util.ArrayList;
 

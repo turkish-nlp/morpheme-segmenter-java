@@ -10,7 +10,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-Xmx20g -classpath %classpath core.RecursiveTrieBuilder /home/master/morphology_project/data/turkce.txt /home/master/morphology_project/data/test.txt /home/master/morphology_project/data/</exec.args>
+                <exec.args>-Xmx20g -classpath %classpath core.ml.SegmentationGenerator null /home/master/Desktop/morph-pro/train/unigram_ML_NS /home/master/Desktop/morph-pro/corpus/goldData_2010_tur.txt uni 1</exec.args>
                 <exec.executable>java</exec.executable>
             </properties>
         </action>
@@ -24,7 +24,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -Xmx20g -classpath %classpath core.RecursiveTrieBuilder /home/master/morphology_project/data/turkce.txt /home/master/morphology_project/data/test.txt /home/master/morphology_project/data/</exec.args>
+                <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -Xmx20g -classpath %classpath core.ml.SegmentationGenerator null /home/master/Desktop/morph-pro/train/unigram_ML_NS /home/master/Desktop/morph-pro/corpus/goldData_2010_tur.txt uni 1</exec.args>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
             </properties>
@@ -39,7 +39,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-Xmx20g -classpath %classpath core.RecursiveTrieBuilder /home/master/morphology_project/data/turkce.txt /home/master/morphology_project/data/test.txt /home/master/morphology_project/data/</exec.args>
+                <exec.args>-Xmx20g -classpath %classpath core.ml.SegmentationGenerator null /home/master/Desktop/morph-pro/train/unigram_ML_NS /home/master/Desktop/morph-pro/corpus/goldData_2010_tur.txt uni 1</exec.args>
                 <exec.executable>java</exec.executable>
             </properties>
         </action>

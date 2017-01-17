@@ -1,6 +1,6 @@
-package core.ml.bigram;
+package core.journal.bigram.unified;
 
-import core.ml.bigram.Operations;
+import core.journal.bigram.unified.Operations;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -23,6 +23,7 @@ public class Constant {
     private static double simUnsegmented;
     private static int heuristic = 2;
     private static double smoothingCoefficient = 0.01;
+    private static double bigramSmoothingCoefficient = 0.001;
     private static int frequencyThreshold;
     private static HashMap<String, Double> cosineTable;
     private boolean includeFrequencies = true;
@@ -33,6 +34,10 @@ public class Constant {
 
     public static double getSimUnfound() {
         return simUnfound;
+    }
+    
+        public static double getBigramSmoothingCoefficient() {
+        return bigramSmoothingCoefficient;
     }
 
     public static double getSmoothingCoefficient() {

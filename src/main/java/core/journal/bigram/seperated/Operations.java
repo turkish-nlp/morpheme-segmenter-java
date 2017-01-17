@@ -1,6 +1,5 @@
-package core.ml.unigram;
+package core.journal.bigram.seperated;
 
-import core.ml.unigram.Constant;
 import org.canova.api.util.MathUtils;
 
 import java.util.*;

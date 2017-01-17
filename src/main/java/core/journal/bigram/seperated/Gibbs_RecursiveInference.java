@@ -1,8 +1,6 @@
-package core.ml.bigram;
+package core.journal.bigram.seperated;
 
-import core.ml.SerializableModel;
-import core.ml.SerializableModel_bigram;
-import core.ml.bigram.Operations;
+import core.journal.SerializableModel_bigram;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -15,28 +13,36 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class Gibbs_RecursiveInference {
 
-    private Map<String, Integer> frequencyTable = new ConcurrentHashMap<>();
+    private Map<String, Integer> stemFrequencyTable = new ConcurrentHashMap<>();
+    private Map<String, Integer> suffixFrequencyTable = new ConcurrentHashMap<>();
     private Map<String, HashMap<String, Integer>> bigramFreq = new HashMap<>();
     private CopyOnWriteArrayList<Sample> samples = new CopyOnWriteArrayList<>();
     private int noOfIteration;
     private int noOfIterationCopy;
 
-    private int sizeOfTable = 0;
+    private int sizeOfstemTable = 0;
+    private int sizeOfsuffixTable = 0;
     private static boolean[] featuresBooleanList = new boolean[4]; //0:poisson, 1:similarity, 2:presence, 3: length
     private String featString = "";
     private int heuristic;
-    private double alpha = 0.000001;
+    private double alpha = 0.01;
     private double gamma = 0.037;
+    private String resultsDir;
+    private String bayes;
 
     public String generateFeatureString() {
-        if (featuresBooleanList[0] == true)
+        if (featuresBooleanList[0] == true) {
             featString = featString + "_Pois";
-        if (featuresBooleanList[1] == true)
+        }
+        if (featuresBooleanList[1] == true) {
             featString = featString + "_Sim";
-        if (featuresBooleanList[2] == true)
+        }
+        if (featuresBooleanList[2] == true) {
             featString = featString + "_Pres";
-        if (featuresBooleanList[3] == true)
+        }
+        if (featuresBooleanList[3] == true) {
             featString = featString + "_Len";
+        }
 
         return featString;
     }
@@ -46,7 +52,7 @@ public class Gibbs_RecursiveInference {
         // <outputDir> <wordListDir> <>
         Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),
                 Boolean.valueOf(args[4]), Boolean.valueOf(args[5]), Boolean.valueOf(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]),
-                Integer.parseInt(args[9]), Double.parseDouble(args[10]), Double.parseDouble(args[11]));
+                Integer.parseInt(args[9]), Double.parseDouble(args[10]), Double.parseDouble(args[11]), args[12], args[13]);
 
         i.featString = i.generateFeatureString();
 
@@ -58,27 +64,31 @@ public class Gibbs_RecursiveInference {
         System.out.println("-----SAMPLING-------");
         i.doSampling();
         System.out.println("-----END OF SAMPLING-------");
-
-        System.out.println("-----SEGMENTATIONS: AFTER SAMPLING-------");
-        for (Sample s : i.samples) {
-            System.out.println(s.getWord() + "--> " + s.getSegmentation());
-        }
     }
 
     public Gibbs_RecursiveInference(String outputDir, String wordListDir,
-                                    int noOfIteration, int freqThreshold, boolean includeFreq, boolean poisson,
-                                    boolean sim, boolean presence, boolean length, int heuristic, double simUnsegmentedArg, double simUnfoundArg) throws IOException, ClassNotFoundException {
+            int noOfIteration, int freqThreshold, boolean includeFreq, boolean poisson,
+            boolean sim, boolean presence, boolean length, int heuristic, double simUnsegmentedArg, double simUnfoundArg, String resultsDir, String bayes) throws IOException, ClassNotFoundException {
 
         Constant baseline = new Constant(outputDir, wordListDir, heuristic, simUnsegmentedArg, simUnfoundArg, freqThreshold, includeFreq);
         this.heuristic = heuristic;
         this.noOfIteration = noOfIteration;
         this.noOfIterationCopy = noOfIteration;
-        this.frequencyTable = new HashMap<>(baseline.getMorphemeFreq());
+        this.stemFrequencyTable = new ConcurrentHashMap<>(baseline.getStemFreq());
+        this.suffixFrequencyTable = new ConcurrentHashMap<>(baseline.getSuffixFreq());
         this.bigramFreq = new HashMap(baseline.getBigramFreq());
         this.samples = new CopyOnWriteArrayList<>(baseline.getSampleList());
-        for (String str : frequencyTable.keySet()) {
-            sizeOfTable = sizeOfTable + frequencyTable.get(str);
+        this.resultsDir = resultsDir;
+        this.bayes = bayes;
+
+        for (String str : stemFrequencyTable.keySet()) {
+            sizeOfstemTable = sizeOfstemTable + stemFrequencyTable.get(str);
         }
+
+        for (String str : suffixFrequencyTable.keySet()) {
+            sizeOfsuffixTable = sizeOfsuffixTable + suffixFrequencyTable.get(str);
+        }
+
         featuresBooleanList[0] = poisson;
         featuresBooleanList[1] = sim;
         featuresBooleanList[2] = presence;
@@ -95,7 +105,8 @@ public class Gibbs_RecursiveInference {
             for (Sample sample : samples) {
 
                 int deleteNo = deleteFromTable(sample.getSegmentation());
-                sizeOfTable = sizeOfTable - deleteNo;
+                sizeOfsuffixTable = sizeOfsuffixTable - deleteNo;
+                sizeOfstemTable--;
 
                 deleteFromBigramMap(sample.getSegmentation());
 
@@ -103,14 +114,18 @@ public class Gibbs_RecursiveInference {
                 //         System.out.println("---> Recursive operation started..");
                 //      System.out.printf("%s%13s%13s%13s%13s%13s", "Split", "Dp Score", "poisson", "similarity", "presence", "length");
                 //        System.out.println();
-
                 sample.setSegmentation("");
                 recursiveSplit(sample, sample.getWord());
 
                 if (!sample.getSegmentation().contains("+")) {
-                    frequencyTable.put("$", frequencyTable.get("$") + 1);
-                    sizeOfTable++;
+                    String suffix = "$";
+                    if (suffixFrequencyTable.containsKey(suffix)) {
+                        suffixFrequencyTable.put(suffix, suffixFrequencyTable.get(suffix) + 1);
+                    } else {
+                        suffixFrequencyTable.put(suffix, 1);
+                    }
                 }
+
                 insertToBigramMap(sample.getSegmentation());
 
                 //         System.out.println("Selected segmentation: " + sample.getSegmentation());
@@ -118,10 +133,10 @@ public class Gibbs_RecursiveInference {
             noOfIteration--;
 
         }
-        saveModel();
+        printModel();
+        //saveModel();
         //  saveSimiliarityValues();
     }
-
 
     private String recursiveSplit(Sample sample, String word) {
 
@@ -132,19 +147,17 @@ public class Gibbs_RecursiveInference {
         double dpScore = 0.0;
         for (String split : possibleSplits) {
             ArrayList<Double> priors = sample.calculateScores(split, featuresBooleanList);  // //0:poisson, 1:similarity, 2:presence, 3: length
-            dpScore = calculateBigramLikelihoods(split);
 
-            if (Double.isNaN(dpScore)) {
-                calculateBigramLikelihoods(split);
-            } else if (Double.isInfinite(dpScore)) {
-                calculateBigramLikelihoods(split);
+            if (bayes.equalsIgnoreCase("ml")) {
+                dpScore = calculateBigramLikelihoods(split);
+            } else {
+                dpScore = calculateBigramLikelihoodsWithDP(split);
             }
 
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
 
             //       System.out.printf("%s%13f%13f%13f%13f%13f", split, dpScore, priors.get(0), priors.get(1), priors.get(2), priors.get(3));
             //      System.out.println();
-
             double nonlog_total = Math.pow(10, total);
             forNormalize = forNormalize + nonlog_total;
             //       System.out.println("nonlog_total: " + nonlog_total);
@@ -184,37 +197,43 @@ public class Gibbs_RecursiveInference {
             String leftMorpheme = tokenizer.nextToken();
             String rightMorpheme = tokenizer.nextToken();
 
-            if (frequencyTable.containsKey(rightMorpheme))
-                frequencyTable.put(rightMorpheme, frequencyTable.get(rightMorpheme) + 1);
-            else
-                frequencyTable.put(rightMorpheme, 1);
-            sizeOfTable = sizeOfTable + 1;
+            if (suffixFrequencyTable.containsKey(rightMorpheme)) {
+                suffixFrequencyTable.put(rightMorpheme, suffixFrequencyTable.get(rightMorpheme) + 1);
+            } else {
+                suffixFrequencyTable.put(rightMorpheme, 1);
+            }
+            sizeOfsuffixTable = sizeOfsuffixTable + 1;
 
-            if (sample.getSegmentation().equalsIgnoreCase(""))
+            if (sample.getSegmentation().equalsIgnoreCase("")) {
                 sample.setSegmentation(rightMorpheme);
-            else
+            } else {
                 sample.setSegmentation(rightMorpheme + "+" + sample.getSegmentation());
+            }
 
             return recursiveSplit(sample, leftMorpheme);
 
         } else {
-            if (frequencyTable.containsKey(word))
-                frequencyTable.put(word, frequencyTable.get(word) + 1);
-            else
-                frequencyTable.put(word, 1);
-            sizeOfTable = sizeOfTable + 1;
+            if (stemFrequencyTable.containsKey(word)) {
+                stemFrequencyTable.put(word, stemFrequencyTable.get(word) + 1);
+            } else {
+                stemFrequencyTable.put(word, 1);
+            }
+            sizeOfstemTable = sizeOfstemTable + 1;
 
-            if (sample.getSegmentation().equalsIgnoreCase(""))
+            if (sample.getSegmentation().equalsIgnoreCase("")) {
                 sample.setSegmentation(word);
-            else
+            } else {
                 sample.setSegmentation(word + "+" + sample.getSegmentation());
+            }
 
             return word;
         }
     }
 
     private Double calculateBigramLikelihoods(String newSegmentation) {
-        int size = sizeOfTable;
+        int sizeOfstem = sizeOfstemTable;
+        int sizeOfsuffix = sizeOfsuffixTable;
+
         double newLikelihood = 0;
         String uSymbol = "$";
 
@@ -222,44 +241,43 @@ public class Gibbs_RecursiveInference {
         String stem = newSegments.nextToken();
         String suffix = (newSegments.hasMoreTokens()) ? newSegments.nextToken() : uSymbol;
 
-        double umCount = (double) getUnigramCount(stem);
+        double umCount = (double) getStemUnigramCount(stem);
         if (umCount != 0) {
-            newLikelihood = newLikelihood + Math.log10(umCount / size);
-            frequencyTable.put(stem, (int) umCount + 1);
-            size++;
+            newLikelihood = newLikelihood + Math.log10(umCount / sizeOfstem);
+            stemFrequencyTable.put(stem, (int) umCount + 1);
+            sizeOfstem++;
 
             double beCount = (double) getBigramCount(stem, suffix);
-            double ueCount = (double) getUnigramCount(suffix);
+            double ueCount = (double) getSuffixUnigramCount(suffix);
             if (beCount != 0) {
                 newLikelihood = newLikelihood + Math.log10(beCount / umCount);
-                frequencyTable.put(suffix, (int) ueCount + 1);
-                size++;
+                suffixFrequencyTable.put(suffix, (int) ueCount + 1);
+                sizeOfsuffix++;
+
+            } else if (ueCount != 0) {
+                newLikelihood = newLikelihood + Math.log10(ueCount / sizeOfsuffix);
+                suffixFrequencyTable.put(suffix, (int) ueCount + 1);
+                sizeOfsuffix++;
             } else {
-                if (ueCount != 0) {
-                    newLikelihood = newLikelihood + Math.log10(ueCount / size);
-                    frequencyTable.put(suffix, (int) ueCount + 1);
-                    size++;
-                } else {
-                    newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / size);
-                    frequencyTable.put(suffix, 1);
-                    size++;
-                }
+                newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / sizeOfsuffix);
+                suffixFrequencyTable.put(suffix, 1);
+                sizeOfsuffix++;
             }
 
         } else {
 
-            newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / size);
-            frequencyTable.put(stem, 1);
-            size++;
-            double ueCount = (double) getUnigramCount(suffix);
+            newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / sizeOfstem);
+            stemFrequencyTable.put(stem, 1);
+            sizeOfstem++;
+            double ueCount = (double) getSuffixUnigramCount(suffix);
             if (ueCount != 0) {
-                newLikelihood = newLikelihood + Math.log10(ueCount / size);
-                frequencyTable.put(suffix, (int) ueCount + 1);
-                size++;
+                newLikelihood = newLikelihood + Math.log10(ueCount / sizeOfsuffix);
+                suffixFrequencyTable.put(suffix, (int) ueCount + 1);
+                sizeOfsuffix++;
             } else {
-                newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / size);
-                frequencyTable.put(suffix, 1);
-                size++;
+                newLikelihood = newLikelihood + Math.log10(Constant.getSmoothingCoefficient() / sizeOfsuffix);
+                suffixFrequencyTable.put(suffix, 1);
+                sizeOfsuffix++;
             }
 
         }
@@ -270,7 +288,10 @@ public class Gibbs_RecursiveInference {
     }
 
     private Double calculateBigramLikelihoodsWithDP(String newSegmentation) {
-        int size = sizeOfTable;
+
+        int sizeOfstem = sizeOfstemTable;
+        int sizeOfsuffix = sizeOfsuffixTable;
+
         double newLikelihood = 0;
         String uSymbol = "$";
 
@@ -279,44 +300,43 @@ public class Gibbs_RecursiveInference {
         String suffix = (newSegments.hasMoreTokens()) ? newSegments.nextToken() : uSymbol;
         int suffixLenght = (suffix.equals("$")) ? 0 : suffix.length();
 
-        double umCount = (double) getUnigramCount(stem);
+        double umCount = (double) getStemUnigramCount(stem);
         if (umCount != 0) {
-            newLikelihood = newLikelihood + Math.log10(umCount / (size + alpha));
-            frequencyTable.put(stem, (int) umCount + 1);
-            size++;
+            newLikelihood = newLikelihood + Math.log10(umCount / (sizeOfstem + alpha));
+            stemFrequencyTable.put(stem, (int) umCount + 1);
+            sizeOfstem++;
 
             double beCount = (double) getBigramCount(stem, suffix);
-            double ueCount = (double) getUnigramCount(suffix);
+            double ueCount = (double) getSuffixUnigramCount(suffix);
             if (beCount != 0) {
                 newLikelihood = newLikelihood + Math.log10(beCount / umCount + alpha);
-                frequencyTable.put(suffix, (int) ueCount + 1);
-                size++;
+                suffixFrequencyTable.put(suffix, (int) ueCount + 1);
+                sizeOfsuffix++;
+
+            } else if (ueCount != 0) {
+                newLikelihood = newLikelihood + Math.log10(alpha * (ueCount / (sizeOfsuffix + alpha)));
+                suffixFrequencyTable.put(suffix, (int) ueCount + 1);
+                sizeOfsuffix++;
             } else {
-                if (ueCount != 0) {
-                    newLikelihood = newLikelihood + Math.log10(ueCount / (size + alpha));
-                    frequencyTable.put(suffix, (int) ueCount + 1);
-                    size++;
-                } else {
-                    newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, suffixLenght + 1) / ((double) size + alpha));
-                    frequencyTable.put(suffix, 1);
-                    size++;
-                }
+                newLikelihood = newLikelihood + Math.log10(alpha * (alpha * Math.pow(gamma, suffixLenght + 1) / ((double) sizeOfsuffix + alpha)));
+                suffixFrequencyTable.put(suffix, 1);
+                sizeOfsuffix++;
             }
 
         } else {
 
-            newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, stem.length() + 1) / ((double) size + alpha));
-            frequencyTable.put(stem, 1);
-            size++;
-            double ueCount = (double) getUnigramCount(suffix);
+            newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, stem.length() + 1) / ((double) sizeOfstem + alpha));
+            stemFrequencyTable.put(stem, 1);
+            sizeOfstem++;
+            double ueCount = (double) getSuffixUnigramCount(suffix);
             if (ueCount != 0) {
-                newLikelihood = newLikelihood + Math.log10(ueCount / (size + alpha));
-                frequencyTable.put(suffix, (int) ueCount + 1);
-                size++;
+                newLikelihood = newLikelihood + Math.log10(alpha * (ueCount / (sizeOfsuffix + alpha)));
+                suffixFrequencyTable.put(suffix, (int) ueCount + 1);
+                sizeOfsuffix++;
             } else {
-                newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, suffixLenght + 1) / ((double) size + alpha));
-                frequencyTable.put(suffix, (int) ueCount + 1);
-                size++;
+                newLikelihood = newLikelihood + Math.log10(alpha * (alpha * Math.pow(gamma, suffixLenght + 1) / ((double) sizeOfsuffix + alpha)));
+                suffixFrequencyTable.put(suffix, 1);
+                sizeOfsuffix++;
             }
 
         }
@@ -339,9 +359,17 @@ public class Gibbs_RecursiveInference {
         }
     }
 
-    private int getUnigramCount(String morpheme) {
-        if (frequencyTable.containsKey(morpheme)) {
-            return frequencyTable.get(morpheme);
+    private int getStemUnigramCount(String morpheme) {
+        if (stemFrequencyTable.containsKey(morpheme)) {
+            return stemFrequencyTable.get(morpheme);
+        } else {
+            return 0;
+        }
+    }
+
+    private int getSuffixUnigramCount(String morpheme) {
+        if (suffixFrequencyTable.containsKey(morpheme)) {
+            return suffixFrequencyTable.get(morpheme);
         } else {
             return 0;
         }
@@ -369,21 +397,24 @@ public class Gibbs_RecursiveInference {
 
     private int deleteFromTable(String segmentation) {
 
-        String uSymbol = "$";
-        if (!segmentation.contains("+")) {
-            frequencyTable.put(segmentation, frequencyTable.get(segmentation) - 1);
-            frequencyTable.put(uSymbol, frequencyTable.get(uSymbol) - 1);
-            return 2;
-        } else {
-            StringTokenizer tokenizer = new StringTokenizer(segmentation, "+");
-            int deletedNo = 0;
-            while (tokenizer.hasMoreTokens()) {
-                String morpheme = tokenizer.nextToken();
-                frequencyTable.put(morpheme, frequencyTable.get(morpheme) - 1);
-                deletedNo++;
-            }
-            return deletedNo;
+        StringTokenizer tokenizer = new StringTokenizer(segmentation, "+");
+        int deletedNo = 0;
+
+        if (tokenizer.countTokens() == 1) {
+            String suffix = "$";
+            suffixFrequencyTable.put(suffix, suffixFrequencyTable.get(suffix) - 1);
+            deletedNo++;
         }
+
+        String stem = tokenizer.nextToken();
+        stemFrequencyTable.put(stem, stemFrequencyTable.get(stem) - 1);
+
+        while (tokenizer.hasMoreTokens()) {
+            String suffix = tokenizer.nextToken();
+            suffixFrequencyTable.put(suffix, suffixFrequencyTable.get(suffix) - 1);
+            deletedNo++;
+        }
+        return deletedNo;
     }
 
     private void deleteFromBigramMap(String segmentation) {
@@ -442,15 +473,17 @@ public class Gibbs_RecursiveInference {
         }
     }
 
+    /*
     private int insertToTable(String segmentation) {
         StringTokenizer tokenizer = new StringTokenizer(segmentation, "+");
         int insertedNo = 0;
         while (tokenizer.hasMoreTokens()) {
             String morpheme = tokenizer.nextToken();
-            if (frequencyTable.containsKey(morpheme))
+            if (frequencyTable.containsKey(morpheme)) {
                 frequencyTable.put(morpheme, frequencyTable.get(morpheme) + 1);
-            else
+            } else {
                 frequencyTable.put(morpheme, 1);
+            }
             insertedNo++;
         }
         return insertedNo;
@@ -482,7 +515,39 @@ public class Gibbs_RecursiveInference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("bigram_ML-NOI_" + noOfIterationCopy + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("bigram_DP-NOI_" + noOfIterationCopy + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
     }
+     */
+    public void printModel() throws FileNotFoundException {
 
+        PrintWriter results = new PrintWriter(resultsDir + "/" + bayes + "_results");
+
+        for (Sample s : samples) {
+            results.println(s.getWord().toLowerCase().replaceAll("ö", "O").replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S")
+                    + "\t" + s.getSegmentation().toLowerCase().replaceAll("\\+", " ").replaceAll("ö", "O").
+                    replaceAll("ç", "C").replaceAll("ü", "U").replaceAll("ı", "I").replaceAll("ğ", "G").replaceAll("ü", "U").replaceAll("ş", "S"));
+        }
+        results.close();
+
+        PrintWriter stems = new PrintWriter(resultsDir + "/" + bayes + "_stems");
+        for (String stem : stemFrequencyTable.keySet()) {
+            stems.println(stem + ":" + stemFrequencyTable.get(stem));
+        }
+        stems.close();
+
+        PrintWriter suffixes = new PrintWriter(resultsDir + "/" + bayes + "_suffixes");
+        for (String suffix : suffixFrequencyTable.keySet()) {
+            suffixes.println(suffix + ":" + suffixFrequencyTable.get(suffix));
+        }
+        suffixes.close();
+
+        PrintWriter bigrams = new PrintWriter(resultsDir + "/" + bayes + "_bigrams");
+        for (String current : bigramFreq.keySet()) {
+            HashMap<String, Integer> transition = bigramFreq.get(current);
+            for (String next : transition.keySet()) {
+                bigrams.println(current + ">" + next + ":" + transition.get(next));
+            }
+        }
+        bigrams.close();
+    }
 }
