@@ -27,6 +27,7 @@ public class Gibbs_RecursiveInference {
     private int heuristic;
     private double alpha = 0.01;
     private double gamma = 0.037;
+    private double discountP = 30;
     private String resultsDir;
     private String bayes;
 
@@ -172,8 +173,10 @@ public class Gibbs_RecursiveInference {
             ArrayList<Double> priors = sample.calculateScores(split, featuresBooleanList);  // //0:poisson, 1:similarity, 2:presence, 3: length
             if (bayes.equalsIgnoreCase("ml")) {
                 dpScore = calculateBigramLikelihoods(split);
-            } else {
+            } else if (bayes.equalsIgnoreCase("dp")) {
                 dpScore = calculateBigramLikelihoodsWithDP(split);
+            } else if (bayes.equalsIgnoreCase("py")) {
+                dpScore = calculateBigramLikelihoodsWithPY(split);
             }
 
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
@@ -345,6 +348,61 @@ public class Gibbs_RecursiveInference {
                 size++;
             } else {
                 newLikelihood = newLikelihood + Math.log10(alpha * (alpha * Math.pow(gamma, suffixLenght + 1) / ((double) size + alpha)));
+                frequencyTable.put(suffix, (int) ueCount + 1);
+                size++;
+            }
+
+        }
+
+        deleteFromTable(newSegmentation);
+
+        return newLikelihood;
+    }
+
+    private Double calculateBigramLikelihoodsWithPY(String newSegmentation) {
+        int size = sizeOfTable;
+        double newLikelihood = 0;
+        String uSymbol = "$";
+
+        StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
+        String stem = newSegments.nextToken();
+        String suffix = (newSegments.hasMoreTokens()) ? newSegments.nextToken() : uSymbol;
+        int suffixLenght = (suffix.equals("$")) ? 0 : suffix.length();
+
+        double umCount = (double) getUnigramCount(stem);
+        if (umCount != 0) {
+            newLikelihood = newLikelihood + Math.log10((umCount - discountP) / (size + alpha));
+            frequencyTable.put(stem, (int) umCount + 1);
+            size++;
+
+            double beCount = (double) getBigramCount(stem, suffix);
+            double ueCount = (double) getUnigramCount(suffix);
+            if (beCount != 0) {
+                newLikelihood = newLikelihood + Math.log10((beCount - discountP) / umCount + alpha);
+                frequencyTable.put(suffix, (int) ueCount + 1);
+                size++;
+            } else if (ueCount != 0) {
+                newLikelihood = newLikelihood + Math.log10((alpha + discountP * bigramFreq.size()) * ((ueCount - discountP) / (size + alpha)));
+                frequencyTable.put(suffix, (int) ueCount + 1);
+                size++;
+            } else {
+                newLikelihood = newLikelihood + Math.log10((alpha + discountP * bigramFreq.size()) * ((alpha + discountP * frequencyTable.size()) * Math.pow(gamma, suffixLenght + 1) / ((double) size + alpha)));
+                frequencyTable.put(suffix, 1);
+                size++;
+            }
+
+        } else {
+
+            newLikelihood = newLikelihood + Math.log10((alpha + discountP * frequencyTable.size()) * Math.pow(gamma, stem.length() + 1) / ((double) size + alpha));
+            frequencyTable.put(stem, 1);
+            size++;
+            double ueCount = (double) getUnigramCount(suffix);
+            if (ueCount != 0) {
+                newLikelihood = newLikelihood + Math.log10((alpha + discountP * bigramFreq.size()) * ((ueCount - discountP) / (size + alpha)));
+                frequencyTable.put(suffix, (int) ueCount + 1);
+                size++;
+            } else {
+                newLikelihood = newLikelihood + Math.log10((alpha + discountP * bigramFreq.size()) * ((alpha + discountP * frequencyTable.size()) * Math.pow(gamma, suffixLenght + 1) / ((double) size + alpha)));
                 frequencyTable.put(suffix, (int) ueCount + 1);
                 size++;
             }

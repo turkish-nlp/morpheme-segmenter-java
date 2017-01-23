@@ -10,7 +10,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-Xmx20g -classpath %classpath core.journal.bigram.seperated.Gibbs_RecursiveInference /home/master/Desktop/morph-pro/tables /home/master/Desktop/morph-pro/corpus/15.txt 10 20 true false true false false 3 1 0.1 /home/master/Desktop/morph-pro/test ml</exec.args>
+                <exec.args>-Xmx20g -classpath %classpath core.journal.bigram.seperated.Gibbs_RecursiveInference /home/master/Desktop/morph-pro/tables /home/master/Desktop/morph-pro/corpus/15.txt 10 20 false false true false false 3 1 0.1 /home/master/Desktop/morph-pro/test dp</exec.args>
                 <exec.executable>java</exec.executable>
             </properties>
         </action>
@@ -24,7 +24,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -Xmx20g -classpath %classpath core.journal.bigram.seperated.Gibbs_RecursiveInference /home/master/Desktop/morph-pro/tables /home/master/Desktop/morph-pro/corpus/15.txt 10 20 true false true false false 3 1 0.1 /home/master/Desktop/morph-pro/test ml</exec.args>
+                <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -Xmx20g -classpath %classpath core.journal.bigram.seperated.Gibbs_RecursiveInference /home/master/Desktop/morph-pro/tables /home/master/Desktop/morph-pro/corpus/15.txt 10 20 false false true false false 3 1 0.1 /home/master/Desktop/morph-pro/test dp</exec.args>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
             </properties>
@@ -39,7 +39,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-Xmx20g -classpath %classpath core.journal.bigram.seperated.Gibbs_RecursiveInference /home/master/Desktop/morph-pro/tables /home/master/Desktop/morph-pro/corpus/15.txt 10 20 true false true false false 3 1 0.1 /home/master/Desktop/morph-pro/test ml</exec.args>
+                <exec.args>-Xmx20g -classpath %classpath core.journal.bigram.seperated.Gibbs_RecursiveInference /home/master/Desktop/morph-pro/tables /home/master/Desktop/morph-pro/corpus/15.txt 10 20 false false true false false 3 1 0.1 /home/master/Desktop/morph-pro/test dp</exec.args>
                 <exec.executable>java</exec.executable>
             </properties>
         </action>

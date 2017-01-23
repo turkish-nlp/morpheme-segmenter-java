@@ -26,6 +26,7 @@ public class Gibbs_RecursiveInference {
     private int heuristic;
     private double alpha = 0.01;
     private double gamma = 0.037;
+    private double discountP = 30;
     private String resultsDir;
     private String bayes;
 
@@ -146,8 +147,10 @@ public class Gibbs_RecursiveInference {
 
             if (bayes.equalsIgnoreCase("ml")) {
                 dpScore = calculateUnigramLikelihoods(split);
-            } else {
+            } else if (bayes.equalsIgnoreCase("dp")) {
                 dpScore = calculateUnigramLikelihoodsWithDP(split);
+            } else if (bayes.equalsIgnoreCase("py")) {
+                dpScore = calculateUnigramLikelihoodsWithPY(split);
             }
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
 
@@ -306,6 +309,55 @@ public class Gibbs_RecursiveInference {
             }
         } else {
             newLikelihood = newLikelihood + Math.log10(alpha * Math.pow(gamma, suffixLenght + 1) / ((double) sizeOfsuffix + alpha));
+            suffixFrequencyTable.put(suffix, 1);
+            sizeOfsuffix++;
+        }
+
+        deleteFromTable(newSegmentation);
+
+        return newLikelihood;
+
+    }
+
+    private Double calculateUnigramLikelihoodsWithPY(String newSegmentation) {
+        int sizeOfstem = sizeOfstemTable;
+        int sizeOfsuffix = sizeOfsuffixTable;
+
+        double newLikelihood = 0;
+
+        StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
+        String stem = newSegments.nextToken();
+        String suffix = (newSegments.hasMoreTokens()) ? newSegments.nextToken() : "$";
+        int suffixLenght = (suffix.equals("$")) ? 0 : suffix.length();
+
+        if (stemFrequencyTable.containsKey(stem)) {
+            if (stemFrequencyTable.get(stem) > 0) {
+                newLikelihood = newLikelihood + Math.log10(((double) (stemFrequencyTable.get(stem) - discountP)) / (sizeOfstem));
+                stemFrequencyTable.put(stem, stemFrequencyTable.get(stem) + 1);
+                sizeOfstem++;
+            } else {
+                newLikelihood = newLikelihood + Math.log10((alpha + discountP * stemFrequencyTable.size()) * Math.pow(gamma, stem.length() + 1) / ((double) sizeOfstem + alpha));
+                stemFrequencyTable.put(stem, 1);
+                sizeOfstem++;
+            }
+        } else {
+            newLikelihood = newLikelihood + Math.log10((alpha + discountP * stemFrequencyTable.size()) * Math.pow(gamma, stem.length() + 1) / ((double) sizeOfstem + alpha));
+            stemFrequencyTable.put(stem, 1);
+            sizeOfstem++;
+        }
+
+        if (suffixFrequencyTable.containsKey(suffix)) {
+            if (suffixFrequencyTable.get(suffix) > 0) {
+                newLikelihood = newLikelihood + Math.log10(((double) (suffixFrequencyTable.get(suffix) - discountP)) / (sizeOfsuffix + alpha));
+                suffixFrequencyTable.put(suffix, suffixFrequencyTable.get(suffix) + 1);
+                sizeOfsuffix++;
+            } else {
+                newLikelihood = newLikelihood + Math.log10((alpha + discountP * suffixFrequencyTable.size()) * Math.pow(gamma, suffixLenght + 1) / ((double) sizeOfsuffix + alpha));
+                suffixFrequencyTable.put(suffix, 1);
+                sizeOfsuffix++;
+            }
+        } else {
+            newLikelihood = newLikelihood + Math.log10((alpha + discountP * suffixFrequencyTable.size()) * Math.pow(gamma, suffixLenght + 1) / ((double) sizeOfsuffix + alpha));
             suffixFrequencyTable.put(suffix, 1);
             sizeOfsuffix++;
         }

@@ -27,6 +27,7 @@ public class Gibbs_RecursiveInference {
     private int heuristic;
     private double alpha = 0.01;
     private double gamma = 0.037;
+    private double discountP = 30;
     private String resultsDir;
     private String bayes;
 
@@ -152,8 +153,10 @@ public class Gibbs_RecursiveInference {
 
             if (bayes.equalsIgnoreCase("ml")) {
                 dpScore = calculateBigramLikelihoods(split);
-            } else {
+            } else if (bayes.equalsIgnoreCase("dp")) {
                 dpScore = calculateBigramLikelihoodsWithDP(split);
+            } else if (bayes.equalsIgnoreCase("py")) {
+                dpScore = calculateBigramLikelihoodsWithPY(split);
             }
 
             double total = dpScore + priors.get(0) + priors.get(1) + priors.get(2) + priors.get(3);
@@ -332,6 +335,65 @@ public class Gibbs_RecursiveInference {
                 sizeOfsuffix++;
             } else {
                 newLikelihood = newLikelihood + Math.log10(alpha * (alpha * Math.pow(gamma, suffixLenght + 1) / ((double) sizeOfsuffix + alpha)));
+                suffixFrequencyTable.put(suffix, 1);
+                sizeOfsuffix++;
+            }
+
+        }
+
+        deleteFromTable(newSegmentation);
+
+        return newLikelihood;
+    }
+
+    private Double calculateBigramLikelihoodsWithPY(String newSegmentation) {
+
+        int sizeOfstem = sizeOfstemTable;
+        int sizeOfsuffix = sizeOfsuffixTable;
+
+        double newLikelihood = 0;
+        String uSymbol = "$";
+
+        StringTokenizer newSegments = new StringTokenizer(newSegmentation, "+");
+        String stem = newSegments.nextToken();
+        String suffix = (newSegments.hasMoreTokens()) ? newSegments.nextToken() : uSymbol;
+        int suffixLenght = (suffix.equals("$")) ? 0 : suffix.length();
+
+        double umCount = (double) getStemUnigramCount(stem);
+        if (umCount != 0) {
+            newLikelihood = newLikelihood + Math.log10((umCount - discountP) / (sizeOfstem + alpha));
+            stemFrequencyTable.put(stem, (int) umCount + 1);
+            sizeOfstem++;
+
+            double beCount = (double) getBigramCount(stem, suffix);
+            double ueCount = (double) getSuffixUnigramCount(suffix);
+            if (beCount != 0) {
+                newLikelihood = newLikelihood + Math.log10((beCount - discountP) / umCount + alpha);
+                suffixFrequencyTable.put(suffix, (int) ueCount + 1);
+                sizeOfsuffix++;
+
+            } else if (ueCount != 0) {
+                newLikelihood = newLikelihood + Math.log10((alpha + discountP * bigramFreq.size()) * ((ueCount - discountP) / (sizeOfsuffix + alpha)));
+                suffixFrequencyTable.put(suffix, (int) ueCount + 1);
+                sizeOfsuffix++;
+            } else {
+                newLikelihood = newLikelihood + Math.log10((alpha + discountP * bigramFreq.size()) * ((alpha + discountP * suffixFrequencyTable.size()) * Math.pow(gamma, suffixLenght + 1) / ((double) sizeOfsuffix + alpha)));
+                suffixFrequencyTable.put(suffix, 1);
+                sizeOfsuffix++;
+            }
+
+        } else {
+
+            newLikelihood = newLikelihood + Math.log10((alpha + discountP * stemFrequencyTable.size()) * Math.pow(gamma, stem.length() + 1) / ((double) sizeOfstem + alpha));
+            stemFrequencyTable.put(stem, 1);
+            sizeOfstem++;
+            double ueCount = (double) getSuffixUnigramCount(suffix);
+            if (ueCount != 0) {
+                newLikelihood = newLikelihood + Math.log10((alpha + discountP * bigramFreq.size()) * ((ueCount - discountP) / (sizeOfsuffix + alpha)));
+                suffixFrequencyTable.put(suffix, (int) ueCount + 1);
+                sizeOfsuffix++;
+            } else {
+                newLikelihood = newLikelihood + Math.log10((alpha + discountP * bigramFreq.size()) * ((alpha + discountP * suffixFrequencyTable.size()) * Math.pow(gamma, suffixLenght + 1) / ((double) sizeOfsuffix + alpha)));
                 suffixFrequencyTable.put(suffix, 1);
                 sizeOfsuffix++;
             }
