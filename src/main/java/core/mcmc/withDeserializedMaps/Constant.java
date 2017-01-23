@@ -13,6 +13,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class Constant {
 
+    private static double scoreLowSim = 0.001;
+
+    public static double getScoreLowSim() {
+        return  scoreLowSim;
+    }
+    public static void setScoreLowSim(double arg) {
+        scoreLowSim = arg;
+    }
+
     private static double lambda;
     private static HashMap<String, Double> newCorpus = new HashMap<>();
     private static double newCorpusSize = 0;

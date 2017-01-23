@@ -1,6 +1,5 @@
 package core.mcmc.withDeserializedMaps;
 
-import core.mcmc.withDeserializedMaps.Constant;
 import org.canova.api.util.MathUtils;
 
 import java.util.*;
@@ -15,8 +14,13 @@ public class Operations {
         double smlrty = Constant.getCosineTable().get(segmentation);
         if (smlrty == -1)
             smlrty = Constant.getSimUnfound();
+        if (smlrty < 0.25)
+            smlrty =  Constant.getScoreLowSim();
+        if (smlrty > 0.25)
+            smlrty = 1;
         return smlrty;
     }
+
 
     public static ArrayList<String> getSegments(String segmentation) {
         ArrayList<String> segments = new ArrayList<>();

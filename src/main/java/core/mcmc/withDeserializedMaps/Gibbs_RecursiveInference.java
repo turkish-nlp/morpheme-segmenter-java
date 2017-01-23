@@ -24,7 +24,6 @@ public class Gibbs_RecursiveInference {
     private static boolean[] featuresBooleanList = new boolean[4]; //0:poisson, 1:similarity, 2:presence, 3: length
     private String featString = "";
     private int heuristic;
-    private double simUnsegmented;
 
 
     public String generateFeatureString() {
@@ -43,9 +42,9 @@ public class Gibbs_RecursiveInference {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
 
 
-        Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], Double.parseDouble(args[2]), Integer.parseInt(args[3]), Double.parseDouble(args[4]),
+      Gibbs_RecursiveInference i = new Gibbs_RecursiveInference(args[0], args[1], Double.parseDouble(args[2]), Integer.parseInt(args[3]), Double.parseDouble(args[4]),
                 Double.parseDouble(args[5]), Boolean.valueOf(args[6]), Boolean.valueOf(args[7]), Boolean.valueOf(args[8]), Boolean.valueOf(args[9]),
-                Integer.parseInt(args[10]), Double.parseDouble(args[11]), Double.parseDouble(args[12]));
+                Integer.parseInt(args[10]), Double.parseDouble(args[11]), Double.parseDouble(args[12]), Double.parseDouble(args[13]));
 
         i.featString = i.generateFeatureString();
 
@@ -66,11 +65,13 @@ public class Gibbs_RecursiveInference {
 
     public Gibbs_RecursiveInference(String outputDir, String wordListDir, double lambda,
                                     int noOfIteration, double alpha, double gamma, boolean poisson,
-                                    boolean sim, boolean presence, boolean length, int heuristic, double simUnsegmentedArg, double simUnfoundArg) throws IOException, ClassNotFoundException {
+                                    boolean sim, boolean presence, boolean length, int heuristic, double simUnsegmentedArg, double simUnfoundArg, double lowSim) throws IOException, ClassNotFoundException {
 
+        Constant.setScoreLowSim(lowSim);
         Constant baseline = new Constant(outputDir, wordListDir, lambda, heuristic, simUnsegmentedArg, simUnfoundArg);
+
         this.heuristic = heuristic;
-        this.simUnsegmented = simUnsegmentedArg;
+
         this.noOfIteration = noOfIteration;
         this.noOfIterationCopy = noOfIteration;
         this.frequencyTable = new ConcurrentHashMap<>(baseline.getMorphemeFreq());
@@ -319,7 +320,7 @@ public class Gibbs_RecursiveInference {
         bos.close();
         out.close();
 
-        FileUtils.writeByteArrayToFile(new File("finalMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha + "-G_" + gamma + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented()), yourBytes);
+        FileUtils.writeByteArrayToFile(new File("finalMODEL-NOI_" + noOfIterationCopy + "-A_" + alpha + "-G_" + gamma + "-Feat" + featString + "-heuristic_" + heuristic + "-SimUNS_" + Constant.getSimUnsegmented() +"ls_" + Constant.getScoreLowSim()), yourBytes);
     }
 
 }
