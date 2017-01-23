@@ -26,7 +26,7 @@ public class Gibbs_RecursiveInference {
     private int heuristic;
     private double alpha = 0.01;
     private double gamma = 0.037;
-    private double discountP = 30;
+    private double discountP = 1;
     private String resultsDir;
     private String bayes;
 
