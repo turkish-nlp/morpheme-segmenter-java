@@ -87,7 +87,7 @@ public class SegmentationGenerator {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
 
-/*        int[] thresholdSet = {50};
+        int[] thresholdSet = {0,1,5,9,25};
 
         for (int i : thresholdSet) {
             System.out.println("THRESHOLD: " + i);
@@ -99,8 +99,8 @@ public class SegmentationGenerator {
                     Thread.sleep(100);
                 }
             }
-        }*/
-        SegmentationGenerator s = new SegmentationGenerator(args[0], args[1], args[2], args[3], Integer.parseInt(args[4]));
+        }
+     //   SegmentationGenerator s = new SegmentationGenerator(args[0], args[1], args[2], args[3], Integer.parseInt(args[4]));
     }
 
     public void parallelSplit() {
@@ -114,7 +114,7 @@ public class SegmentationGenerator {
     }
     public void printFinalSegmentations() throws FileNotFoundException, UnsupportedEncodingException {
         //PrintWriter writer = new PrintWriter("results_th50\\UTF8_OLD_SIM_" + sim + "_NOUNSEG_" + NoUnseg + "_th_" + threshold + "_" + mode + "_" + file.substring(file.indexOf("\\") + 1).replaceAll("finalMODEL-NOI_", ""), "UTF-8");
-        PrintWriter writer = new PrintWriter(file + "_result_" + threshold);
+        PrintWriter writer = new PrintWriter("ciclingSegmentations\\" +  "result_" + threshold +"_" + file.substring(file.indexOf("\\")+1));
         if(file.contains("ger")) {
             System.out.println("!!!!!GERMAN FILE");
             for (String str : finalSegmentation.keySet()) {
@@ -136,9 +136,6 @@ public class SegmentationGenerator {
             writer.close();
         }
     }
-
-
-
     public void doSplit(String word, Set<String> affixes) throws FileNotFoundException {
         ArrayList<String> results = getPossibleSplits(word, affixes);
 
