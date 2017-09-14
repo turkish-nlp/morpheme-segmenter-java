@@ -1,5 +1,6 @@
 package core.prepareDataforMorp2Vec;
 
+import org.apache.commons.lang.StringUtils;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
@@ -20,7 +21,7 @@ public class FullUnsupervisedSegmentation {
 
     static {
         try {
-            vectors = WordVectorSerializer.loadTxtVectors(new File("C:\\Users\\Murathan\\github\\vectors.txt"));
+            vectors = WordVectorSerializer.loadTxtVectors(new File("/Users/murathan/IdeaProjects/vectors.txt"));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -74,10 +75,8 @@ public class FullUnsupervisedSegmentation {
         }
     }
 
-    public static List<String> getAllPossibleSplits(String word, int morphemeNo) {
-
+    public static HashMap<String, Double> getAllPossibleSplits(String word, int morphemeNo) {
         List<String> tmpResults = new ArrayList<>();
-
         String tWord = word;
         int nM = morphemeNo - 1;
 
@@ -91,32 +90,35 @@ public class FullUnsupervisedSegmentation {
             }
             tmpResults.add(nWord + " " + tWord.substring(i[nM - 1]));
         }
-        List<String> results;
+        HashMap<String, Double> results;
         double th = threshold;
         do {
             th = th - 0.05;
             results = getSplitByThreshold(tmpResults, th);
         } while ((results.size() == 0) && (th != 1) && th > 0);
-
         return results;
     }
 
-    public static List<String> getSplitByThreshold(List<String> all, double threshold) {
-        List<String> results = new ArrayList<>();
+    public static HashMap<String, Double> getSplitByThreshold(List<String> all, double threshold) {
+        HashMap<String, Double> results = new HashMap<>();
 
         for (String s : all) {
             StringTokenizer st = new StringTokenizer(s, " ");
             String curr = st.nextToken();
             String next = "";
             boolean isOK = true;
+            double sim = 0;
             while (st.hasMoreTokens()) {
                 next = curr + st.nextToken();
                 if (!(isOK = (vectors.hasWord(curr) && vectors.hasWord(next) && (vectors.similarity(curr, next) > threshold && vectors.similarity(curr, next) < 1)))) {
                     break;
                 }
+                sim = sim + vectors.similarity(curr, next);
                 curr = next;
             }
-            if (isOK) results.add(s);
+            if (isOK){
+                results.put(s, (sim/StringUtils.countMatches(s, " ")));
+            }
         }
         return results;
     }
@@ -128,9 +130,7 @@ public class FullUnsupervisedSegmentation {
         for (int i = 1; i < sWord; i++) {
             input[i - 1] = i;
         }
-
         int k = nMorpheme;                             // sequence length
-
         List<int[]> subsets = new ArrayList<>();
 
         int[] s = new int[k];                  // here we'll keep indices
@@ -155,7 +155,6 @@ public class FullUnsupervisedSegmentation {
                 }
             }
         }
-
         return subsets;
     }
 
@@ -176,8 +175,6 @@ public class FullUnsupervisedSegmentation {
         for (int i = 0; i < word.length() - 2; i++) {
 
             String candidate = stem.substring(0, stem.length() - count);
-
-
             if (vectors.hasWord(stem) && vectors.hasWord(candidate) && (vectors.similarity(stem, candidate) > threshold && vectors.similarity(stem, candidate) < 1)) {
                 String affix = stem.substring(stem.length() - count, stem.length());
 
@@ -199,51 +196,61 @@ public class FullUnsupervisedSegmentation {
     }
 
     public static void main(String[] args) throws IOException {
-
-
         Charset charset = Charset.forName("UTF-8");
-        List<String> lines = Files.readAllLines(new File("DATAMOR2VEC\\tur_10000.txt").toPath(), charset);
+        List<String> lines = Files.readAllLines(new File("DATAMOR2VEC/tur_10000.txt").toPath(), charset);
         HashMap<String, ArrayList<String>> wordSegMap = new HashMap<>();
+
+        PrintWriter writer = new PrintWriter("seg.txt", "UTF-8");
 
         int[] morpNo = {2, 3, 4};
         int wordC = 0;
         int totalS = 0;
         for (String word : lines) {
-            if (vectors.hasWord(word)) {
-                System.out.println("==========================================================");
-                int seg = 0;
-                ArrayList<String> segs = new ArrayList<>();
+            if (vectors.hasWord(word) && !word.trim().equals("")) {
+                HashMap<String, Double> segs = new HashMap<>();
                 for (int i : morpNo) {
-                    for (String s : getAllPossibleSplits(word, i)) {
-                        //System.out.println(s);
-                        seg++;
-                        segs.add(s);
-                    }
+                    segs.putAll(getAllPossibleSplits(word, i));
                 }
-                if(segs.size() > 10)
+                if(segs.keySet().size() > 10)
                 {
-                    Collections.shuffle(segs);
-                    segs = new ArrayList<>(segs.subList(0,10));
+                    Map<String, Double> result2 = new LinkedHashMap<>();
+                    segs.entrySet().stream()
+                            .sorted(Map.Entry.<String, Double>comparingByValue().reversed()).limit(10)
+                            .forEachOrdered(x -> result2.put(x.getKey(), x.getValue()));
+                    segs.clear();
+                    segs.putAll(result2);
                 }
-                if(segs.size() < 10 && segs.size() > 0)
+                ArrayList<String> segmen = new ArrayList<>(segs.keySet());
+                if(segmen.size() < 10 && segmen.size() > 0)
                 {
-                    int size = segs.size();
-                    while(segs.size() < 10)
-                    {
-                        segs.add(segs.get(size-1));
-                    }
+                    int size = segmen.size();
+                    while(segmen.size() < 10)
+                        segmen.add(segmen.get(size-1));
                 }
-
-                if(segs.size() > 1)
+                if(segmen.size() == 10){
                     wordC++;
-                wordSegMap.put(word, segs);
-                // System.out.println("==========================================================  " + word + " " + seg);
-                totalS = totalS + segs.size();
+                System.out.println(wordC);
+                wordSegMap.put(word, segmen );
+                totalS = totalS + segmen.size();}
                  /* */
             }
         }
         System.out.println(wordC);
         System.out.println((double) totalS / wordC);
+
+            for (String word : wordSegMap.keySet()) {
+                writer.print(word + ":");
+                String toPrint = "";
+                for(String seg: wordSegMap.get(word))
+                {
+                    seg = seg.replaceAll("  ", " ").replaceAll(" ", "-");
+                    toPrint = toPrint + seg + "+";
+                }
+                writer.print( toPrint.substring(0,toPrint.length() -1));
+                writer.println();
+            }
+        writer.close();
+
 
     }
 
