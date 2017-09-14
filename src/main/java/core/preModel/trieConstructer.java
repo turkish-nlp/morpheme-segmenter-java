@@ -36,7 +36,6 @@ public class trieConstructer {
         {
             String[] wordSplit = str.split(" ");
             buildTries(wordSplit[1]);
-
         }
     }
 
