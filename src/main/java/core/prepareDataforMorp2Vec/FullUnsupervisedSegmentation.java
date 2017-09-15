@@ -21,7 +21,7 @@ public class FullUnsupervisedSegmentation {
 
     static {
         try {
-            vectors = WordVectorSerializer.loadTxtVectors(new File("/Users/murathan/IdeaProjects/vectors.txt"));
+            vectors = WordVectorSerializer.loadTxtVectors(new File("C:\\Users\\Murathan\\github\\vectors.txt"));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -197,16 +197,16 @@ public class FullUnsupervisedSegmentation {
 
     public static void main(String[] args) throws IOException {
         Charset charset = Charset.forName("UTF-8");
-        List<String> lines = Files.readAllLines(new File("DATAMOR2VEC/tur_10000.txt").toPath(), charset);
+        List<String> lines = Files.readAllLines(new File("DATAMOR2VEC/tur_100K.txt").toPath(), charset);
         HashMap<String, ArrayList<String>> wordSegMap = new HashMap<>();
 
-        PrintWriter writer = new PrintWriter("seg.txt", "UTF-8");
+        PrintWriter writer = new PrintWriter("100K_10seg.txt", "UTF-8");
 
         int[] morpNo = {2, 3, 4};
         int wordC = 0;
         int totalS = 0;
         for (String word : lines) {
-            if (vectors.hasWord(word) && !word.trim().equals("")) {
+            if (vectors.hasWord(word) && !word.trim().equals("") && word.length() > 1) {
                 HashMap<String, Double> segs = new HashMap<>();
                 for (int i : morpNo) {
                     segs.putAll(getAllPossibleSplits(word, i));
